@@ -5,15 +5,19 @@
   "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev:portal": "pnpm --filter @repo/portal dev",
-    "dev:app1": "pnpm --filter @repo/app1 dev",
+    "dev:notion-training-app": "pnpm --filter @repo/notion-training-app dev",
     "dev:app2": "pnpm --filter @repo/app2 dev",
     "dev:api": "pnpm --filter @repo/api dev",
     "build:portal": "pnpm --filter @repo/portal build",
-    "build:app1": "pnpm --filter @repo/app1 build",
+    "build:notion-training-app": "pnpm --filter @repo/notion-training-app build",
     "build:app2": "pnpm --filter @repo/app2 build",
     "build:api": "pnpm --filter @repo/api build",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "typescript": "latest"

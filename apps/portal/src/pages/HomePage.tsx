@@ -1,9 +1,20 @@
 import { Link } from "react-router-dom";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui";
 
 const apps = [
-  { href: "/app1/", title: "App 1", description: "学習用アプリ1" },
-  { href: "/app2/", title: "App 2", description: "学習用アプリ2" }
+  {
+    href: "/notion-training-app/",
+    title: "App 1",
+    description: "学習用アプリ1",
+  },
+  { href: "/app2/", title: "App 2", description: "学習用アプリ2" },
 ];
 
 export function HomePage() {

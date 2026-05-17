@@ -4,7 +4,7 @@ import { App } from "../App";
 
 export function RootRouter() {
   return (
-    <BrowserRouter basename="/app1">
+    <BrowserRouter basename="/notion-training-app">
       <App />
     </BrowserRouter>
   );
