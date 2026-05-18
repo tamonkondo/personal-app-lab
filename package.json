@@ -5,11 +5,11 @@
   "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev:portal": "pnpm --filter @repo/portal dev",
-    "dev:notion-training-app": "pnpm --filter @repo/notion-training-app dev",
+    "dev:nta": "pnpm --filter @repo/notion-training-app dev",
     "dev:app2": "pnpm --filter @repo/app2 dev",
     "dev:api": "pnpm --filter @repo/api dev",
     "build:portal": "pnpm --filter @repo/portal build",
-    "build:notion-training-app": "pnpm --filter @repo/notion-training-app build",
+    "build:nta": "pnpm --filter @repo/notion-training-app build",
     "build:app2": "pnpm --filter @repo/app2 build",
     "build:api": "pnpm --filter @repo/api build",
     "build": "pnpm -r build",
