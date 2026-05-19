@@ -3,21 +3,14 @@
  * 〇〇：Notion APIから取得したデータの1件分の型
  * 〇〇Data: Notion APIから取得した生のデータの型
  * 〇〇Response: クライアントに返すレスポンスの型
- * */ 
+ * */
 // trainingLogTypes.ts
-import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints";
-import type { BasePageMeta } from "@/integrations/notion/notion.types";
+import type {
+  BasePageMeta,
+  NotionProp,
+  NotionResults,
+} from "@/integrations/notion/notion.types";
 
-type PropsOf<P extends PageObjectResponse> = P["properties"];
-type PageProps = PropsOf<PageObjectResponse>;
-type NotionProp<
-  Name extends keyof PageProps,
-  Kind extends PageProps[Name]["type"],
-> = Extract<PageProps[Name], { type: Kind }>;
-type NotionResults<T> = {
-  object: string;
-  results: T[];
-};
 export type TrainingLog = BasePageMeta & {
   properties: {
     memo: NotionProp<"memo", "rich_text">;

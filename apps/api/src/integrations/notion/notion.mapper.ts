@@ -1,28 +1,12 @@
 import type { DateResponse } from "@notionhq/client/build/src/api-endpoints/common";
+import {
+  NotionFormula,
+  NotionPropertyType,
+  FormulaValueMap,
+  RollupValueMap,
+  NotionRollup,
+} from "./notion.types";
 
-type NotionPropertyType = "string" | "number" | "date" | "title" | "array";
-type FormulaValueMap = {
-  string: string | null;
-  number: number | null;
-  date: DateResponse | null;
-  title: null;
-  array: unknown[] | null;
-};
-type RollupValueMap = {
-  string: string | null;
-  number: number | null;
-  date: DateResponse | null;
-  title: null;
-  array: unknown[] | null;
-};
-
-export type NotionFormula<T extends NotionPropertyType> = {
-  id: string;
-  type: "formula";
-  formula: { type: T } & Partial<Record<NotionPropertyType, unknown>> & {
-      [K in T]: FormulaValueMap[K];
-    };
-};
 export function isFormula<T extends NotionPropertyType>(
   property: unknown,
   type: T,
@@ -48,12 +32,6 @@ export function getFormula<T extends NotionPropertyType>(
   const value = property.formula[type] as FormulaValueMap[T] | undefined;
   return value ?? null;
 }
-export type NotionRollup<T extends NotionPropertyType> = {
-  type: "rollup";
-  rollup: { type: T } & Partial<Record<NotionPropertyType, unknown>> & {
-      [K in T]: RollupValueMap[K];
-    };
-};
 
 export function isRollup<T extends NotionPropertyType>(
   property: unknown,

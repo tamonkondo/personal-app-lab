@@ -15,7 +15,7 @@ import {
   getFormula,
   getRollup,
   getRollupFormulaDate,
-} from "./notion-training-app.mapper";
+} from "@/integrations/notion/notion.mapper";
 
 // トレーニングログ一覧の取得
 export async function fetchTrainingLogs(cursor?: string, limit: number = 20) {
