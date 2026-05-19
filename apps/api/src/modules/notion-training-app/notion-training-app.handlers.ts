@@ -1,7 +1,7 @@
 /**
  * 各CRUDに対応するハンドラー関数を定義するファイル
  * 処理手順
- * 1. zodスキーマを元にリクエストのバリデーションを行う
+ * 1. formdataはzodスキーマを元にリクエストのバリデーションを行う
  * 2. notion-training-app.notion.tsのfetch関数を呼び出して、Notion APIからデータを取得する
  * 3. 取得したデータを整形する。
  * 4. 取得したデータをレスポンスとして返す
@@ -10,10 +10,16 @@
 import { asyncHandler } from "@/libs/asyncHandler";
 import * as fetches from "./notion-training-app.notion";
 
-export const getTrainingLogs = asyncHandler(async (_, res) => {
-  const trainingLogs = await fetches.fetchTrainingLogs();
-  res.json({ message: "getTrainingLogs", data: trainingLogs });
-});
+export const getTrainingLogs = asyncHandler(
+  async (req: { query: { cursor?: string; limit?: number } }, res) => {
+    const { cursor, limit } = req.query;
+    const trainingLogs = await fetches.fetchTrainingLogs(
+      cursor,
+      limit ? Number(limit) : undefined,
+    );
+    res.json({ message: "getTrainingLogs", data: trainingLogs });
+  },
+);
 export const getTrainingLog = asyncHandler(
   async (req: { params: { id: string } }, res) => {
     const { id } = req.params;
@@ -44,8 +50,16 @@ export const deleteTrainingLog = asyncHandler(async (req, res) => {
   res.json({ message: "deleteTrainingLog" });
 });
 export const getGoalWeights = asyncHandler(async (req, res) => {
-  res.json({ message: "getGoalWeights" });
+  const goalWeights = await fetches.fetchGoalWeights();
+  res.json({ message: "getGoalWeights", data: goalWeights });
 });
+export const getGoalWeightsDetail = asyncHandler(
+  async (req: { params: { id: string } }, res) => {
+    const { id } = req.params;
+    const goalWeightDetail = await fetches.fetchGoalWeightsDetail(id);
+    res.json({ message: "getGoalWeightsDetail", data: goalWeightDetail });
+  },
+);
 export const getExercise = asyncHandler(async (req, res) => {
   res.json({ message: "getExercise" });
 });

@@ -20,6 +20,7 @@ notionTrainingAppRouter.get(
 );
 // トレーニングの目標重量
 notionTrainingAppRouter.get("/goal-weights", handlers.getGoalWeights);
+notionTrainingAppRouter.get("/goal-weights/:id", handlers.getGoalWeightsDetail);
 // トレーニング種目一覧
 notionTrainingAppRouter.get("/exercise", handlers.getExercise);
 notionTrainingAppRouter.post("/exercise", handlers.createExercise);

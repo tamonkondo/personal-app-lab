@@ -5,18 +5,32 @@ import notionClient from "@/integrations/notion/notion.client";
 import {
   ExerciseDetailLog,
   ExerciseLog,
+  GoalWeight,
+  GoalWeightData,
+  GoalWeightResponse,
   TrainingLog,
   TrainingLogResponse,
 } from "./notion-training-app.types";
-import { getFormula, getRollup } from "./notion-training-app.mapper";
+import {
+  getFormula,
+  getRollup,
+  getRollupFormulaDate,
+} from "./notion-training-app.mapper";
 
 // トレーニングログ一覧の取得
-export async function fetchTrainingLogs() {
-  const trainingLogs = await notionClient.dataSources.query({
+export async function fetchTrainingLogs(cursor?: string, limit: number = 20) {
+  const trainingLogs = (await notionClient.dataSources.query({
     data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
-    page_size: 1,
-  });
-  return trainingLogs.results;
+    page_size: limit,
+    start_cursor: cursor,
+    filter_properties: [
+      "memo",
+      "trainingExercisesRelation",
+      "createdTime",
+      "bodyWeight",
+    ],
+  })) as unknown as TrainingLog[];
+  return trainingLogs;
 }
 // トレーニングログの取得
 export async function fetchTrainingLog(id: string) {
@@ -114,7 +128,57 @@ export async function fetchTrainingLogDetail(id: string) {
   };
   return responseData;
 }
-export async function fetchGoalsWeight() {}
+// 目標重量の一覧取得
+export async function fetchGoalWeights() {
+  const goalWeights: GoalWeightData = (await notionClient.dataSources.query({
+    data_source_id: process.env.NOTION_GOAL_WEIGHTS_DATABASE_ID!,
+    filter_properties: [
+      "exerciseNameFormula",
+      "maxWeightRollup",
+      "updateDateRollup",
+      "goalWeight",
+      "statusFormula",
+    ],
+  })) as unknown as GoalWeightData;
+  const responseData: GoalWeightResponse[] = goalWeights.results.map(
+    (goalWeight) => ({
+      id: goalWeight.id,
+      exerciseName:
+        getFormula(goalWeight.properties.exerciseNameFormula, "string") || "",
+      maxWeight:
+        Number(getRollup(goalWeight.properties.maxWeightRollup, "number")) || 0,
+      updateDate: getRollupFormulaDate(goalWeight.properties.updateDateRollup)
+        ?.start,
+      goalWeight: goalWeight.properties.goalWeight.number || 0,
+      status: getFormula(goalWeight.properties.statusFormula, "string") || "",
+    }),
+  );
+  return responseData;
+}
+export async function fetchGoalWeightsDetail(id: string) {
+  const goalWeight: GoalWeight = (await notionClient.pages.retrieve({
+    page_id: id,
+    filter_properties: [
+      "exerciseNameFormula",
+      "maxWeightRollup",
+      "updateDateRollup",
+      "goalWeight",
+      "statusFormula",
+    ],
+  })) as unknown as GoalWeight;
+  const responseData: GoalWeightResponse = {
+    id: goalWeight.id,
+    exerciseName:
+      getFormula(goalWeight.properties.exerciseNameFormula, "string") || "",
+    maxWeight:
+      Number(getRollup(goalWeight.properties.maxWeightRollup, "number")) || 0,
+    updateDate: getRollupFormulaDate(goalWeight.properties.updateDateRollup)
+      ?.start,
+    goalWeight: goalWeight.properties.goalWeight.number || 0,
+    status: getFormula(goalWeight.properties.statusFormula, "string") || "",
+  };
+  return responseData;
+}
 export async function fetchExerciseReference() {}
 export async function fetchExerciseReferenceDetail() {}
 export async function fetchExerciseLogs() {}

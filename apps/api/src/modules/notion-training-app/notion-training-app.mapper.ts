@@ -1,17 +1,32 @@
-type NotionPropertyType = "string" | "number" | "created_time" | "title";
+import type { DateResponse } from "@notionhq/client/build/src/api-endpoints/common";
 
-export type NotionFormula<T> = {
+type NotionPropertyType = "string" | "number" | "date" | "title" | "array";
+type FormulaValueMap = {
+  string: string | null;
+  number: number | null;
+  date: DateResponse | null;
+  title: null;
+  array: unknown[] | null;
+};
+type RollupValueMap = {
+  string: string | null;
+  number: number | null;
+  date: DateResponse | null;
+  title: null;
+  array: unknown[] | null;
+};
+
+export type NotionFormula<T extends NotionPropertyType> = {
   id: string;
   type: "formula";
-  formula: {
-    type: T;
-    [key: string]: T | null;
-  };
+  formula: { type: T } & Partial<Record<NotionPropertyType, unknown>> & {
+      [K in T]: FormulaValueMap[K];
+    };
 };
-export function isFormula(
+export function isFormula<T extends NotionPropertyType>(
   property: unknown,
-  type: NotionPropertyType = "string",
-): property is NotionFormula<typeof type> {
+  type: T,
+): property is NotionFormula<T> {
   return (
     typeof property === "object" &&
     property !== null &&
@@ -25,25 +40,25 @@ export function isFormula(
   );
 }
 
-export function getFormula(
+export function getFormula<T extends NotionPropertyType>(
   property: unknown,
-  type: NotionPropertyType,
-): NotionPropertyType | null {
+  type: T,
+): FormulaValueMap[T] | null {
   if (!isFormula(property, type)) return null;
-  return property.formula[type];
+  const value = property.formula[type] as FormulaValueMap[T] | undefined;
+  return value ?? null;
 }
-export type NotionRollup<T> = {
+export type NotionRollup<T extends NotionPropertyType> = {
   type: "rollup";
-  rollup: {
-    type: T;
-    [key: string]: T | null;
-  };
+  rollup: { type: T } & Partial<Record<NotionPropertyType, unknown>> & {
+      [K in T]: RollupValueMap[K];
+    };
 };
 
-export function isRollup(
+export function isRollup<T extends NotionPropertyType>(
   property: unknown,
-  type: NotionPropertyType,
-): property is NotionRollup<typeof type> {
+  type: T,
+): property is NotionRollup<T> {
   return (
     typeof property === "object" &&
     property !== null &&
@@ -57,10 +72,22 @@ export function isRollup(
   );
 }
 
-export function getRollup(
+export function getRollup<T extends NotionPropertyType>(
   property: unknown,
-  type: NotionPropertyType = "number",
-): NotionPropertyType | null {
+  type: T,
+): RollupValueMap[T] | null {
   if (!isRollup(property, type)) return null;
-  return property.rollup[type];
+  const value = property.rollup[type] as RollupValueMap[T] | undefined;
+  return value ?? null;
+}
+
+export function getRollupArray(property: unknown): unknown[] | null {
+  const rollupArray = getRollup(property, "array");
+  return Array.isArray(rollupArray) ? rollupArray : null;
+}
+
+export function getRollupFormulaDate(property: unknown): DateResponse | null {
+  const rollupArray = getRollupArray(property);
+  if (!Array.isArray(rollupArray) || rollupArray.length === 0) return null;
+  return getFormula(rollupArray[0], "date");
 }
