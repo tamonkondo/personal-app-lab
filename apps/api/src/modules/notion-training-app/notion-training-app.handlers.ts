@@ -10,19 +10,30 @@
 import { asyncHandler } from "@/libs/asyncHandler";
 import * as fetches from "./notion-training-app.notion";
 
-export const getTrainingLogs = asyncHandler(async (req, res) => {
+export const getTrainingLogs = asyncHandler(async (_, res) => {
   const trainingLogs = await fetches.fetchTrainingLogs();
   res.json({ message: "getTrainingLogs", data: trainingLogs });
 });
-export const getTrainingLog = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const trainingLog = await fetches.fetchTrainingLog(id as string);
-
-  res.json({
-    message: "getTrainingLog",
-    data: trainingLog,
-  });
-});
+export const getTrainingLog = asyncHandler(
+  async (req: { params: { id: string } }, res) => {
+    const { id } = req.params;
+    const trainingLog = await fetches.fetchTrainingLog(id);
+    res.json({
+      message: "getTrainingLog",
+      data: trainingLog,
+    });
+  },
+);
+export const getTraininngLogDetail = asyncHandler(
+  async (req: { params: { id: string } }, res) => {
+    const { id } = req.params;
+    const trainingLogDetail = await fetches.fetchTrainingLogDetail(id);
+    res.json({
+      message: "getTraininngLogDetail",
+      data: trainingLogDetail,
+    });
+  },
+);
 export const createTrainingLog = asyncHandler(async (req, res) => {
   res.json({ message: "createTrainingLog" });
 });

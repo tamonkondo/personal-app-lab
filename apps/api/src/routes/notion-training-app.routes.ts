@@ -13,6 +13,11 @@ notionTrainingAppRouter.delete(
   "/training-logs/:id",
   handlers.deleteTrainingLog,
 );
+// 特定の日付のトレーニングリストの詳細（トレーニング種目のログも含む）
+notionTrainingAppRouter.get(
+  "/training-logs/:id/detail",
+  handlers.getTraininngLogDetail,
+);
 // トレーニングの目標重量
 notionTrainingAppRouter.get("/goal-weights", handlers.getGoalWeights);
 // トレーニング種目一覧
