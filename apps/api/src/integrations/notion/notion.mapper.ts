@@ -69,3 +69,19 @@ export function getRollupFormulaDate(property: unknown): DateResponse | null {
   if (!Array.isArray(rollupArray) || rollupArray.length === 0) return null;
   return getFormula(rollupArray[0], "date");
 }
+
+export function getTitle(property: unknown): string {
+  if (
+    typeof property === "object" &&
+    property !== null &&
+    "type" in property &&
+    property.type === "title" &&
+    "title" in property &&
+    Array.isArray(property.title) &&
+    property.title.length > 0 &&
+    "plain_text" in property.title[0]
+  ) {
+    return property.title[0].plain_text;
+  }
+  return "";
+}
