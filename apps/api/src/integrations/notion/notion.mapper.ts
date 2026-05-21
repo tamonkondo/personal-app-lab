@@ -85,3 +85,17 @@ export function getTitle(property: unknown): string {
   }
   return "";
 }
+
+export function getRelatonIds(property: unknown): string[] {
+  if (
+    typeof property === "object" &&
+    property !== null &&
+    "type" in property &&
+    property.type === "relation" &&
+    "relation" in property &&
+    Array.isArray(property.relation)
+  ) {
+    return property.relation.map((relation) => relation.id);
+  }
+  return [];
+}

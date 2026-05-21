@@ -13,9 +13,15 @@ export type NotionProp<
   Name extends keyof NotionPageProps,
   Kind extends NotionPageProps[Name]["type"],
 > = Extract<NotionPageProps[Name], { type: Kind }>;
-export type NotionResults<T> = {
+export type NotionResults<T> = PageObjectResponse & {
   object: string;
+  next_cursor: string | null;
+  has_more: boolean;
   results: T[];
+};
+export type NotionPageResults<T> = PageObjectResponse & {
+  object: string;
+  properties: T;
 };
 export type BasePageMeta = Pick<
   PageObjectResponse,

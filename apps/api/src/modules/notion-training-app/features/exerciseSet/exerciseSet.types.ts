@@ -1,0 +1,36 @@
+import {
+  BasePageMeta,
+  NotionPageResults,
+  NotionProp,
+  NotionResults,
+} from "@/integrations/notion/notion.types";
+
+export type ExerciseSet = BasePageMeta & {
+  properties: ExerciseDetail;
+};
+export type ExerciseDetail = BasePageMeta & {
+  kg: NotionProp<"kg", "number">;
+  rep: NotionProp<"rep", "number">;
+  memo: NotionProp<"memo", "rich_text">;
+  detailFormula: NotionProp<"detailFormula", "formula">;
+  maxWeightFormula: NotionProp<"maxWeightFormula", "formula">;
+};
+
+export type ExerciseSetsData = NotionResults<ExerciseSet>;
+export type ExerciseSetDetailData = NotionPageResults<ExerciseDetail>;
+
+export type ExerciseSetResponse = {
+  id: string;
+  kg: number;
+  rep: number;
+  memo: string;
+  detail: string;
+  maxWeight: number;
+  createdTime: string;
+};
+
+export type ExerciseSetsResponse = {
+  data: ExerciseSetResponse[];
+  next_cursor?: string | undefined;
+  has_more: boolean;
+};

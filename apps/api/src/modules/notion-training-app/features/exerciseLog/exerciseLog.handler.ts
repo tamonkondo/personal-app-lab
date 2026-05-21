@@ -6,9 +6,21 @@ export const getRecentTrainingLogs = asyncHandler(async (req, res) => {
 });
 // 特定の種目の記録一覧を取得
 export const getExerciseLogs = asyncHandler(
-  async (req: { params: { exerciseId: string } }, res) => {
+  async (
+    req: {
+      params: { exerciseId: string };
+      query: { limit?: number; start_cursor?: string };
+    },
+    res,
+  ) => {
     const { exerciseId } = req.params; // exerciseId
-    const exerciseLogs = await fetches.fetchExerciseLogs(exerciseId);
+    const { limit, start_cursor } = req.query; // 取得件数の上限
+
+    const exerciseLogs = await fetches.fetchExerciseLogs(
+      exerciseId,
+      limit ? Number(limit) : undefined,
+      start_cursor,
+    );
     res.json({ message: "getExerciseLogs", data: exerciseLogs });
   },
 );
@@ -16,7 +28,8 @@ export const getExerciseLogs = asyncHandler(
 export const getExerciseLog = asyncHandler(
   async (req: { params: { id: string } }, res) => {
     const { id } = req.params; // exerciseLogId
-    res.json({ message: "getExerciseLog", data: { id } });
+    const exerciseLog = await fetches.fetchExerciseLog(id);
+    res.json({ message: "getExerciseLog", data: exerciseLog });
   },
 );
 export const createExerciseLog = asyncHandler(async (req, res) => {

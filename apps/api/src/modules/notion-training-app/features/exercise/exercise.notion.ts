@@ -1,6 +1,15 @@
-import { getFormula, getRollup, getTitle } from "@/integrations/notion/notion.mapper";
+import {
+  getFormula,
+  getRollup,
+  getTitle,
+} from "@/integrations/notion/notion.mapper";
 import notionClient from "@/integrations/notion/notion.client";
-import { ExerciseData, ExerciseDetail, ExerciseDetailResponse, ExerciseResponse } from "./exercise.types";
+import {
+  ExerciseData,
+  ExerciseDetail,
+  ExerciseDetailResponse,
+  ExerciseResponse,
+} from "./exercise.types";
 
 // トレーニング種目一覧の取得
 export async function fetchExercises() {

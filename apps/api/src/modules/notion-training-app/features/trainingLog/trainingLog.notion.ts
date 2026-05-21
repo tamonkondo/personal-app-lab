@@ -6,10 +6,8 @@ import {
   getTitle,
 } from "@/integrations/notion/notion.mapper";
 import { TrainingLog, TrainingLogResponse } from "./trainingLog.types";
-import {
-  ExerciseDetailLog,
-  ExerciseLog,
-} from "../exerciseLog/exerciseLog.types";
+import { ExerciseLog } from "../exerciseLog/exerciseLog.types";
+import { ExerciseSet } from "../exerciseSet/exerciseSet.types";
 
 // トレーニングログ一覧の取得
 export async function fetchTrainingLogs(cursor?: string, limit: number = 20) {
@@ -61,21 +59,21 @@ export async function fetchTrainingLogDetail(id: string) {
         filter_properties: [
           "todayMaxWeightRollup",
           "trainingNameFormula",
-          "exerciseDetailLogsRelation",
+          "exerciseSetsRelation",
           "rest",
           "memo",
         ],
       }),
     ) || [],
   )) as ExerciseLog[];
-  const exerciseDetailLogsRelationIds = exerciseLogs.flatMap(
+  const exerciseSetsRelationIds = exerciseLogs.flatMap(
     (exerciseLog) =>
-      exerciseLog.properties.exerciseDetailLogsRelation.relation?.map(
+      exerciseLog.properties.exerciseSetsRelation.relation?.map(
         (relation) => relation.id,
       ) || [],
   );
-  const exerciseDetailLogs: ExerciseDetailLog[] = (await Promise.all(
-    exerciseDetailLogsRelationIds.map((id) =>
+  const exerciseSets: ExerciseSet[] = (await Promise.all(
+    exerciseSetsRelationIds.map((id) =>
       notionClient.pages.retrieve({
         page_id: id,
         filter_properties: [
@@ -84,11 +82,10 @@ export async function fetchTrainingLogDetail(id: string) {
           "memo",
           "detailFormula",
           "maxWeightFormula",
-          "createdTime",
         ],
       }),
     ),
-  )) as ExerciseDetailLog[];
+  )) as unknown as ExerciseSet[];
   const responseData: TrainingLogResponse = {
     createdTime: trainingLog.properties.createdTime.created_time,
     bodyWeight: trainingLog.properties.bodyWeight.number,
@@ -102,9 +99,9 @@ export async function fetchTrainingLogDetail(id: string) {
         ) || 0,
       rest: exerciseLog.properties.rest.number,
       memo: getTitle(exerciseLog.properties.memo),
-      sets: exerciseDetailLogs
+      sets: exerciseSets
         .filter((exerciseDetailLog) =>
-          exerciseLog.properties.exerciseDetailLogsRelation.relation?.some(
+          exerciseLog.properties.exerciseSetsRelation.relation?.some(
             (relation) => relation.id === exerciseDetailLog.id,
           ),
         )
@@ -115,7 +112,6 @@ export async function fetchTrainingLogDetail(id: string) {
           detailFormula:
             getFormula(exerciseDetailLog.properties.detailFormula, "string") ||
             "",
-          createdTime: exerciseDetailLog.properties.createdTime.created_time,
         })),
     })),
   };

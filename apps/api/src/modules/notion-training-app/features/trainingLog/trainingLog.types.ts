@@ -31,7 +31,6 @@ export type TrainingLogResponse = {
       rep: number;
       memo: string;
       detailFormula: string;
-      createdTime: string;
     }[];
   }[];
 };

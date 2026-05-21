@@ -41,10 +41,7 @@ notionTrainingAppRouter.get(
   goalWeightHandlers.getGoalWeightsDetail,
 );
 // トレーニング種目一覧
-notionTrainingAppRouter.get(
-  "/exercises/:id",
-  exerciseHandlers.getExercises,
-);
+notionTrainingAppRouter.get("/exercises/:id", exerciseHandlers.getExercises);
 notionTrainingAppRouter.post("/exercises", exerciseHandlers.createExercise);
 notionTrainingAppRouter.patch("/exercises", exerciseHandlers.updateExercise);
 notionTrainingAppRouter.delete("/exercises", exerciseHandlers.deleteExercise);
@@ -89,23 +86,23 @@ notionTrainingAppRouter.delete(
 );
 // トレーニング種目の1セットのログ一覧
 notionTrainingAppRouter.get(
-  "/exercise-set-logs",
-  exerciseSetHandlers.getExerciseSetLogs,
+  "/exercise-sets",
+  exerciseSetHandlers.getExerciseSets,
 );
 // トレーニング種目の1セットのログ詳細
 notionTrainingAppRouter.get(
-  "/exercise-set-logs/:id",
-  exerciseSetHandlers.getExerciseSetLog,
+  "/exercise-sets/:id",
+  exerciseSetHandlers.getExerciseSet,
 );
 notionTrainingAppRouter.post(
-  "/exercise-set-logs/:id",
-  exerciseSetHandlers.createExerciseSetLog,
+  "/exercise-sets/:id",
+  exerciseSetHandlers.createExerciseSet,
 );
 notionTrainingAppRouter.patch(
-  "/exercise-set-logs/:id",
-  exerciseSetHandlers.updateExerciseSetLog,
+  "/exercise-sets/:id",
+  exerciseSetHandlers.updateExerciseSet,
 );
 notionTrainingAppRouter.delete(
-  "/exercise-set-logs/:id",
-  exerciseSetHandlers.deleteExerciseSetLog,
+  "/exercise-sets/:id",
+  exerciseSetHandlers.deleteExerciseSet,
 );
