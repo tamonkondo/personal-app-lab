@@ -1,23 +1,27 @@
 import {
   BasePageMeta,
+  NotionPageResults,
   NotionProp,
   NotionResults,
 } from "@/integrations/notion/notion.types";
 
 export type ExerciseLog = BasePageMeta & {
-  properties: {
-    todayMaxWeightRollup: NotionProp<"todayMaxWeightRollup", "rollup">;
-    trainingNameFormula: NotionProp<"trainingNameFormula", "formula">;
-    exerciseSetsRelation: NotionProp<"exerciseSetsRelation", "relation">;
-    rest: NotionProp<"rest", "number">;
-    memo: NotionProp<"memo", "rich_text">;
-  };
+  properties: ExerciseLogDetail;
 };
 
 export type ExerciseLogData = NotionResults<ExerciseLog> & {
   next_cursor: string | undefined;
   has_more: boolean;
 };
+
+export type ExerciseLogDetail = {
+  todayMaxWeightRollup: NotionProp<"todayMaxWeightRollup", "rollup">;
+  trainingNameFormula: NotionProp<"trainingNameFormula", "formula">;
+  exerciseSetsRelation: NotionProp<"exerciseSetsRelation", "relation">;
+  rest: NotionProp<"rest", "number">;
+  memo: NotionProp<"memo", "rich_text">;
+};
+export type ExerciseLogDetailData = NotionPageResults<ExerciseLogDetail>;
 
 export type ExerciseLogsResponse = {
   next_cursor: string | undefined;
@@ -41,9 +45,9 @@ export type ExerciseLogResponse = {
   exerciseSets: {
     id: string;
     kg: number;
-    reps: number;
+    rep: number;
     memo: string;
-    detail: string;
+    displayText: string;
     maxWeight: number;
   }[];
 };

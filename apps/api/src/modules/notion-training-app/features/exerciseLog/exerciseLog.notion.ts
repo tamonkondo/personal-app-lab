@@ -1,5 +1,10 @@
 import notionClient from "@/integrations/notion/notion.client";
-import { ExerciseLogData, ExerciseLogsResponse } from "./exerciseLog.types";
+import {
+  ExerciseLogData,
+  ExerciseLogDetailData,
+  ExerciseLogResponse,
+  ExerciseLogsResponse,
+} from "./exerciseLog.types";
 import {
   getFormula,
   getRelatonIds,
@@ -50,7 +55,7 @@ export async function fetchExerciseLogs(
   return responseData;
 }
 export async function fetchExerciseLog(exerciseLogId: string) {
-  const log = (await notionClient.pages.retrieve({
+  const log: ExerciseLogDetailData = (await notionClient.pages.retrieve({
     page_id: exerciseLogId,
     filter_properties: [
       "todayMaxWeightRollup",
@@ -59,7 +64,7 @@ export async function fetchExerciseLog(exerciseLogId: string) {
       "trainingNameFormula",
       "createdDate",
     ],
-  })) as unknown as ExerciseLogData["results"][number];
+  })) as unknown as ExerciseLogDetailData;
   const exerciseSetsIds = getRelatonIds(log.properties.exerciseSetsRelation);
   const exerciseSets: ExerciseSet[] = (await Promise.all(
     exerciseSetsIds.map((id) =>
@@ -75,7 +80,7 @@ export async function fetchExerciseLog(exerciseLogId: string) {
       }),
     ),
   )) as unknown as ExerciseSet[];
-  const responseData = {
+  const responseData: ExerciseLogResponse = {
     id: log.id,
     createdTime: log.created_time,
     todayMaxWeight:
@@ -86,9 +91,9 @@ export async function fetchExerciseLog(exerciseLogId: string) {
     exerciseSets: exerciseSets.map((set) => ({
       id: set.id,
       kg: set.properties.kg.number || 0,
-      reps: set.properties.rep.number || 0,
+      rep: set.properties.rep.number || 0,
       memo: set.properties.memo.rich_text[0]?.plain_text || "",
-      detail: getFormula(set.properties.detailFormula, "string") || "",
+      displayText: getFormula(set.properties.detailFormula, "string") || "",
       maxWeight: getFormula(set.properties.maxWeightFormula, "number") || 0,
     })),
   };

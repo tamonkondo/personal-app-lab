@@ -30,7 +30,7 @@ export type TrainingLogResponse = {
       kg: number;
       rep: number;
       memo: string;
-      detailFormula: string;
+      displayText: string;
     }[];
   }[];
 };
