@@ -10,15 +10,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "latest",
+    "@tanstack/react-query": "latest",
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-redux": "latest",
     "react-router-dom": "latest",
-    "@tanstack/react-query": "latest",
-    "@reduxjs/toolkit": "latest",
-    "react-redux": "latest"
+    "swr": "^2.4.1",
+    "typescript": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
     "@tailwindcss/vite": "latest",
