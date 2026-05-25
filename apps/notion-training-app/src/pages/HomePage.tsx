@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import useSWR from "swr";
 import fetcher from "../lib/fetch";
+import { Button } from "@repo/ui";
 
 const HomePage = () => {
   const { data } = useSWR(
@@ -11,7 +12,23 @@ const HomePage = () => {
     // Your effect logic here
   }, []);
 
-  return <div>{data ? JSON.stringify(data) : "Loading..."}</div>;
+  return (
+    <main className="p-4">
+      {/* {data ? JSON.stringify(data) : "Loading..."} */}
+      <div className="mt-4">
+        <Button
+          variant={"destructive"}
+          className="mt-4"
+          onClick={() => alert("Button clicked!")}
+        >
+          新しいトレーニング記録を作成
+        </Button>
+        <Button className="mt-4" onClick={() => console.log("Button clicked!")}>
+          Click Me
+        </Button>
+      </div>
+    </main>
+  );
 };
 
 export default HomePage;

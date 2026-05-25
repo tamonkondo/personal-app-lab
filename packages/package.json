@@ -17,6 +17,7 @@
     "lucide-react": "latest",
     "radix-ui": "latest",
     "tailwind-merge": "latest",
+    "tailwindcss": "^4.3.0",
     "zod": "latest"
   },
   "devDependencies": {
