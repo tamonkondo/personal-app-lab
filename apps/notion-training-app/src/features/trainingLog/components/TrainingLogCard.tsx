@@ -8,7 +8,10 @@ import {
 } from "@repo/ui";
 import { formatDate } from "@repo/utils";
 
-export function ExampleCard() {
+interface Props {
+  data: TrainingLogResponseData;
+}
+export function ExampleCard({ data }: Props) {
   return (
     <Card>
       <CardHeader>

@@ -6,7 +6,11 @@ import {
   getRollup,
   getTitle,
 } from "@/integrations/notion/notion.mapper";
-import { TrainingLog, TrainingLogResponse } from "./trainingLog.types";
+import {
+  TrainingLog,
+  TrainingLogData,
+  TrainingLogWithExerciseResponse,
+} from "./trainingLog.types";
 import { ExerciseLogDetailData } from "../exerciseLog/exerciseLog.types";
 import { ExerciseSet } from "../exerciseSet/exerciseSet.types";
 
@@ -20,13 +24,23 @@ const FILTER_PROPERTIES = [
 // トレーニングログ一覧の取得
 // /api/notion-training-app/training-logs/?cursor=xxx&limit=20
 export async function fetchTrainingLogs(cursor?: string, limit: number = 20) {
-  const trainingLogs = (await notionClient.dataSources.query({
+  const trainingLogs: TrainingLogData = (await notionClient.dataSources.query({
     data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
     page_size: limit,
     start_cursor: cursor,
     filter_properties: FILTER_PROPERTIES,
-  })) as unknown as TrainingLog[];
-  return trainingLogs;
+  })) as unknown as TrainingLogData;
+  const responseData = trainingLogs.results.map((trainingLog) => ({
+    trainingExercisesRelation: getRelatonIds(
+      trainingLog.properties.trainingExercisesRelation,
+    ),
+    createdTime: trainingLog.properties.createdTime.created_time,
+    bodyWeight: trainingLog.properties.bodyWeight.number || 0,
+    memo: trainingLog.properties.memo.rich_text[0]?.plain_text || "",
+
+    id: trainingLog.id,
+  }));
+  return responseData;
 }
 // トレーニングログの取得
 // /api/notion-training-app/training-logs/:id
@@ -76,7 +90,7 @@ export async function fetchTrainingLogDetail(id: string) {
         }),
       ),
     )) as unknown as ExerciseSet[];
-  const responseData: TrainingLogResponse = {
+  const responseData: TrainingLogWithExerciseResponse = {
     createdTime: trainingLog.properties.createdTime.created_time,
     bodyWeight: trainingLog.properties.bodyWeight.number || 0,
     memo: trainingLog.properties.memo.rich_text[0]?.plain_text || "",

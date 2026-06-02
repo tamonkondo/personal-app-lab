@@ -4,7 +4,7 @@ import fetcher from "../lib/fetch";
 import { Button } from "@repo/ui";
 
 const HomePage = () => {
-  const { data } = useSWR(
+  const { data, error } = useSWR(
     `${import.meta.env.VITE_API_URL}/training-logs`,
     fetcher,
   );
@@ -14,7 +14,7 @@ const HomePage = () => {
 
   return (
     <main className="p-4">
-      {/* {data ? JSON.stringify(data) : "Loading..."} */}
+      {error ? error.message : data ? JSON.stringify(data) : "Loading..."}
       <div className="mt-4">
         <Button
           variant={"destructive"}

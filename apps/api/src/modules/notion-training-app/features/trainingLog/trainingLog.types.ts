@@ -17,7 +17,7 @@ export type TrainingLog = BasePageMeta & {
   };
 };
 export type TrainingLogData = NotionResults<TrainingLog>;
-export type TrainingLogResponse = {
+export type TrainingLogWithExerciseResponse = {
   createdTime: string;
   bodyWeight: number | null;
   memo: string;

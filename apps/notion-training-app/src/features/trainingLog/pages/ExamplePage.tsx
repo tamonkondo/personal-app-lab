@@ -1,4 +1,4 @@
-import { ExampleCard } from "../components/ExampleCard";
+import { ExampleCard } from "../components/TrainingLogCard";
 
 export function ExamplePage() {
   return (
