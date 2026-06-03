@@ -6,3 +6,17 @@ onlyBuiltDependencies:
   - bcrypt
   - esbuild
   - msw
+
+catalog:
+  typescript: latest
+  react: latest
+  react-dom: latest
+  react-router-dom: latest
+  vite: latest
+  "@vitejs/plugin-react": latest
+  "@tailwindcss/vite": latest
+  tailwindcss: ^4.3.0
+  "@types/react": latest
+  "@types/react-dom": latest
+  "@types/node": ^25.9.1
+  zod: latest

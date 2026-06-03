@@ -8,8 +8,8 @@
     "build": "pnpm typecheck"
   },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "dependencies": {
     "class-variance-authority": "latest",
@@ -17,11 +17,11 @@
     "lucide-react": "latest",
     "radix-ui": "latest",
     "tailwind-merge": "latest",
-    "zod": "latest"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "typescript": "latest"
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
   }
 }

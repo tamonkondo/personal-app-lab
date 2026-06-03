@@ -18,7 +18,7 @@
     "express": "latest",
     "jsonwebtoken": "latest",
     "morgan": "^1.10.1",
-    "zod": "latest"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/bcrypt": "latest",
@@ -27,9 +27,9 @@
     "@types/express": "latest",
     "@types/jsonwebtoken": "latest",
     "@types/morgan": "^1.9.10",
-    "@types/node": "latest",
+    "@types/node": "catalog:",
     "tsup": "latest",
     "tsx": "latest",
-    "typescript": "latest"
+    "typescript": "catalog:"
   }
 }

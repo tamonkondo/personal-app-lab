@@ -10,21 +10,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "latest",
-    "@tanstack/react-query": "latest",
-    "@vitejs/plugin-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "react-redux": "latest",
-    "react-router-dom": "latest",
+    "@vitejs/plugin-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-router-dom": "catalog:",
     "swr": "^2.4.1",
-    "typescript": "latest",
-    "vite": "latest"
+    "typescript": "catalog:",
+    "vite": "catalog:"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "tailwindcss": "latest"
+    "@tailwindcss/vite": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "tailwindcss": "catalog:"
   }
 }

@@ -401,10 +401,7 @@ export function App() {
     "typescript": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-router-dom": "latest",
-    "@tanstack/react-query": "latest",
-    "@reduxjs/toolkit": "latest",
-    "react-redux": "latest"
+    "react-router-dom": "latest"
   },
   "devDependencies": {
     "@types/react": "latest",
@@ -476,10 +473,7 @@ app1 と同様で構いません。パッケージ名とポートだけ変えて
     "typescript": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-router-dom": "latest",
-    "@tanstack/react-query": "latest",
-    "@reduxjs/toolkit": "latest",
-    "react-redux": "latest"
+    "react-router-dom": "latest"
   },
   "devDependencies": {
     "@types/react": "latest",
