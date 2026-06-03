@@ -6,11 +6,11 @@
   "scripts": {
     "dev:portal": "pnpm --filter @repo/portal dev",
     "dev:nta": "pnpm --filter @repo/notion-training-app dev",
-    "dev:app2": "pnpm --filter @repo/app2 dev",
+    "dev:ntpa": "pnpm --filter @repo/notion-todo-pomodoro-app dev",
     "dev:api": "pnpm --filter @repo/api dev",
     "build:portal": "pnpm --filter @repo/portal build",
     "build:nta": "pnpm --filter @repo/notion-training-app build",
-    "build:app2": "pnpm --filter @repo/app2 build",
+    "build:ntpa": "pnpm --filter @repo/notion-todo-pomodoro-app build",
     "build:api": "pnpm --filter @repo/api build",
     "build": "pnpm -r build",
     "add:ui": "tsx ./scripts/add-ui.ts",

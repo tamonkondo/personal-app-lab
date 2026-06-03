@@ -6,7 +6,7 @@ React + Vite の複数アプリと Express API を pnpm workspace で管理す�
 
 - `apps/portal`: ポートフォリオトップ・ログイン導線
 - `apps/notion-training-app`: 学習用アプリ1
-- `apps/app2`: 学習用アプリ2
+- `apps/notion-todo-pomodoro`: 学習用アプリ2
 - `apps/api`: Express API
 
 ## Packages
@@ -29,7 +29,7 @@ React + Vite の複数アプリと Express API を pnpm workspace で管理す�
 ```bash
 pnpm dev:portal
 pnpm dev:notion-training-app
-pnpm dev:app2
+pnpm dev:notion-todo-pomodoro
 pnpm dev:api
 pnpm build
 pnpm typecheck

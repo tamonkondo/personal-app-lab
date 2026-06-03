@@ -17,8 +17,8 @@ https://example.com/
 https://example.com/app1/
   → app1
 
-https://example.com/app2/
-  → app2
+https://example.com/notion-todo-pomodoro/
+  → notion-todo-pomodoro
 
 https://example.com/api/
   → Express API
@@ -87,7 +87,7 @@ portfolio-monorepo/
             pages/
               ExamplePage.tsx
 
-    app2/
+    notion-todo-pomodoro/
       package.json
       tsconfig.json
       vite.config.ts
@@ -173,18 +173,15 @@ portfolio-monorepo/
   "name": "portfolio-monorepo",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev:portal": "npm run dev -w apps/portal",
     "dev:app1": "npm run dev -w apps/app1",
-    "dev:app2": "npm run dev -w apps/app2",
+    "dev:notion-todo-pomodoro": "npm run dev -w apps/notion-todo-pomodoro",
     "dev:api": "npm run dev -w apps/api",
     "build:portal": "npm run build -w apps/portal",
     "build:app1": "npm run build -w apps/app1",
-    "build:app2": "npm run build -w apps/app2",
+    "build:notion-todo-pomodoro": "npm run build -w apps/notion-todo-pomodoro",
     "build:api": "npm run build -w apps/api",
     "build": "npm run build --workspaces",
     "typecheck": "npm run typecheck --workspaces"
@@ -249,7 +246,7 @@ portfolio-monorepo/
 ```txt
 apps/portal
 apps/app1
-apps/app2
+apps/notion-todo-pomodoro
 ```
 
 各アプリは独立した Vite + React アプリとして作成してください。
@@ -341,7 +338,7 @@ export default defineConfig({
 - `/` に HomePage
 - `/login` に LoginPage
 - `/logout` に LogoutPage
-- HomePage には app1 / app2 へのリンクを置く
+- HomePage には app1 / notion-todo-pomodoro へのリンクを置く
 
 例:
 
@@ -362,7 +359,7 @@ export function App() {
           <a href="/app1/">App 1</a>
         </Button>
         <Button asChild variant="outline">
-          <a href="/app2/">App 2</a>
+          <a href="/notion-todo-pomodoro/">App 2</a>
         </Button>
       </div>
 
@@ -449,17 +446,17 @@ export function Root() {
 
 ---
 
-# apps/app2
+# apps/notion-todo-pomodoro
 
-`app2` はサブパス `/app2/` に配置する Vite + React アプリです。
+`notion-todo-pomodoro` はサブパス `/notion-todo-pomodoro/` に配置する Vite + React アプリです。
 
-## apps/app2/package.json
+## apps/notion-todo-pomodoro/package.json
 
 app1 と同様で構いません。パッケージ名とポートだけ変えてください。
 
 ```json
 {
-  "name": "@repo/app2",
+  "name": "@repo/notion-todo-pomodoro",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -491,21 +488,21 @@ app1 と同様で構いません。パッケージ名とポートだけ変えて
 }
 ```
 
-## apps/app2/vite.config.ts
+## apps/notion-todo-pomodoro/vite.config.ts
 
 ```ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: "/app2/",
+  base: "/notion-todo-pomodoro/",
   plugins: [react()],
 });
 ```
 
 ## React Router 指示
 
-`BrowserRouter` を使う場合は、`basename="/app2"` を設定してください。
+`BrowserRouter` を使う場合は、`basename="/notion-todo-pomodoro"` を設定してください。
 
 ---
 
@@ -608,12 +605,12 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{ts,tsx}",
-    "../../packages/ui/src/**/*.{ts,tsx}"
+    "../../packages/ui/src/**/*.{ts,tsx}",
   ],
   theme: {
-    extend: {}
+    extend: {},
   },
-  plugins: []
+  plugins: [],
 };
 ```
 
@@ -736,7 +733,7 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8)
+  password: z.string().min(8),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -792,7 +789,7 @@ export function formatDate(date: Date | string) {
   return new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
     month: "2-digit",
-    day: "2-digit"
+    day: "2-digit",
   }).format(new Date(date));
 }
 ```
@@ -890,7 +887,7 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   dts: false,
-  splitting: false
+  splitting: false,
 });
 ```
 
@@ -905,10 +902,12 @@ import { errorHandler } from "./middleware/errorHandler";
 
 export const app = express();
 
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  }),
+);
 
 app.use(cookieParser());
 app.use(express.json());
@@ -952,7 +951,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   console.error(err);
 
   res.status(500).json({
-    message: "Internal Server Error"
+    message: "Internal Server Error",
   });
 };
 ```
@@ -997,8 +996,8 @@ apps/portal
 apps/app1
   → 未ログイン時は /login?redirect=/app1/ に遷移
 
-apps/app2
-  → 未ログイン時は /login?redirect=/app2/ に遷移
+apps/notion-todo-pomodoro
+  → 未ログイン時は /login?redirect=/notion-todo-pomodoro/ に遷移
 
 apps/api
   → /api/auth/login
@@ -1010,7 +1009,7 @@ Cookie認証を想定します。
 
 - Express API が `httpOnly Cookie` を発行する
 - Cookieの `path` は `/` にする
-- 同一ドメイン配下の portal / app1 / app2 で共通利用できるようにする
+- 同一ドメイン配下の portal / app1 / notion-todo-pomodoro で共通利用できるようにする
 
 ---
 
@@ -1022,7 +1021,7 @@ Viteアプリはそれぞれ build した成果物をNginxで配信する想定�
 /var/www/portfolio/
   portal/
   app1/
-  app2/
+  notion-todo-pomodoro/
 ```
 
 URL:
@@ -1030,7 +1029,7 @@ URL:
 ```txt
 /       → portal
 /app1/  → app1
-/app2/  → app2
+/notion-todo-pomodoro/  → notion-todo-pomodoro
 /api/   → Express API
 ```
 
@@ -1042,7 +1041,7 @@ Nginxで `/api/` を Express API にリバースプロキシする想定です�
 
 READMEには最低限以下を書いてください。
 
-```md
+````md
 # Portfolio Monorepo
 
 React + Vite の複数アプリと Express API を npm workspaces で管理するモノレポです。
@@ -1051,7 +1050,7 @@ React + Vite の複数アプリと Express API を npm workspaces で管理す�
 
 - `apps/portal`: ポートフォリオトップ・ログイン導線
 - `apps/app1`: 学習用アプリ1
-- `apps/app2`: 学習用アプリ2
+- `apps/notion-todo-pomodoro`: 学習用アプリ2
 - `apps/api`: Express API
 
 ## Packages
@@ -1074,12 +1073,14 @@ React + Vite の複数アプリと Express API を npm workspaces で管理す�
 ```bash
 npm run dev:portal
 npm run dev:app1
-npm run dev:app2
+npm run dev:notion-todo-pomodoro
 npm run dev:api
 npm run build
 npm run typecheck
 ```
-```
+````
+
+````
 
 ---
 
@@ -1093,9 +1094,9 @@ npm run typecheck
 npm run build
 npm run dev:portal
 npm run dev:app1
-npm run dev:app2
+npm run dev:notion-todo-pomodoro
 npm run dev:api
-```
+````
 
 少なくとも以下が動作することを確認してください。
 
@@ -1106,8 +1107,8 @@ http://localhost:5173
 app1:
 http://localhost:5174/app1/
 
-app2:
-http://localhost:5175/app2/
+notion-todo-pomodoro:
+http://localhost:5175/notion-todo-pomodoro/
 
 api:
 http://localhost:3000/api/health

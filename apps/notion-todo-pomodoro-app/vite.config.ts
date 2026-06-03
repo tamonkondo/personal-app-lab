@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
-  base: "/app2/",
+  base: "/notion-todo-pomodoro-app/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
