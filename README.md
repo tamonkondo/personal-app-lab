@@ -28,9 +28,32 @@ React + Vite の複数アプリと Express API を pnpm workspace で管理す�
 
 ```bash
 pnpm dev:portal
-pnpm dev:notion-training-app
-pnpm dev:notion-todo-pomodoro
+pnpm dev:nta
+pnpm dev:ntpa
 pnpm dev:api
 pnpm build
 pnpm typecheck
+```
+
+## Docker Dev (HMR)
+
+docker compose を開発モードで起動すると、api + frontend 3アプリが立ち上がります。
+
+```bash
+pnpm docker:dev:build
+pnpm docker:dev:up
+```
+
+アクセス先:
+
+- http://localhost/
+- http://localhost/notion-training-app/
+- http://localhost/notion-todo-pomodoro-app/
+- http://localhost/api/health
+
+ログ確認と停止:
+
+```bash
+pnpm docker:dev:logs
+pnpm docker:dev:down
 ```

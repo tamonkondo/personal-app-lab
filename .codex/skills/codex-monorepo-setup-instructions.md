@@ -338,7 +338,7 @@ export default defineConfig({
 - `/` に HomePage
 - `/login` に LoginPage
 - `/logout` に LogoutPage
-- HomePage には app1 / notion-todo-pomodoro へのリンクを置く
+- HomePage には app1 / notion-todo-pomodoro-app へのリンクを置く
 
 例:
 
@@ -1009,7 +1009,7 @@ Cookie認証を想定します。
 
 - Express API が `httpOnly Cookie` を発行する
 - Cookieの `path` は `/` にする
-- 同一ドメイン配下の portal / app1 / notion-todo-pomodoro で共通利用できるようにする
+- 同一ドメイン配下の portal / app1 / notion-todo-pomodoro-app で共通利用できるようにする
 
 ---
 

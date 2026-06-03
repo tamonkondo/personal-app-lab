@@ -1,0 +1,67 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+    command: pnpm --filter @repo/api dev
+    volumes:
+      - ./:/app
+      - api_node_modules:/app/node_modules
+      - api_workspace_node_modules:/app/apps/api/node_modules
+    restart: unless-stopped
+
+  portal:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile.dev
+    command: pnpm --filter @repo/portal dev
+    volumes:
+      - ./:/app
+      - portal_node_modules:/app/node_modules
+      - portal_workspace_node_modules:/app/apps/portal/node_modules
+    restart: unless-stopped
+
+  notion-training-app:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile.dev
+    command: pnpm --filter @repo/notion-training-app dev
+    volumes:
+      - ./:/app
+      - nta_node_modules:/app/node_modules
+      - nta_workspace_node_modules:/app/apps/notion-training-app/node_modules
+    restart: unless-stopped
+
+  notion-todo-pomodoro-app:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile.dev
+    command: pnpm --filter @repo/notion-todo-pomodoro-app dev
+    volumes:
+      - ./:/app
+      - ntpa_node_modules:/app/node_modules
+      - ntpa_workspace_node_modules:/app/apps/notion-todo-pomodoro-app/node_modules
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile.dev
+    depends_on:
+      - api
+      - portal
+      - notion-training-app
+      - notion-todo-pomodoro-app
+
+volumes:
+  api_node_modules:
+  api_workspace_node_modules:
+  portal_node_modules:
+  portal_workspace_node_modules:
+  nta_node_modules:
+  nta_workspace_node_modules:
+  ntpa_node_modules:
+  ntpa_workspace_node_modules:

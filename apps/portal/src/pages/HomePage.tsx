@@ -15,7 +15,7 @@ const apps = [
     description: "Notion API を使ったトレーニング管理アプリです。",
   },
   {
-    href: "/notion-todo-pomodoro/",
+    href: "/notion-todo-pomodoro-app/",
     title: "Notion Todo Pomodoro",
     description: "Notion API を使った Todo & Pomodoro アプリです。",
   },

@@ -17,14 +17,11 @@
     "lucide-react": "latest",
     "radix-ui": "latest",
     "tailwind-merge": "latest",
-    "tailwindcss": "^4.3.0",
     "zod": "latest"
   },
   "devDependencies": {
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "shadcn": "latest",
-    "tw-animate-css": "latest",
     "typescript": "latest"
   }
 }

@@ -22,7 +22,7 @@ export function ExampleCard() {
           Today: {formatDate(new Date())}
         </p>
         <Button asChild>
-          <a href="/login?redirect=/notion-todo-pomodoro/">Login from portal</a>
+          <a href="/login?redirect=/notion-todo-pomodoro-app/">Login from portal</a>
         </Button>
       </CardContent>
     </Card>
