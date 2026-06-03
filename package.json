@@ -13,6 +13,7 @@
     "build:app2": "pnpm --filter @repo/app2 build",
     "build:api": "pnpm --filter @repo/api build",
     "build": "pnpm -r build",
+    "add:ui": "tsx ./scripts/add-ui.ts",
     "typecheck": "pnpm -r typecheck",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
@@ -20,6 +21,8 @@
     "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.4",
     "typescript": "latest"
   }
 }
