@@ -1,12 +1,5 @@
-/**
- * 必要なデータ
- * - 日付
- * - 体重
- * - トレーニング種目(3種目まで表示)
- * - メモ
- * - 遷移ボタン
- * */
 import {
+  Badge,
   Button,
   Table,
   TableBody,
@@ -19,17 +12,20 @@ import {
 interface Props {
   data: {
     id: string;
-    date: string;
-    memo: string;
-    exercises: {
-      name: string;
-      maxWeight: string;
-      sets: number;
+    name: string;
+    part: string;
+    maxWeight: string;
+    volume: string;
+    isPr: boolean;
+    sets: {
+      set: number;
+      weight: string;
+      reps: number;
       memo?: string;
     }[];
   };
 }
-export function TrainingLogCard({ data }: Props) {
+export function ExerciseLogCard({ data }: Props) {
   return (
     <article
       key={data.id}
@@ -38,34 +34,43 @@ export function TrainingLogCard({ data }: Props) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-bold">{data.date}</h2>
+            <h2 className="text-xl font-bold">{data.name}</h2>
+            <Badge variant="secondary">{data.part}</Badge>
+            {data.isPr ? (
+              <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                PR更新
+              </Badge>
+            ) : null}
           </div>
+          <p className="text-sm text-zinc-500">
+            最大重量 {data.maxWeight} / 総重量 {data.volume}
+          </p>
         </div>
         <Button variant="outline" size="sm" className="w-full sm:w-auto">
-          詳細
+          種目詳細
         </Button>
       </div>
 
       <Table className="mt-5 overflow-hidden rounded-2xl border">
         <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
           <TableRow>
-            <TableHead>種目</TableHead>
-            <TableHead>最大重量</TableHead>
-            <TableHead>セット数</TableHead>
+            <TableHead>Set</TableHead>
+            <TableHead>重量</TableHead>
+            <TableHead>回数</TableHead>
             <TableHead className="">メモ</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="divide-y border-2 rounded-2xl">
-          {data.exercises.map((exercise) => (
+          {data.sets.map((set) => (
             <TableRow
-              key={`${data.id}-${exercise.name}`}
+              key={`${data.id}-${set.set}`}
               className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
             >
-              <TableCell className="font-semibold">{exercise.name}</TableCell>
-              <TableCell>{exercise.maxWeight}</TableCell>
-              <TableCell>{exercise.sets}回</TableCell>
+              <TableCell className="font-semibold">{set.set}</TableCell>
+              <TableCell>{set.weight}</TableCell>
+              <TableCell>{set.reps}回</TableCell>
               <TableCell className="hidden text-zinc-500 sm:block">
-                {exercise.memo || "-"}
+                {set.memo || "-"}
               </TableCell>
             </TableRow>
           ))}
