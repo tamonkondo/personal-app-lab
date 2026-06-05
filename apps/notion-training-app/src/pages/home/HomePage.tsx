@@ -12,8 +12,6 @@ import ControllPanel from "./widgets/ControllPanel";
 const trainingLog = {
   id: "log-1",
   date: "2026/06/01",
-  day: "月",
-  title: "胸・三頭",
   status: "完了",
   duration: 68,
   exerciseCount: 5,
@@ -23,7 +21,6 @@ const trainingLog = {
 };
 
 const summaryItems = [
-  { label: "時間", value: `${trainingLog.duration}分` },
   { label: "種目数", value: `${trainingLog.exerciseCount}` },
   { label: "セット数", value: `${trainingLog.sets}` },
   { label: "総重量", value: trainingLog.volume },
@@ -37,7 +34,6 @@ const TrainingLogDetail = () => {
           trainingLog={trainingLog}
           summaryItems={summaryItems}
         />
-
         <section className="grid gap-6 xl:grid-cols-[1fr_320px]">
           <TabPanel />
           <SidePanel>

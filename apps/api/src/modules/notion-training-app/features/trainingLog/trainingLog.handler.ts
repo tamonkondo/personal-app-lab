@@ -21,6 +21,15 @@ export const getTrainingLog = asyncHandler(
     });
   },
 );
+// 最新のトレーニングログを取得するエンドポイント
+export const getNewestTrainingLog = asyncHandler(async (req, res) => {
+  // idがない場合は今日の日付を反映
+  const trainingLog = await fetches.fetchNewestTrainingLog();
+  res.status(200).json({
+    message: "getNewestTrainingLog",
+    data: trainingLog,
+  });
+});
 export const getTrainingLogDetail = asyncHandler(
   async (req: { params: { id: string } }, res) => {
     const { id } = req.params;

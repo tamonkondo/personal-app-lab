@@ -42,6 +42,8 @@ export async function fetchTrainingLogs(cursor?: string, limit: number = 20) {
   }));
   return responseData;
 }
+
+//
 // トレーニングログの取得
 // /api/notion-training-app/training-logs/:id
 export async function fetchTrainingLog(id: string) {
@@ -120,4 +122,31 @@ export async function fetchTrainingLogDetail(id: string) {
     })),
   };
   return responseData;
+}
+
+// 最新のトレーニングログの取得
+export async function fetchNewestTrainingLog() {
+  // 最新のトレーニングログを1件取得するクエリ
+  const newestLog = await notionClient.dataSources.query({
+    data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
+    page_size: 1,
+    sorts: [
+      {
+        property: "createdTime",
+        direction: "descending",
+      },
+    ],
+  });
+  // リレーションですべてのトレーニング種目を取得するために、最新のトレーニングログのIDを取得
+  const relationIds = getRelatonIds(
+    (newestLog as unknown as TrainingLogData).results[0].properties
+      .trainingExercisesRelation,
+  );
+  const logs = newestLog as unknown as TrainingLogData;
+  if (logs.results.length === 0) {
+    return null; // ログが存在しない場合はnullを返す
+  }
+  const log = logs.results[0];
+
+  return log;
 }

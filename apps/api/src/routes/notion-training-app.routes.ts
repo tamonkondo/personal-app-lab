@@ -16,6 +16,11 @@ notionTrainingAppRouter.post(
   "/training-logs",
   trainingLogHandlers.createTrainingLog,
 );
+// 最新のトレーニングログの取得
+notionTrainingAppRouter.get(
+  "/training-logs/newest",
+  trainingLogHandlers.getNewestTrainingLog,
+);
 // 特定の日付のトレーニングリスト
 notionTrainingAppRouter.get(
   "/training-logs/:id",

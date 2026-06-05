@@ -10,8 +10,6 @@ interface Props {
   trainingLog: {
     id: string;
     date: string;
-    day: string;
-    title: string;
     status: string; // e.g. "完了", "予定", "未完了"
     duration: number; // in minutes
     exerciseCount: number;
@@ -38,11 +36,8 @@ const DailyLogsHeader = ({ trainingLog, summaryItems }: Props) => {
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium text-zinc-300">
-                {trainingLog.date} {trainingLog.day}
-              </p>
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                {trainingLog.title}
+                {trainingLog.date}
               </h1>
               <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
                 {trainingLog.memo}
@@ -57,10 +52,10 @@ const DailyLogsHeader = ({ trainingLog, summaryItems }: Props) => {
           </div>
         </div>
       </section>
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 grid-cols-3">
         {summaryItems.map((item) => (
           <Card key={item.label}>
-            <CardContent className="p-5">
+            <CardContent className="p-3 xl:p-5">
               <p className="text-sm text-zinc-500">{item.label}</p>
               <p className="mt-2 text-2xl font-bold">{item.value}</p>
             </CardContent>
