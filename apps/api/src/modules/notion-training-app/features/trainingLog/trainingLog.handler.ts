@@ -1,6 +1,7 @@
 import { asyncHandler } from "@/libs/asyncHandler";
 import * as fetches from "./trainingLog.notion";
 
+// トレーニングログ一覧の取得エンドポイント
 export const getTrainingLogs = asyncHandler(
   async (req: { query: { cursor?: string; limit?: number } }, res) => {
     const { cursor, limit } = req.query;
@@ -13,7 +14,7 @@ export const getTrainingLogs = asyncHandler(
 );
 
 // 最新のトレーニングログを取得するエンドポイント
-export const getNewestTrainingLog = asyncHandler(async (req, res) => {
+export const getNewestTrainingLog = asyncHandler(async (_, res) => {
   // idがない場合は今日の日付を反映
   const trainingLog = await fetches.fetchNewestTrainingLog();
   res.status(200).json({
@@ -21,4 +22,3 @@ export const getNewestTrainingLog = asyncHandler(async (req, res) => {
     data: trainingLog,
   });
 });
-

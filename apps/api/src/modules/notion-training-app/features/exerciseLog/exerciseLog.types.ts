@@ -5,13 +5,7 @@ import {
   NotionResults,
 } from "@/integrations/notion/notion.types";
 
-export type ExerciseLog = BasePageMeta & {
-  properties: ExerciseLogDetail;
-};
-
-export type ExerciseLogData = NotionResults<ExerciseLog>;
-
-export type ExerciseLogDetail = {
+export interface ExerciseLogProperties {
   todayMaxWeightRollup: NotionProp<"todayMaxWeightRollup", "rollup">;
   trainingNameFormula: NotionProp<"trainingNameFormula", "formula">;
   exerciseSetsRelation: NotionProp<"exerciseSetsRelation", "relation">;
@@ -24,14 +18,34 @@ export type ExerciseLogDetail = {
   createdTime: NotionProp<"createdTime", "created_time">;
   bodyWeight: NotionProp<"bodyWeight", "number">;
   name: NotionProp<"name", "title">;
+  goalWeightRollup: NotionProp<"goalWeightRollup", "rollup">;
+  todayMaxWeightFormula: NotionProp<"todayMaxWeightFormula", "formula">;
+  rmTypeFormula: NotionProp<"rmTypeFormula", "formula">;
+  rmTypeRollup: NotionProp<"rmTypeRollup", "rollup">;
+  maxDetailsRollup: NotionProp<"maxDetailsRollup", "rollup">;
+  createdDate: NotionProp<"createdDate", "created_time">;
+  setName: NotionProp<"setName", "button">;
+  relatedBackToExerciseLogs: NotionProp<
+    "relatedBackToExerciseLogs",
+    "relation"
+  >;
+  theGoalWeightRelation: NotionProp<"theGoalWeightRelation", "relation">;
+  trainingExerciseRelation: NotionProp<"trainingExerciseRelation", "relation">;
+  trainingRecordRelation: NotionProp<"trainingRecordRelation", "relation">;
+}
+
+export type ExerciseLog = BasePageMeta & {
+  properties: ExerciseLogProperties;
 };
+
+export type ExtractExerciseLog<T extends keyof ExerciseLogProperties> =
+  BasePageMeta & {
+    properties: Pick<ExerciseLogProperties, T>;
+  };
+
+export type ExerciseLogData = NotionResults<ExerciseLog>;
+
 export type ExerciseLogDetailData = NotionPageResults<ExerciseLog>;
-export type ExerciseLogExerciseSetsRelation = Pick<
-  ExerciseLog,
-  "exerciseSetsRelation"
->;
-export type ExerciseLogExerciseSetsRelationData =
-  NotionPageResults<ExerciseLogExerciseSetsRelation>;
 
 export type ExerciseLogsResponse = {
   next_cursor: string | undefined;

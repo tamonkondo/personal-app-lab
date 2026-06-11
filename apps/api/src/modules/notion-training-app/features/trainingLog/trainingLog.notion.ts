@@ -7,8 +7,12 @@ import {
   getTitle,
 } from "@/integrations/notion/notion.mapper";
 import { TrainingLogData } from "./trainingLog.types";
-import { ExerciseLogExerciseSetsRelationData } from "../exerciseLog/exerciseLog.types";
 import { ExerciseSetWeightData } from "../exerciseSet/exerciseSet.types";
+import {
+  ExerciseLogData,
+  ExerciseLogProperties,
+  ExtractExerciseLog,
+} from "../exerciseLog/exerciseLog.types";
 import { TrainingLogResponse } from "@repo/types/notion-training-app/index";
 const FILTER_PROPERTIES = [
   "trainingExercisesRelation",
@@ -34,21 +38,25 @@ export async function fetchTrainingLogs(
     (trainingLog) =>
       getRelatonIds(trainingLog.properties.trainingExercisesRelation) || [],
   );
-  const exerciseLogs: ExerciseLogExerciseSetsRelationData[] =
-    (await Promise.all(
-      exercisesRelationIds.map((id) =>
-        notionClient.pages.retrieve({
-          page_id: id,
-          filter_properties: [
-            "exerciseSetsRelation",
-            "todayMaxWeightRollup",
-            "trainingNameFormula",
-            "memo",
-            "rest",
-          ],
-        }),
-      ),
-    )) as unknown as ExerciseLogExerciseSetsRelationData[];
+  const extractExerciseProperties = [
+    "exerciseSetsRelation",
+    "todayMaxWeightRollup",
+    "trainingNameFormula",
+    "memo",
+    "rest",
+  ] as const satisfies (keyof ExerciseLogProperties)[];
+  const exerciseLogs: ExtractExerciseLog<
+    (typeof extractExerciseProperties)[number]
+  >[] = (await Promise.all(
+    exercisesRelationIds.map((id) =>
+      notionClient.pages.retrieve({
+        page_id: id,
+        filter_properties: [...extractExerciseProperties],
+      }),
+    ),
+  )) as unknown as ExtractExerciseLog<
+    (typeof extractExerciseProperties)[number]
+  >[];
   const responseData: TrainingLogResponse[] = trainingLogs.results.map(
     (trainingLog) => ({
       id: trainingLog.id,
@@ -105,14 +113,14 @@ export async function fetchNewestTrainingLog() {
   // リレーションですべてのトレーニング種目を取得するために、最新のトレーニングログのIDを取得
   const relationIds = getRelatonIds(log.properties.trainingExercisesRelation);
   // 最新のトレーニングログのIDをもとに、リレーションでつながっているトレーニング種目をすべて取得
-  const exerciseLogs = (await Promise.all(
+  const exerciseLogs: ExerciseLogData[] = (await Promise.all(
     relationIds?.map((id) =>
       notionClient.pages.retrieve({
         page_id: id,
         filter_properties: ["exerciseSetsRelation"],
       }),
     ) || [],
-  )) as unknown as ExerciseLogExerciseSetsRelationData[];
+  )) as unknown as ExerciseLogData[];
   const exerciseSetsRelationIds = exerciseLogs.flatMap(
     (exerciseLog) =>
       getRelatonIds(exerciseLog.properties.exerciseSetsRelation) || [],
