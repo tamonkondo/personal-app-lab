@@ -18,6 +18,8 @@ export type ExerciseDetail = BasePageMeta & {
 
 export type ExerciseSetsData = NotionResults<ExerciseSet>;
 export type ExerciseSetDetailData = NotionPageResults<ExerciseDetail>;
+export type ExerciseSetWeight = Pick<ExerciseDetail, "kg" | "rep">;
+export type ExerciseSetWeightData = NotionPageResults<ExerciseSetWeight>;
 
 export type ExerciseSetResponse = {
   id: string;

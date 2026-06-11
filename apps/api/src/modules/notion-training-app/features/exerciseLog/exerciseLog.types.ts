@@ -22,6 +22,12 @@ export type ExerciseLogDetail = {
   memo: NotionProp<"memo", "rich_text">;
 };
 export type ExerciseLogDetailData = NotionPageResults<ExerciseLogDetail>;
+export type ExerciseLogExerciseSetsRelation = Pick<
+  ExerciseLogDetail,
+  "exerciseSetsRelation"
+>;
+export type ExerciseLogExerciseSetsRelationData =
+  NotionPageResults<ExerciseLogExerciseSetsRelation>;
 
 export type ExerciseLogsResponse = {
   next_cursor: string | undefined;

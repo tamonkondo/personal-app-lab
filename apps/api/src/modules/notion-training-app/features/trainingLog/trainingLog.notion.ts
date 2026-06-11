@@ -11,8 +11,14 @@ import {
   TrainingLogData,
   TrainingLogWithExerciseResponse,
 } from "./trainingLog.types";
-import { ExerciseLogDetailData } from "../exerciseLog/exerciseLog.types";
-import { ExerciseSet } from "../exerciseSet/exerciseSet.types";
+import {
+  ExerciseLogDetailData,
+  ExerciseLogExerciseSetsRelationData,
+} from "../exerciseLog/exerciseLog.types";
+import {
+  ExerciseSet,
+  ExerciseSetWeightData,
+} from "../exerciseSet/exerciseSet.types";
 
 const FILTER_PROPERTIES = [
   "memo",
@@ -124,9 +130,12 @@ export async function fetchTrainingLogDetail(id: string) {
   return responseData;
 }
 
-// 最新のトレーニングログの取得
+// 最新のトレーニングログを1件取得するクエリ
 export async function fetchNewestTrainingLog() {
-  // 最新のトレーニングログを1件取得するクエリ
+  /**
+   * 取得したいもの
+   * ・日付、メモ、種目数、セット数、総重量数
+   */
   const newestLog = await notionClient.dataSources.query({
     data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
     page_size: 1,
@@ -137,16 +146,53 @@ export async function fetchNewestTrainingLog() {
       },
     ],
   });
-  // リレーションですべてのトレーニング種目を取得するために、最新のトレーニングログのIDを取得
-  const relationIds = getRelatonIds(
-    (newestLog as unknown as TrainingLogData).results[0].properties
-      .trainingExercisesRelation,
-  );
   const logs = newestLog as unknown as TrainingLogData;
   if (logs.results.length === 0) {
     return null; // ログが存在しない場合はnullを返す
   }
   const log = logs.results[0];
 
-  return log;
+  // リレーションですべてのトレーニング種目を取得するために、最新のトレーニングログのIDを取得
+  const relationIds = getRelatonIds(
+    log.properties.trainingExercisesRelation,
+  );
+  // 最新のトレーニングログのIDをもとに、リレーションでつながっているトレーニング種目をすべて取得
+  const exerciseLogs = (await Promise.all(
+    relationIds?.map((id) =>
+      notionClient.pages.retrieve({
+        page_id: id,
+        filter_properties: ["exerciseSetsRelation"],
+      }),
+    ) || [],
+  )) as unknown as ExerciseLogExerciseSetsRelationData[];
+  const exerciseSetsRelationIds = exerciseLogs.flatMap(
+    (exerciseLog) =>
+      getRelatonIds(exerciseLog.properties.exerciseSetsRelation) || [],
+  );
+  // トレーニング種目に紐づくセットのリレーションをすべて取得
+
+  const exerciseSets = (await Promise.all(
+    exerciseSetsRelationIds.map((id) =>
+      notionClient.pages.retrieve({
+        page_id: id,
+        filter_properties: ["kg", "rep"],
+      }),
+    ),
+  )) as unknown as ExerciseSetWeightData[];
+  // 取得したkgとrepをもとに、総重量数を計算
+  let totalWeight = 0;
+  exerciseSets.forEach((exerciseSet) => {
+    const kg = exerciseSet.properties.kg.number || 0;
+    const rep = exerciseSet.properties.rep.number || 0;
+    totalWeight += kg * rep;
+  });
+
+  const responseData = {
+    createdTime: log.properties.createdTime.created_time,
+    bodyWeight: log.properties.bodyWeight.number || 0,
+    memo: log.properties.memo.rich_text[0]?.plain_text || "",
+    exerciseCount: relationIds?.length || 0,
+    totalWeight,
+  };
+  return responseData;
 }
