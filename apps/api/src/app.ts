@@ -2,10 +2,12 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import morgan from "morgan";
+import "./libs/sentry";
 import { errorHandler } from "./middleware/errorHandler";
 import { healthRouter } from "./routes/health.routes";
 import { notionRouter } from "./routes/notion.routes";
 import { notionTrainingAppRouter } from "./routes/notion-training-app.routes";
+import * as Sentry from "@sentry/node";
 
 export const app = express();
 
@@ -24,6 +26,8 @@ app.use(
     credentials: true,
   }),
 );
+// Sentry Error追加
+Sentry.setupExpressErrorHandler(app);
 // Cookie parser middleware
 app.use(cookieParser());
 // JSON body parser middleware

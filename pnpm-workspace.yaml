@@ -3,6 +3,8 @@ packages:
   - packages/*
 
 allowBuilds:
+  '@sentry-internal/node-cpu-profiler': true
+  '@sentry/cli': true
   bcrypt: true
   esbuild: true
   msw: true

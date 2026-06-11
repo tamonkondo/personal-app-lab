@@ -1,14 +1,56 @@
 import { Badge, Button, Card, CardContent } from "@repo/ui";
+import { ApiResponse } from "@repo/types/index";
+import * as Sentry from "@sentry/react";
+import useSWR from "swr";
+import fetcher from "../../../lib/fetch";
+import DailyLogsHeaderSkeleton from "./DailyLogsHeaderSkeleton";
 
-interface Props {
-  trainingLog: {
-    createdTime: string;
-    memo: string;
-  };
-  summaryItems: { label: string; value: string }[];
-}
+type NewestTrainingLog = {
+  createdTime: string;
+  bodyWeight: number;
+  memo: string;
+  exerciseCount: number;
+  totalWeight: number;
+};
 
-const DailyLogsHeader = ({ trainingLog, summaryItems }: Props) => {
+type NewestTrainingLogResponse = ApiResponse<NewestTrainingLog | null>;
+
+const DailyLogsHeader = () => {
+  const {
+    data: newestLogData,
+    error,
+    isLoading,
+  } = useSWR<NewestTrainingLogResponse>(
+    `${import.meta.env.VITE_API_URL}/training-logs/newest`,
+    fetcher,
+  );
+  const newestLog = newestLogData?.data || null;
+  const summaryItems = newestLog
+    ? [
+        { label: "種目数", value: `${newestLog.exerciseCount}` },
+        { label: "体重", value: `${newestLog.bodyWeight}kg` },
+        {
+          label: "総重量",
+          value: `${newestLog.totalWeight.toLocaleString()}kg`,
+        },
+      ]
+    : [];
+
+  if (isLoading) {
+    return <DailyLogsHeaderSkeleton statusMessage={"読み込み中..."} />;
+  }
+  if (error) {
+    // ここでエラーログをSentryなどに送信するロジックがいるかもしれない
+    Sentry.logger.error("エラーが発生しました:", error);
+
+    return (
+      <DailyLogsHeaderSkeleton statusMessage={"最新ログの取得に失敗しました"} />
+    );
+  }
+  if (!newestLog) {
+    return <DailyLogsHeaderSkeleton statusMessage="ログがありません" />;
+  }
+
   return (
     <>
       <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
@@ -22,10 +64,10 @@ const DailyLogsHeader = ({ trainingLog, summaryItems }: Props) => {
 
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                {trainingLog.createdTime}
+                {newestLog.createdTime}
               </h1>
               <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
-                {trainingLog.memo}
+                {newestLog.memo}
               </p>
             </div>
           </div>

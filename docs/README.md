@@ -29,13 +29,14 @@ VS Code で開発中に迷った時に見返すための、実務寄りの判断
 
 ## ファイル一覧
 
-| ファイル | 内容 |
-|---|---|
-| [01-small-scale.md](./01-small-scale.md) | 小規模時の型定義・フォルダ・コード例 |
-| [02-when-to-split.md](./02-when-to-split.md) | 分割するタイミングの判断基準 |
-| [03-medium-scale-flow.md](./03-medium-scale-flow.md) | 小規模から中規模への移行フロー |
-| [04-task-example.md](./04-task-example.md) | Task を例にした段階的なコード分割 |
-| [05-decision-cheatsheet.md](./05-decision-cheatsheet.md) | 迷った時のチートシート |
+| ファイル                                                               | 内容                                       |
+| ---------------------------------------------------------------------- | ------------------------------------------ |
+| [01-small-scale.md](./01-small-scale.md)                               | 小規模時の型定義・フォルダ・コード例       |
+| [02-when-to-split.md](./02-when-to-split.md)                           | 分割するタイミングの判断基準               |
+| [03-medium-scale-flow.md](./03-medium-scale-flow.md)                   | 小規模から中規模への移行フロー             |
+| [04-task-example.md](./04-task-example.md)                             | Task を例にした段階的なコード分割          |
+| [05-decision-cheatsheet.md](./05-decision-cheatsheet.md)               | 迷った時のチートシート                     |
+| [06-sentry-react-express-setup.md](./06-sentry-react-express-setup.md) | Sentry の段階的導入手順（Express → React） |
 
 ## 最重要ルール
 
