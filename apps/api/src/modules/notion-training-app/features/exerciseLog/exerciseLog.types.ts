@@ -9,10 +9,7 @@ export type ExerciseLog = BasePageMeta & {
   properties: ExerciseLogDetail;
 };
 
-export type ExerciseLogData = NotionResults<ExerciseLog> & {
-  next_cursor: string | undefined;
-  has_more: boolean;
-};
+export type ExerciseLogData = NotionResults<ExerciseLog>;
 
 export type ExerciseLogDetail = {
   todayMaxWeightRollup: NotionProp<"todayMaxWeightRollup", "rollup">;
@@ -20,10 +17,17 @@ export type ExerciseLogDetail = {
   exerciseSetsRelation: NotionProp<"exerciseSetsRelation", "relation">;
   rest: NotionProp<"rest", "number">;
   memo: NotionProp<"memo", "rich_text">;
+  trainingExercisesRelation: NotionProp<
+    "trainingExercisesRelation",
+    "relation"
+  >;
+  createdTime: NotionProp<"createdTime", "created_time">;
+  bodyWeight: NotionProp<"bodyWeight", "number">;
+  name: NotionProp<"name", "title">;
 };
-export type ExerciseLogDetailData = NotionPageResults<ExerciseLogDetail>;
+export type ExerciseLogDetailData = NotionPageResults<ExerciseLog>;
 export type ExerciseLogExerciseSetsRelation = Pick<
-  ExerciseLogDetail,
+  ExerciseLog,
   "exerciseSetsRelation"
 >;
 export type ExerciseLogExerciseSetsRelationData =

@@ -6,6 +6,7 @@
  * - メモ
  * - 遷移ボタン
  * */
+import { TrainingLogResponse } from "@repo/types/notion-training-app";
 import {
   Button,
   Table,
@@ -15,19 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui";
-
+import { formatDate } from "@repo/utils/index";
 interface Props {
-  data: {
-    id: string;
-    date: string;
-    memo: string;
-    exercises: {
-      name: string;
-      maxWeight: string;
-      sets: number;
-      memo?: string;
-    }[];
-  };
+  data: TrainingLogResponse;
 }
 export function TrainingLogCard({ data }: Props) {
   return (
@@ -38,7 +29,9 @@ export function TrainingLogCard({ data }: Props) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-bold">{data.date}</h2>
+            <h2 className="text-xl font-bold">
+              {formatDate(data.createdTime)}
+            </h2>
           </div>
         </div>
         <Button variant="outline" size="sm" className="w-full sm:w-auto">
@@ -62,7 +55,7 @@ export function TrainingLogCard({ data }: Props) {
               className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
             >
               <TableCell className="font-semibold">{exercise.name}</TableCell>
-              <TableCell>{exercise.maxWeight}</TableCell>
+              <TableCell>{exercise.todayMaxWeight}</TableCell>
               <TableCell>{exercise.sets}回</TableCell>
               <TableCell className="hidden text-zinc-500 sm:block">
                 {exercise.memo || "-"}

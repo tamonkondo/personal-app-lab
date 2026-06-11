@@ -11,16 +11,7 @@ export const getTrainingLogs = asyncHandler(
     res.status(200).json({ message: "getTrainingLogs", data: trainingLogs });
   },
 );
-export const getTrainingLog = asyncHandler(
-  async (req: { params: { id: string } }, res) => {
-    const { id } = req.params;
-    const trainingLog = await fetches.fetchTrainingLog(id);
-    res.status(200).json({
-      message: "getTrainingLog",
-      data: trainingLog,
-    });
-  },
-);
+
 // 最新のトレーニングログを取得するエンドポイント
 export const getNewestTrainingLog = asyncHandler(async (req, res) => {
   // idがない場合は今日の日付を反映
@@ -30,22 +21,4 @@ export const getNewestTrainingLog = asyncHandler(async (req, res) => {
     data: trainingLog,
   });
 });
-export const getTrainingLogDetail = asyncHandler(
-  async (req: { params: { id: string } }, res) => {
-    const { id } = req.params;
-    const trainingLogDetail = await fetches.fetchTrainingLogDetail(id);
-    res.status(200).json({
-      message: "getTrainingLogDetail",
-      data: trainingLogDetail,
-    });
-  },
-);
-export const createTrainingLog = asyncHandler(async (req, res) => {
-  res.json({ message: "createTrainingLog" });
-});
-export const updateTrainingLog = asyncHandler(async (req, res) => {
-  res.json({ message: "updateTrainingLog" });
-});
-export const deleteTrainingLog = asyncHandler(async (req, res) => {
-  res.json({ message: "deleteTrainingLog" });
-});
+

@@ -99,4 +99,3 @@ export async function fetchExerciseLog(exerciseLogId: string) {
   };
   return responseData;
 }
-// 172684c1-6338-800a-ba8c-dcdb4a9ab625

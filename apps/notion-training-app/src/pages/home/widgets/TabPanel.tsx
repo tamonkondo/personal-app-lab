@@ -11,83 +11,8 @@ import {
 } from "@repo/ui";
 import { TrainingLogCard } from "../../../features/trainingLog/components/TrainingLogCard";
 import { ExerciseLogCard } from "../../../features/exerciseLog/components/ExerciseLogCard";
-const trainingLogs = [
-  {
-    id: "log-1",
-    date: "2026/06/01",
-    memo: "ベンチプレスでPR更新。全体的に調子良し。次回はインクライン種目を先に入れても良さそう。",
-    exercises: [
-      {
-        name: "ベンチプレス",
-        maxWeight: "92.5kg",
-        sets: 4,
-        memo: "3セット目でPR更新",
-      },
-      {
-        name: "インクラインダンベルプレス",
-        maxWeight: "30kg",
-        sets: 3,
-        memo: "やや重い",
-      },
-      {
-        name: "ケーブルフライ",
-        maxWeight: "22.5kg",
-        sets: 3,
-        memo: "収縮意識",
-      },
-    ],
-  },
-  {
-    id: "log-1",
-    date: "2026/06/01",
-    memo: "ベンチプレスでPR更新。全体的に調子良し。次回はインクライン種目を先に入れても良さそう。",
-    exercises: [
-      {
-        name: "ベンチプレス",
-        maxWeight: "92.5kg",
-        sets: 4,
-        memo: "3セット目でPR更新",
-      },
-      {
-        name: "インクラインダンベルプレス",
-        maxWeight: "30kg",
-        sets: 3,
-        memo: "やや重い",
-      },
-      {
-        name: "ケーブルフライ",
-        maxWeight: "22.5kg",
-        sets: 3,
-        memo: "収縮意識",
-      },
-    ],
-  },
-  {
-    id: "log-1",
-    date: "2026/06/01",
-    memo: "ベンチプレスでPR更新。全体的に調子良し。次回はインクライン種目を先に入れても良さそう。",
-    exercises: [
-      {
-        name: "ベンチプレス",
-        maxWeight: "92.5kg",
-        sets: 4,
-        memo: "3セット目でPR更新",
-      },
-      {
-        name: "インクラインダンベルプレス",
-        maxWeight: "30kg",
-        sets: 3,
-        memo: "やや重い",
-      },
-      {
-        name: "ケーブルフライ",
-        maxWeight: "22.5kg",
-        sets: 3,
-        memo: "収縮意識",
-      },
-    ],
-  },
-];
+import fetcher from "../../../lib/fetch";
+import useSWR from "swr";
 
 const exerciseDetails = [
   {
@@ -144,8 +69,25 @@ const exerciseDetails = [
     ],
   },
 ];
-
+import { TrainingLogResponseData } from "@repo/types/notion-training-app/index";
 const TabPanel = () => {
+  const {
+    data: newestLogData,
+    error,
+    isLoading,
+  } = useSWR<TrainingLogResponseData>(
+    `${import.meta.env.VITE_API_URL}/training-logs/`,
+    fetcher,
+  );
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  if (error) {
+    return <div>Error loading data</div>;
+  }
+  if (!newestLogData || !newestLogData.data) {
+    return <div>No data available</div>;
+  }
   return (
     <Tabs defaultValue="trainingLogs">
       <TabsList className="px-3 py-6  h-auto gap-2 [&>button]:h-auto [&>button]:cursor-pointer">
@@ -157,16 +99,13 @@ const TabPanel = () => {
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle>Training Logs</CardTitle>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-2 text-sm text-zinc-500">
                 各種目ごとの重量、回数、メモを確認できます。
               </p>
             </div>
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
-              セットを追加
-            </Button>
           </CardHeader>
           <CardContent className="space-y-5">
-            {trainingLogs.map((log) => (
+            {newestLogData?.data.map((log) => (
               <TrainingLogCard key={log.id} data={log} />
             ))}
           </CardContent>
@@ -177,7 +116,7 @@ const TabPanel = () => {
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle>Exercise Logs</CardTitle>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-2 text-sm text-zinc-500">
                 各種目ごとの重量、回数、メモを確認できます。
               </p>
             </div>

@@ -12,32 +12,10 @@ notionTrainingAppRouter.get(
   "/training-logs",
   trainingLogHandlers.getTrainingLogs,
 );
-notionTrainingAppRouter.post(
-  "/training-logs",
-  trainingLogHandlers.createTrainingLog,
-);
 // 最新のトレーニングログの取得
 notionTrainingAppRouter.get(
   "/training-logs/newest",
   trainingLogHandlers.getNewestTrainingLog,
-);
-// 特定の日付のトレーニングリスト
-notionTrainingAppRouter.get(
-  "/training-logs/:id",
-  trainingLogHandlers.getTrainingLog,
-);
-notionTrainingAppRouter.patch(
-  "/training-logs/:id",
-  trainingLogHandlers.updateTrainingLog,
-);
-notionTrainingAppRouter.delete(
-  "/training-logs/:id",
-  trainingLogHandlers.deleteTrainingLog,
-);
-// 特定の日付のトレーニングリストの詳細（トレーニング種目のログも含む）
-notionTrainingAppRouter.get(
-  "/training-logs/:id/detail",
-  trainingLogHandlers.getTrainingLogDetail,
 );
 // トレーニングの目標重量
 notionTrainingAppRouter.get("/goal-weights", goalWeightHandlers.getGoalWeights);

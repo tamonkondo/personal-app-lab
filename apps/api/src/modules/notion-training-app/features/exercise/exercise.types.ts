@@ -1,5 +1,8 @@
-import { BasePageMeta, NotionProp, NotionResults } from "@/integrations/notion/notion.types";
-
+import {
+  BasePageMeta,
+  NotionProp,
+  NotionResults,
+} from "@/integrations/notion/notion.types";
 
 export type Exercise = BasePageMeta & {
   properties: {
@@ -8,6 +11,7 @@ export type Exercise = BasePageMeta & {
     currentMaxWeightRollup: NotionProp<"currentMaxWeightRollup", "rollup">;
     maxGoalStatusFormula: NotionProp<"maxGoalStatusFormula", "formula">;
     musclesTypes: NotionProp<"musclesTypes", "multi_select">;
+    rest: NotionProp<"rest", "number">;
   };
 };
 
@@ -38,4 +42,3 @@ export type ExerciseDetailResponse = {
   trainingRecordIds: string[];
   theGoalsWeightId: string | null;
 };
-
