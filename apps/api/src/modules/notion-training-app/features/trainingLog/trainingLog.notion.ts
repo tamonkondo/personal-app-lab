@@ -13,7 +13,7 @@ import {
   ExerciseLogProperties,
   ExtractExerciseLog,
 } from "../exerciseLog/exerciseLog.types";
-import { TrainingLogResponse } from "@repo/types/notion-training-app/index";
+import { TrainingLogSummaryResponse } from "@repo/types/notion-training-app/index";
 const FILTER_PROPERTIES = [
   "trainingExercisesRelation",
   "createdTime",
@@ -27,7 +27,7 @@ const FILTER_PROPERTIES = [
 export async function fetchTrainingLogs(
   cursor?: string,
   limit: number = 20,
-): Promise<TrainingLogResponse[]> {
+): Promise<TrainingLogSummaryResponse> {
   const trainingLogs: TrainingLogData = (await notionClient.dataSources.query({
     data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
     page_size: limit,
@@ -57,8 +57,8 @@ export async function fetchTrainingLogs(
   )) as unknown as ExtractExerciseLog<
     (typeof extractExerciseProperties)[number]
   >[];
-  const responseData: TrainingLogResponse[] = trainingLogs.results.map(
-    (trainingLog) => ({
+  const responseData: TrainingLogSummaryResponse = {
+    data: trainingLogs.results.map((trainingLog) => ({
       id: trainingLog.id,
       createdTime: trainingLog.properties.createdTime.created_time,
       bodyWeight: trainingLog.properties.bodyWeight.number || 0,
@@ -83,8 +83,10 @@ export async function fetchTrainingLogs(
             getRelatonIds(exerciseLog.properties.exerciseSetsRelation)
               ?.length || 0,
         })),
-    }),
-  );
+    })),
+    next_cursor: trainingLogs.next_cursor || undefined,
+    has_more: trainingLogs.has_more,
+  };
   return responseData;
 }
 

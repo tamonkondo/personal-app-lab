@@ -5,9 +5,21 @@ import {
   NotionResults,
 } from "@/integrations/notion/notion.types";
 
-export type ExerciseSet = BasePageMeta & {
-  properties: ExerciseDetail;
+export type ExerciseSetProperties = {
+  kg: NotionProp<"kg", "number">;
+  rep: NotionProp<"rep", "number">;
+  memo: NotionProp<"memo", "rich_text">;
+  detailFormula: NotionProp<"detailFormula", "formula">;
+  maxWeightFormula: NotionProp<"maxWeightFormula", "formula">;
 };
+export type ExerciseSet = BasePageMeta & {
+  properties: ExerciseSetProperties;
+};
+export type ExtractExerciseSetLog<T extends keyof ExerciseSetProperties> =
+  BasePageMeta & {
+    properties: Pick<ExerciseSetProperties, T>;
+  };
+
 export type ExerciseDetail = BasePageMeta & {
   kg: NotionProp<"kg", "number">;
   rep: NotionProp<"rep", "number">;

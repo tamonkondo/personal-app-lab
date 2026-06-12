@@ -60,18 +60,3 @@ export type ExerciseLogsResponse = {
   }[];
 };
 
-export type ExerciseLogResponse = {
-  id: string;
-  createdTime: string;
-  todayMaxWeight: number;
-  trainingName: string;
-  rest: number;
-  exerciseSets: {
-    id: string;
-    kg: number;
-    rep: number;
-    memo: string;
-    displayText: string;
-    maxWeight: number;
-  }[];
-};

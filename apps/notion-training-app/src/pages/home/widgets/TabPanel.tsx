@@ -1,5 +1,4 @@
 import {
-  Button,
   Card,
   CardContent,
   CardHeader,
@@ -69,13 +68,9 @@ const exerciseDetails = [
     ],
   },
 ];
-import { TrainingLogResponseData } from "@repo/types/notion-training-app/index";
+import { TrainingLogSummaryResponse } from "@repo/types/notion-training-app/index";
 const TabPanel = () => {
-  const {
-    data: newestLogData,
-    error,
-    isLoading,
-  } = useSWR<TrainingLogResponseData>(
+  const { data: trainingLogs, error, isLoading } = useSWR<TrainingLogSummaryResponse>(
     `${import.meta.env.VITE_API_URL}/training-logs/`,
     fetcher,
   );
@@ -85,9 +80,10 @@ const TabPanel = () => {
   if (error) {
     return <div>Error loading data</div>;
   }
-  if (!newestLogData || !newestLogData.data) {
+  if (!trainingLogs || !trainingLogs.data) {
     return <div>No data available</div>;
   }
+  console.log("Fetched training logs:", trainingLogs.data);
   return (
     <Tabs defaultValue="trainingLogs">
       <TabsList className="px-3 py-6  h-auto gap-2 [&>button]:h-auto [&>button]:cursor-pointer">
@@ -105,7 +101,7 @@ const TabPanel = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
-            {newestLogData?.data.map((log) => (
+            {trainingLogs.data.map((log) => (
               <TrainingLogCard key={log.id} data={log} />
             ))}
           </CardContent>

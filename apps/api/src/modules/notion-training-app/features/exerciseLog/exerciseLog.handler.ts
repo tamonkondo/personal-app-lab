@@ -25,11 +25,15 @@ export const getExerciseLogs = asyncHandler(
   },
 );
 // 特定の種目のある日付の記録を取得
-export const getExerciseLog = asyncHandler(
-  async (req: { params: { id: string } }, res) => {
-    const { id } = req.params; // exerciseLogId
-    const exerciseLog = await fetches.fetchExerciseLog(id);
-    res.json({ message: "getExerciseLog", data: exerciseLog });
+export const getExerciseSummaryLogs = asyncHandler(
+  async (req: { query: { limit?: number; start_cursor?: string } }, res) => {
+    const { limit, start_cursor } = req.query; // 取得件数の上限
+
+    const exerciseSummaryLogs = await fetches.fetchExerciseSummaryLogs(
+      limit ? Number(limit) : undefined,
+      start_cursor,
+    );
+    res.json({ message: "getExerciseSummaryLogs", data: exerciseSummaryLogs });
   },
 );
 export const createExerciseLog = asyncHandler(async (req, res) => {

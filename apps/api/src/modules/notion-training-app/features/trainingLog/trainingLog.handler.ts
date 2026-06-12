@@ -9,7 +9,12 @@ export const getTrainingLogs = asyncHandler(
       cursor,
       limit ? Number(limit) : undefined,
     );
-    res.status(200).json({ message: "getTrainingLogs", data: trainingLogs });
+    const meta = {
+      next_cursor: trainingLogs.next_cursor,
+      has_more: trainingLogs.has_more,
+    };
+    const data = trainingLogs.data;
+    res.status(200).json({ message: "getTrainingLogs", data, meta });
   },
 );
 

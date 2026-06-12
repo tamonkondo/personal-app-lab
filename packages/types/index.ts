@@ -4,7 +4,12 @@ export type User = {
   email: string;
 };
 
-export type ApiResponse<T> = {
+export interface ApiResponse<T> {
   data: T;
   message?: string;
+}
+
+export type BaseMeta = {
+  has_more: boolean;
+  next_cursor?: string;
 };

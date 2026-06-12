@@ -13,14 +13,14 @@ type NewestTrainingLog = {
   totalWeight: number;
 };
 
-type NewestTrainingLogResponse = ApiResponse<NewestTrainingLog | null>;
+type NewestTrainingLogSummaryResponse = ApiResponse<NewestTrainingLog | null>;
 
 const DailyLogsHeader = () => {
   const {
     data: newestLogData,
     error,
     isLoading,
-  } = useSWR<NewestTrainingLogResponse>(
+  } = useSWR<NewestTrainingLogSummaryResponse>(
     `${import.meta.env.VITE_API_URL}/training-logs/newest`,
     fetcher,
   );

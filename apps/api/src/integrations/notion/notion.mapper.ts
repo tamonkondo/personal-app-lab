@@ -59,9 +59,43 @@ export function getRollup<T extends NotionPropertyType>(
   return value ?? null;
 }
 
-export function getRollupArray(property: unknown): unknown[] | null {
+export function getRollupArray(property: unknown,): unknown[] | null {
   const rollupArray = getRollup(property, "array");
   return Array.isArray(rollupArray) ? rollupArray : null;
+}
+
+type RollupArrayItemMap = {
+  string: { type: "string"; string: string | null };
+  number: { type: "number"; number: number | null };
+  date: { type: "date"; date: DateResponse | null };
+  array: { type: "array"; array: unknown[] | null };
+  title: { type: "title"; title: null };
+};
+
+function isRollupArrayItem<T extends NotionPropertyType>(
+  item: unknown,
+  type: T,
+): item is RollupArrayItemMap[T] {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    "type" in item &&
+    item.type === type &&
+    type in item
+  );
+}
+
+export function getRollupArrayValue<T extends NotionPropertyType>(
+  property: unknown,
+  type: T,
+  index: number = 0,
+): RollupValueMap[T] | null {
+  const rollupArray = getRollupArray(property);
+  if (!rollupArray || index < 0 || rollupArray.length <= index) return null;
+  const item = rollupArray[index];
+  if (!isRollupArrayItem(item, type)) return null;
+  const typedItem = item as RollupArrayItemMap[T] & Record<T, RollupValueMap[T]>;
+  return typedItem[type] ?? null;
 }
 
 export function getRollupFormulaDate(property: unknown): DateResponse | null {

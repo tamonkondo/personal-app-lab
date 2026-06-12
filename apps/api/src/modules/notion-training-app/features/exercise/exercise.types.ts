@@ -4,6 +4,8 @@ import {
   NotionResults,
 } from "@/integrations/notion/notion.types";
 
+
+
 export type Exercise = BasePageMeta & {
   properties: {
     name: NotionProp<"name", "title">;
@@ -12,6 +14,13 @@ export type Exercise = BasePageMeta & {
     maxGoalStatusFormula: NotionProp<"maxGoalStatusFormula", "formula">;
     musclesTypes: NotionProp<"musclesTypes", "multi_select">;
     rest: NotionProp<"rest", "number">;
+    maxGoalWeight: NotionProp<"maxGoalWeight", "rollup">;
+    maxWeightDateFormula: NotionProp<"maxWeightDateFormula", "formula">;
+    maxWeightFormula: NotionProp<"maxWeightFormula", "formula">;
+    maxLogsDetailsFormula: NotionProp<"maxLogsDetailsFormula", "formula">;
+    theGoalsWeightRelation: NotionProp<"theGoalsWeightRelation", "relation">;
+    maxWeightExerciseId: NotionProp<"maxWeightExerciseId", "formula">;
+    latestExerciseId: NotionProp<"latestExerciseId", "formula">;
   };
 };
 

@@ -45,16 +45,12 @@ notionTrainingAppRouter.delete(
   "/exercises/:id",
   exerciseHandlers.deleteExerciseDetail,
 );
+notionTrainingAppRouter.get(
+  "/exercise/summary",
+  exerciseHandlers.getExerciseSummaryLogs,
+);
 // トレーニング種目のログ一覧
-notionTrainingAppRouter.get(
-  "/exercise-logs/:exerciseId",
-  exerciseLogHandlers.getExerciseLogs,
-);
-// トレーニング種目の各ログ
-notionTrainingAppRouter.get(
-  "/exercise-logs/:id/detail",
-  exerciseLogHandlers.getExerciseLog,
-);
+
 notionTrainingAppRouter.post(
   "/exercise-logs/:id",
   exerciseLogHandlers.createExerciseLog,

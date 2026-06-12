@@ -7,6 +7,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from "@repo/ui";
 
 interface Props {
@@ -50,32 +54,72 @@ export function ExerciseLogCard({ data }: Props) {
           種目詳細
         </Button>
       </div>
-
-      <Table className="mt-5 overflow-hidden rounded-2xl border">
-        <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
-          <TableRow>
-            <TableHead>Set</TableHead>
-            <TableHead>重量</TableHead>
-            <TableHead>回数</TableHead>
-            <TableHead className="">メモ</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="divide-y border-2 rounded-2xl">
-          {data.sets.map((set) => (
-            <TableRow
-              key={`${data.id}-${set.set}`}
-              className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
-            >
-              <TableCell className="font-semibold">{set.set}</TableCell>
-              <TableCell>{set.weight}</TableCell>
-              <TableCell>{set.reps}回</TableCell>
-              <TableCell className="hidden text-zinc-500 sm:block">
-                {set.memo || "-"}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <Tabs defaultValue="maxWeightLogs" className="mt-3">
+        <TabsList className="bg-color-none h-auto gap-2 [&>button]:h-auto [&>button]:cursor-pointer">
+          <TabsTrigger value="maxWeightLogs">
+            MaxWeight Exercise Logs
+          </TabsTrigger>
+          <TabsTrigger value="latestExerciseLogs">
+            Latest Exercise Logs
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="maxWeightLogs">
+          <p>Rest:1分</p>
+          <Table className="overflow-hidden rounded-2xl border">
+            <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
+              <TableRow>
+                <TableHead>Set</TableHead>
+                <TableHead>重量</TableHead>
+                <TableHead>回数</TableHead>
+                <TableHead className="">メモ</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y border-2 rounded-2xl">
+              {data.sets.map((set) => (
+                <TableRow
+                  key={`${data.id}-${set.set}`}
+                  className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
+                >
+                  <TableCell className="font-semibold">{set.set}</TableCell>
+                  <TableCell>{set.weight}</TableCell>
+                  <TableCell>{set.reps}回</TableCell>
+                  <TableCell className="hidden text-zinc-500 sm:block">
+                    {set.memo || "-"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+        <TabsContent value="latestExerciseLogs">
+          <p>Rest:2分</p>
+          <Table className="overflow-hidden rounded-2xl border">
+            <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
+              <TableRow>
+                <TableHead>Set</TableHead>
+                <TableHead>重量</TableHead>
+                <TableHead>回数</TableHead>
+                <TableHead className="">メモ</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y border-2 rounded-2xl">
+              {data.sets.map((set) => (
+                <TableRow
+                  key={`${data.id}-${set.set}`}
+                  className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
+                >
+                  <TableCell className="font-semibold">{set.set}</TableCell>
+                  <TableCell>{set.weight}</TableCell>
+                  <TableCell>{set.reps}回</TableCell>
+                  <TableCell className="hidden text-zinc-500 sm:block">
+                    {set.memo || "-"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+      </Tabs>
     </article>
   );
 }
