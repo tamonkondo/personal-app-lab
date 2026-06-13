@@ -13,6 +13,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui";
+import { formatDate } from "@repo/utils";
 import { Link } from "react-router-dom";
 
 interface Props {
@@ -30,12 +31,28 @@ export function ExerciseLogCard({ data }: Props) {
             <h2 className="text-xl font-bold">{data.trainingName}</h2>
             <Badge variant="secondary">{data.musclesTypes.join(", ")}</Badge>
             {data.isPr ? (
-              <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-                PR更新
-              </Badge>
+              <>
+                <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                  PR更新
+                </Badge>
+                <Button size="sm">Create New Goal</Button>
+              </>
             ) : null}
           </div>
-          <p className="text-sm text-zinc-500">最大重量 {data.maxGoalWeight}</p>
+          <div className="flex gap-2">
+            <p className="text-sm text-zinc-500">
+              Goal Weight:{data.maxGoalWeight.toFixed(0)}kg
+            </p>
+            <p className="text-sm text-zinc-500">
+              Current Max Weight:{data.currentMaxWeight.toFixed(0)}kg
+            </p>
+            {!data.isPr && data.currentMaxWeight < data.maxGoalWeight ? (
+              <p className="text-sm text-green-500">
+                Only {(data.maxGoalWeight - data.currentMaxWeight).toFixed(0)}{" "}
+                kg to go!!
+              </p>
+            ) : null}
+          </div>
         </div>
         <Link to={`/exercise/${data.id}`}>
           <Button variant="outline" size="sm" className="w-full sm:w-auto">
@@ -53,60 +70,86 @@ export function ExerciseLogCard({ data }: Props) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="maxWeightLogs">
-          <p>Rest:1分</p>
-          <Table className="overflow-hidden rounded-2xl border">
-            <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
-              <TableRow>
-                <TableHead>Set</TableHead>
-                <TableHead>重量</TableHead>
-                <TableHead>回数</TableHead>
-                <TableHead className="">メモ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y border-2 rounded-2xl">
-              {data.maxWeightSets.map((set, index) => (
-                <TableRow
-                  key={`${data.id}-${set.id}`}
-                  className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
-                >
-                  <TableCell className="font-semibold">{index + 1}</TableCell>
-                  <TableCell>{set.kg}</TableCell>
-                  <TableCell>{set.rep}回</TableCell>
-                  <TableCell className="hidden text-zinc-500 sm:block">
-                    {set.memo || "-"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {data.maxWeightSets.length > 0 ? (
+            <>
+              <p>Rest:1分</p>
+              <p>
+                Date:{" "}
+                {data.maxWeightSets[0]?.createdTime &&
+                  formatDate(data.maxWeightSets[0]?.createdTime)}
+              </p>
+              <Table className="overflow-hidden rounded-2xl border">
+                <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
+                  <TableRow>
+                    <TableHead>Set</TableHead>
+                    <TableHead>重量</TableHead>
+                    <TableHead>回数</TableHead>
+                    <TableHead className="">メモ</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y border-2 rounded-2xl">
+                  {data.maxWeightSets.map((set, index) => (
+                    <TableRow
+                      key={`${data.id}-${set.id}`}
+                      className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
+                    >
+                      <TableCell className="font-semibold">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell>{set.kg}</TableCell>
+                      <TableCell>{set.rep}回</TableCell>
+                      <TableCell className="hidden text-zinc-500 sm:block">
+                        {set.memo || "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
+          ) : (
+            <p>No max weight logs available.</p>
+          )}
         </TabsContent>
         <TabsContent value="latestExerciseLogs">
-          <p>Rest:2分</p>
-          <Table className="overflow-hidden rounded-2xl border">
-            <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
-              <TableRow>
-                <TableHead>Set</TableHead>
-                <TableHead>重量</TableHead>
-                <TableHead>回数</TableHead>
-                <TableHead className="">メモ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y border-2 rounded-2xl">
-              {data.latestSets.map((set, index) => (
-                <TableRow
-                  key={`${data.id}-${set.id}`}
-                  className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
-                >
-                  <TableCell className="font-semibold">{index + 1}</TableCell>
-                  <TableCell>{set.kg}</TableCell>
-                  <TableCell>{set.rep}回</TableCell>
-                  <TableCell className="hidden text-zinc-500 sm:block">
-                    {set.memo || "-"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {data.latestSets.length > 0 ? (
+            <>
+              <p>Rest:2分</p>
+              <p>
+                Date:{" "}
+                {data.latestSets[0]?.createdTime &&
+                  formatDate(data.latestSets[0]?.createdTime)}
+              </p>
+              <Table className="overflow-hidden rounded-2xl border">
+                <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
+                  <TableRow>
+                    <TableHead>Set</TableHead>
+                    <TableHead>重量</TableHead>
+                    <TableHead>回数</TableHead>
+                    <TableHead className="">メモ</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y border-2 rounded-2xl">
+                  {data.latestSets.map((set, index) => (
+                    <TableRow
+                      key={`${data.id}-${set.id}`}
+                      className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
+                    >
+                      <TableCell className="font-semibold">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell>{set.kg}</TableCell>
+                      <TableCell>{set.rep}回</TableCell>
+                      <TableCell className="hidden text-zinc-500 sm:block">
+                        {set.memo || "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
+          ) : (
+            <p>No latest exercise logs available.</p>
+          )}
         </TabsContent>
       </Tabs>
     </article>

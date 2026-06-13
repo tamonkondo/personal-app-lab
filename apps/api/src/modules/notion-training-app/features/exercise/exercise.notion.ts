@@ -155,6 +155,7 @@ export async function fetchExerciseSummaryLogs(
   ): ExerciseSet => ({
     exerciseId:
       getRollupRelationIds(data?.properties.exerciseNameRollup)[0] || "",
+    createdTime: data?.created_time || "",
     id: data?.id || "",
     kg: data?.properties.kg.number || 0,
     rep: data?.properties.rep.number || 0,
@@ -180,7 +181,7 @@ export async function fetchExerciseSummaryLogs(
                 direction: "descending",
               },
             ],
-            // filter_properties: ["exerciseSetsRelation", "rest", "memo"],
+            filter_properties: ["exerciseSetsRelation", "rest", "memo"],
           })) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>[];
           return queryResult;
         }),

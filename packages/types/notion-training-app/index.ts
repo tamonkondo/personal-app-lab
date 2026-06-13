@@ -37,6 +37,7 @@ export type TrainingLogSummaryResponse = BaseMeta & {
 
 export type ExerciseSet = {
   exerciseId: string;
+  createdTime: string;
   id: string;
   kg: number;
   rep: number;

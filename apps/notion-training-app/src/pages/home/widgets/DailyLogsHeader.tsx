@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/react";
 import useSWR from "swr";
 import fetcher from "../../../lib/fetch";
 import DailyLogsHeaderSkeleton from "./DailyLogsHeaderSkeleton";
+import { formatDate } from "@repo/utils";
 
 type NewestTrainingLog = {
   createdTime: string;
@@ -52,7 +53,7 @@ const DailyLogsHeader = () => {
   }
 
   return (
-    <>
+    <header className="grid gap-6">
       <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-4">
@@ -64,7 +65,7 @@ const DailyLogsHeader = () => {
 
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                {newestLog.createdTime}
+                {formatDate(newestLog.createdTime)}
               </h1>
               <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
                 {newestLog.memo}
@@ -89,7 +90,7 @@ const DailyLogsHeader = () => {
           </Card>
         ))}
       </section>
-    </>
+    </header>
   );
 };
 
