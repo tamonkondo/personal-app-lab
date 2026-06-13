@@ -247,11 +247,16 @@ export async function fetchExerciseSummaryLogs(
   const responseData: ExerciseSummaryResponse = {
     data: exercises.results.map((log) => ({
       id: log.id,
+      musclesTypes:
+        log.properties.musclesTypes.multi_select?.map(
+          (muscle) => muscle.name,
+        ) || [],
+      trainingName: log.properties.name.title?.[0]?.plain_text || "",
       maxGoalWeight:
         getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") || 0,
       currentMaxWeight:
         Number(getRollup(log.properties.currentMaxWeightRollup, "number")) || 0,
-      trainingName: log.properties.name.title?.[0]?.plain_text || "",
+
       isPr:
         Number(getRollup(log.properties.currentMaxWeightRollup, "number")) >
         (getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") ||

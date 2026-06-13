@@ -48,6 +48,7 @@ export type ExerciseSummary = {
   currentMaxWeight: number;
   trainingName: string;
   isPr: boolean;
+  musclesTypes: string[];
   maxWeightSets: ExerciseSet[];
   latestSets: ExerciseSet[];
 };

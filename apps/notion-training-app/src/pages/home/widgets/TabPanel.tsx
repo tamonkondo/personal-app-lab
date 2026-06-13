@@ -13,74 +13,39 @@ import { ExerciseLogCard } from "../../../features/exerciseLog/components/Exerci
 import fetcher from "../../../lib/fetch";
 import useSWR from "swr";
 
-const exerciseDetails = [
-  {
-    id: "exercise-1",
-    name: "ベンチプレス",
-    part: "胸",
-    maxWeight: "92.5kg",
-    volume: "3,450kg",
-    isPr: true,
-    sets: [
-      { set: 1, weight: "80kg", reps: 8, memo: "ウォームアップ" },
-      { set: 2, weight: "87.5kg", reps: 6, memo: "余裕あり" },
-      { set: 3, weight: "92.5kg", reps: 3, memo: "PR" },
-      { set: 4, weight: "85kg", reps: 7, memo: "フォーム重視" },
-    ],
-  },
-  {
-    id: "exercise-2",
-    name: "インクラインダンベルプレス",
-    part: "胸",
-    maxWeight: "30kg",
-    volume: "1,680kg",
-    isPr: false,
-    sets: [
-      { set: 1, weight: "26kg", reps: 10, memo: "" },
-      { set: 2, weight: "28kg", reps: 8, memo: "" },
-      { set: 3, weight: "30kg", reps: 6, memo: "やや重い" },
-    ],
-  },
-  {
-    id: "exercise-3",
-    name: "ケーブルフライ",
-    part: "胸",
-    maxWeight: "22.5kg",
-    volume: "1,350kg",
-    isPr: false,
-    sets: [
-      { set: 1, weight: "20kg", reps: 12, memo: "" },
-      { set: 2, weight: "22.5kg", reps: 10, memo: "" },
-      { set: 3, weight: "22.5kg", reps: 10, memo: "収縮意識" },
-    ],
-  },
-  {
-    id: "exercise-4",
-    name: "トライセプスプレスダウン",
-    part: "三頭",
-    maxWeight: "35kg",
-    volume: "1,940kg",
-    isPr: false,
-    sets: [
-      { set: 1, weight: "30kg", reps: 12, memo: "" },
-      { set: 2, weight: "32.5kg", reps: 10, memo: "" },
-      { set: 3, weight: "35kg", reps: 8, memo: "" },
-    ],
-  },
-];
-import { TrainingLogSummaryResponse } from "@repo/types/notion-training-app/index";
+import {
+  ExerciseSummaryResponse,
+  TrainingLogSummaryResponse,
+} from "@repo/types/notion-training-app/index";
 const TabPanel = () => {
-  const { data: trainingLogs, error, isLoading } = useSWR<TrainingLogSummaryResponse>(
+  const {
+    data: exerciseSummary,
+    error: fetchExerciseSummaryError,
+    isLoading: fetchExerciseSummaryLoading,
+  } = useSWR<ExerciseSummaryResponse>(
+    `${import.meta.env.VITE_API_URL}/exercise/summary/`,
+    fetcher,
+  );
+  const {
+    data: trainingLogs,
+    error: fetchTrainingLogsError,
+    isLoading: fetchTrainingLogsLoading,
+  } = useSWR<TrainingLogSummaryResponse>(
     `${import.meta.env.VITE_API_URL}/training-logs/`,
     fetcher,
   );
-  if (isLoading) {
+  if (fetchExerciseSummaryLoading || fetchTrainingLogsLoading) {
     return <div>Loading...</div>;
   }
-  if (error) {
+  if (fetchExerciseSummaryError || fetchTrainingLogsError) {
     return <div>Error loading data</div>;
   }
-  if (!trainingLogs || !trainingLogs.data) {
+  if (
+    !trainingLogs ||
+    !trainingLogs.data ||
+    !exerciseSummary ||
+    !exerciseSummary.data
+  ) {
     return <div>No data available</div>;
   }
   console.log("Fetched training logs:", trainingLogs.data);
@@ -118,7 +83,7 @@ const TabPanel = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
-            {exerciseDetails.map((exercise) => (
+            {exerciseSummary.data.map((exercise) => (
               <ExerciseLogCard key={exercise.id} data={exercise} />
             ))}
           </CardContent>
