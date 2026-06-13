@@ -2,19 +2,13 @@ import { ExerciseSummary } from "@repo/types/notion-training-app";
 import {
   Badge,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@repo/ui";
-import { formatDate } from "@repo/utils";
 import { Link } from "react-router-dom";
+import ExerciseLogTable from "./ExerciseLogTable";
 
 interface Props {
   data: ExerciseSummary;
@@ -71,82 +65,14 @@ export function ExerciseLogCard({ data }: Props) {
         </TabsList>
         <TabsContent value="maxWeightLogs">
           {data.maxWeightSets.length > 0 ? (
-            <>
-              <p>Rest:1分</p>
-              <p>
-                Date:{" "}
-                {data.maxWeightSets[0]?.createdTime &&
-                  formatDate(data.maxWeightSets[0]?.createdTime)}
-              </p>
-              <Table className="overflow-hidden rounded-2xl border">
-                <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
-                  <TableRow>
-                    <TableHead>Set</TableHead>
-                    <TableHead>重量</TableHead>
-                    <TableHead>回数</TableHead>
-                    <TableHead className="">メモ</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y border-2 rounded-2xl">
-                  {data.maxWeightSets.map((set, index) => (
-                    <TableRow
-                      key={`${data.id}-${set.id}`}
-                      className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
-                    >
-                      <TableCell className="font-semibold">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell>{set.kg}</TableCell>
-                      <TableCell>{set.rep}回</TableCell>
-                      <TableCell className="hidden text-zinc-500 sm:block">
-                        {set.memo || "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </>
+            <ExerciseLogTable data={data.maxWeightSets} />
           ) : (
             <p>No max weight logs available.</p>
           )}
         </TabsContent>
         <TabsContent value="latestExerciseLogs">
           {data.latestSets.length > 0 ? (
-            <>
-              <p>Rest:2分</p>
-              <p>
-                Date:{" "}
-                {data.latestSets[0]?.createdTime &&
-                  formatDate(data.latestSets[0]?.createdTime)}
-              </p>
-              <Table className="overflow-hidden rounded-2xl border">
-                <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
-                  <TableRow>
-                    <TableHead>Set</TableHead>
-                    <TableHead>重量</TableHead>
-                    <TableHead>回数</TableHead>
-                    <TableHead className="">メモ</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y border-2 rounded-2xl">
-                  {data.latestSets.map((set, index) => (
-                    <TableRow
-                      key={`${data.id}-${set.id}`}
-                      className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
-                    >
-                      <TableCell className="font-semibold">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell>{set.kg}</TableCell>
-                      <TableCell>{set.rep}回</TableCell>
-                      <TableCell className="hidden text-zinc-500 sm:block">
-                        {set.memo || "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </>
+            <ExerciseLogTable data={data.latestSets} />
           ) : (
             <p>No latest exercise logs available.</p>
           )}
