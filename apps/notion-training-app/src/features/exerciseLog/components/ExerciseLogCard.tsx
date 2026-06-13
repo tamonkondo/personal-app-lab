@@ -64,14 +64,14 @@ export function ExerciseLogCard({ data }: Props) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="maxWeightLogs">
-          {data.maxWeightSets.length > 0 ? (
+          {data.maxWeightSets.sets.length > 0 ? (
             <ExerciseLogTable data={data.maxWeightSets} />
           ) : (
             <p>No max weight logs available.</p>
           )}
         </TabsContent>
         <TabsContent value="latestExerciseLogs">
-          {data.latestSets.length > 0 ? (
+          {data.latestSets.sets.length > 0 ? (
             <ExerciseLogTable data={data.latestSets} />
           ) : (
             <p>No latest exercise logs available.</p>

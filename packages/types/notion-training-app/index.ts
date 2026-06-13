@@ -37,12 +37,23 @@ export type TrainingLogSummaryResponse = BaseMeta & {
 
 export type ExerciseSet = {
   exerciseId: string;
-  createdTime: string;
   id: string;
   kg: number;
   rep: number;
+  maxWeight: number;
   memo: string;
+  notionUrl: string;
 };
+
+export type ExerciseLogWithSets = {
+  exerciseId: string;
+  createdTime: string;
+  rest: number;
+  trainingName: string;
+  sets: ExerciseSet[];
+  notionUrl: string;
+};
+
 export type ExerciseSummary = {
   id: string;
   maxGoalWeight: number;
@@ -50,8 +61,8 @@ export type ExerciseSummary = {
   trainingName: string;
   isPr: boolean;
   musclesTypes: string[];
-  maxWeightSets: ExerciseSet[];
-  latestSets: ExerciseSet[];
+  maxWeightSets: ExerciseLogWithSets;
+  latestSets: ExerciseLogWithSets;
 };
 
 export interface ExerciseSummaryResponse extends BaseMeta {

@@ -1,7 +1,10 @@
 // notionTypes.ts
 import type {
   DateResponse,
+  GroupFilterOperatorArray,
   PageObjectResponse,
+  PropertyFilter,
+  TimestampFilter,
 } from "@notionhq/client/build/src/api-endpoints";
 
 /**
@@ -78,4 +81,27 @@ export type NotionRollup<T extends NotionPropertyType> = {
   rollup: { type: T } & Partial<Record<NotionPropertyType, unknown>> & {
       [K in T]: RollupValueMap[K];
     };
+};
+
+// クエリデータのパラメーター型
+export type NotionQueryDataSourceBodyParameters = {
+  filter?:
+    | {
+        or: GroupFilterOperatorArray;
+      }
+    | {
+        and: GroupFilterOperatorArray;
+      }
+    | PropertyFilter
+    | TimestampFilter;
+  sorts?: Array<
+    | {
+        property: string;
+        direction: "ascending" | "descending";
+      }
+    | {
+        timestamp: "created_time" | "last_edited_time";
+        direction: "ascending" | "descending";
+      }
+  >;
 };

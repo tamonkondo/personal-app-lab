@@ -1,7 +1,6 @@
 import {
   getFormula,
   getRollup,
-  getRollupRelationIds,
   getRollupArrayValue,
 } from "@/integrations/notion/notion.mapper";
 import notionClient from "@/integrations/notion/notion.client";
@@ -11,16 +10,8 @@ import {
   ExerciseDetailResponse,
   ExerciseResponse,
 } from "./exercise.types";
-import {
-  ExerciseSet,
-  ExerciseSummaryResponse,
-} from "@repo/types/notion-training-app";
-import { ExtractExerciseLogData } from "../exerciseLog/exerciseLog.types";
-import { ExerciseLogProperties } from "../exerciseLog/exerciseLog.types";
-import {
-  ExerciseSetProperties,
-  ExtractExerciseSetLog,
-} from "../exerciseSet/exerciseSet.types";
+import { ExerciseSummaryResponse } from "@repo/types/notion-training-app";
+import { fetchExerciseLogWithSets } from "../exerciseLog/exerciseLog.notion";
 
 // トレーニング種目一覧の取得
 export async function fetchExercises() {
@@ -134,116 +125,25 @@ export async function fetchExerciseSummaryLogs(
     page_size: limit,
     start_cursor: start_cursor,
   })) as unknown as ExerciseData;
-  // 直近のトレーニングログを1件のみ取得
-  const extractExerciseSetsProperties = [
-    "kg",
-    "rep",
-    "memo",
-    "exerciseNameRollup",
-  ] as const satisfies (keyof ExerciseSetProperties)[];
-  const extractExerciseProperties = [
-    "exerciseSetsRelation",
-    "rest",
-  ] as const satisfies (keyof ExerciseLogProperties)[];
-  type ExtractedExerciseLogProperties =
-    (typeof extractExerciseProperties)[number];
-  type ExtractedExerciseSetLog = ExtractExerciseSetLog<
-    (typeof extractExerciseSetsProperties)[number]
-  >;
-  const exerciseSetsDTO = (
-    data: ExtractedExerciseSetLog | null,
-  ): ExerciseSet => ({
-    exerciseId:
-      getRollupRelationIds(data?.properties.exerciseNameRollup)[0] || "",
-    createdTime: data?.created_time || "",
-    id: data?.id || "",
-    kg: data?.properties.kg.number || 0,
-    rep: data?.properties.rep.number || 0,
-    memo: data?.properties.memo.rich_text[0]?.plain_text || "",
+
+  const maxWeightSets = await fetchExerciseLogWithSets({
+    exercises,
+    sorts: [
+      {
+        property: "todayMaxWeightFormula",
+        direction: "descending",
+      },
+    ],
   });
-  // 直近のトレーニング記録を取得
-  const latestExerciseLogs = async (): Promise<ExerciseSet[]> => {
-    const exerciseLogs: ExtractExerciseLogData<ExtractedExerciseLogProperties>[] =
-      (await Promise.all(
-        exercises.results.map(async (exercise) => {
-          const queryResult = (await notionClient.dataSources.query({
-            data_source_id: process.env.NOTION_EXERCISE_LOGS_DATABASE_ID!,
-            filter: {
-              property: "trainingExerciseRelation",
-              relation: {
-                contains: exercise.id,
-              },
-            },
-            page_size: 1,
-            sorts: [
-              {
-                timestamp: "created_time",
-                direction: "descending",
-              },
-            ],
-            filter_properties: ["exerciseSetsRelation", "rest", "memo"],
-          })) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>[];
-          return queryResult;
-        }),
-      )) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>[];
-    const relationSetIds = exerciseLogs
-      .map((log) => log.results[0]?.properties.exerciseSetsRelation.relation)
-      .flat()
-      .map((relation) => relation.id);
-    // 直近のトレーニング記録の各セットデータを取得
-    const exerciseSet: ExerciseSet[] = await Promise.all(
-      relationSetIds.map(async (setId) => {
-        const setData = (await notionClient.pages.retrieve({
-          page_id: setId,
-          filter_properties: ["kg", "rep", "memo", "exerciseNameRollup"],
-        })) as unknown as ExtractedExerciseSetLog;
-        return exerciseSetsDTO(setData);
-      }),
-    );
-    return exerciseSet;
-  };
-  const goalExerciseLogs = async (): Promise<ExerciseSet[]> => {
-    const exerciseLogs: ExtractExerciseLogData<ExtractedExerciseLogProperties>[] =
-      (await Promise.all(
-        exercises.results.map(async (exercise) => {
-          const queryResult = (await notionClient.dataSources.query({
-            data_source_id: process.env.NOTION_EXERCISE_LOGS_DATABASE_ID!,
-            filter: {
-              property: "trainingExerciseRelation",
-              relation: {
-                contains: exercise.id,
-              },
-            },
-            page_size: 1,
-            sorts: [
-              {
-                property: "todayMaxWeightFormula",
-                direction: "descending",
-              },
-            ],
-            filter_properties: ["exerciseSetsRelation", "rest", "memo"],
-          })) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>;
-          return queryResult;
-        }),
-      )) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>[];
-    const relationSetIds = exerciseLogs
-      .map((log) => log.results[0]?.properties.exerciseSetsRelation.relation)
-      .flat()
-      .map((relation) => relation.id);
-    // 直近のトレーニング記録の各セットデータを取得
-    const exerciseSet: ExerciseSet[] = await Promise.all(
-      relationSetIds.map(async (setId) => {
-        const setData = (await notionClient.pages.retrieve({
-          page_id: setId,
-          filter_properties: ["kg", "rep", "memo", "exerciseNameRollup"],
-        })) as unknown as ExtractedExerciseSetLog;
-        return exerciseSetsDTO(setData);
-      }),
-    );
-    return exerciseSet;
-  };
-  const maxWeightSets = await goalExerciseLogs();
-  const latestSets = await latestExerciseLogs();
+  const latestSets = await fetchExerciseLogWithSets({
+    exercises,
+    sorts: [
+      {
+        timestamp: "created_time",
+        direction: "descending",
+      },
+    ],
+  });
 
   const responseData: ExerciseSummaryResponse = {
     data: exercises.results.map((log) => ({
@@ -262,8 +162,8 @@ export async function fetchExerciseSummaryLogs(
         Number(getRollup(log.properties.currentMaxWeightRollup, "number")) >
         (getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") ||
           0),
-      maxWeightSets: maxWeightSets.filter((set) => set.exerciseId === log.id),
-      latestSets: latestSets.filter((set) => set.exerciseId === log.id),
+      maxWeightSets: maxWeightSets.find((set) => set.exerciseId === log.id)!,
+      latestSets: latestSets.find((set) => set.exerciseId === log.id)!,
     })),
     next_cursor: exercises.next_cursor || undefined,
     has_more: exercises.has_more,
