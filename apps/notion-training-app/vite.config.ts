@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
       "@repo/ui": fileURLToPath(new URL("../../packages/ui", import.meta.url)),
       "@repo/types": fileURLToPath(
         new URL("../../packages/types", import.meta.url),

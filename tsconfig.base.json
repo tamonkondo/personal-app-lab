@@ -15,6 +15,7 @@
     "ignoreDeprecations": "6.0",
     "paths": {
       "@repo/ui": ["./packages/ui/index.ts"],
+      "@repo/icons": ["./packages/ui/icons/index.ts"],
       "@repo/ui/*": ["./packages/ui/*"],
       "@repo/types": ["./packages/types/index.ts"],
       "@repo/types/*": ["./packages/types/*"],
