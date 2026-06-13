@@ -1,6 +1,7 @@
 import {
   getFormula,
   getRollup,
+  getRollupRelationIds,
   getRollupArrayValue,
 } from "@/integrations/notion/notion.mapper";
 import notionClient from "@/integrations/notion/notion.client";
@@ -10,12 +11,16 @@ import {
   ExerciseDetailResponse,
   ExerciseResponse,
 } from "./exercise.types";
-import { ExerciseSummaryResponse } from "@repo/types/notion-training-app";
+import {
+  ExerciseSet,
+  ExerciseSummaryResponse,
+} from "@repo/types/notion-training-app";
+import { ExtractExerciseLogData } from "../exerciseLog/exerciseLog.types";
+import { ExerciseLogProperties } from "../exerciseLog/exerciseLog.types";
 import {
   ExerciseSetProperties,
-  ExtractExerciseLog,
+  ExtractExerciseSetLog,
 } from "../exerciseSet/exerciseSet.types";
-import { ExerciseLogProperties } from "../exerciseLog/exerciseLog.types";
 
 // トレーニング種目一覧の取得
 export async function fetchExercises() {
@@ -107,7 +112,7 @@ export async function fetchExerciseSummaryLogs(
           },
         },
         {
-          property: "maxGoalWeight",
+          property: "maxGoalWeightRollup",
           rollup: {
             number: {
               is_not_empty: true,
@@ -120,7 +125,7 @@ export async function fetchExerciseSummaryLogs(
       "name",
       "musclesTypes",
       "maxGoalStatusFormula",
-      "maxGoalWeight",
+      "maxGoalWeightRollup",
       "theGoalsWeightRelation",
       "maxWeightExerciseId",
       "latestExerciseId",
@@ -130,110 +135,132 @@ export async function fetchExerciseSummaryLogs(
     start_cursor: start_cursor,
   })) as unknown as ExerciseData;
   // 直近のトレーニングログを1件のみ取得
+  const extractExerciseSetsProperties = [
+    "kg",
+    "rep",
+    "memo",
+    "exerciseNameRollup",
+  ] as const satisfies (keyof ExerciseSetProperties)[];
   const extractExerciseProperties = [
     "exerciseSetsRelation",
-    "rest"
+    "rest",
   ] as const satisfies (keyof ExerciseLogProperties)[];
-  type ExtractedExerciseSetLog = ExtractExerciseLog<
-    (typeof extractExerciseProperties)[number]
+  type ExtractedExerciseLogProperties =
+    (typeof extractExerciseProperties)[number];
+  type ExtractedExerciseSetLog = ExtractExerciseSetLog<
+    (typeof extractExerciseSetsProperties)[number]
   >;
+  const exerciseSetsDTO = (
+    data: ExtractedExerciseSetLog | null,
+  ): ExerciseSet => ({
+    exerciseId:
+      getRollupRelationIds(data?.properties.exerciseNameRollup)[0] || "",
+    id: data?.id || "",
+    kg: data?.properties.kg.number || 0,
+    rep: data?.properties.rep.number || 0,
+    memo: data?.properties.memo.rich_text[0]?.plain_text || "",
+  });
+  // 直近のトレーニング記録を取得
+  const latestExerciseLogs = async (): Promise<ExerciseSet[]> => {
+    const exerciseLogs: ExtractExerciseLogData<ExtractedExerciseLogProperties>[] =
+      (await Promise.all(
+        exercises.results.map(async (exercise) => {
+          const queryResult = (await notionClient.dataSources.query({
+            data_source_id: process.env.NOTION_EXERCISE_LOGS_DATABASE_ID!,
+            filter: {
+              property: "trainingExerciseRelation",
+              relation: {
+                contains: exercise.id,
+              },
+            },
+            page_size: 1,
+            sorts: [
+              {
+                timestamp: "created_time",
+                direction: "descending",
+              },
+            ],
+            // filter_properties: ["exerciseSetsRelation", "rest", "memo"],
+          })) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>[];
+          return queryResult;
+        }),
+      )) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>[];
+    const relationSetIds = exerciseLogs
+      .map((log) => log.results[0]?.properties.exerciseSetsRelation.relation)
+      .flat()
+      .map((relation) => relation.id);
+    // 直近のトレーニング記録の各セットデータを取得
+    const exerciseSet: ExerciseSet[] = await Promise.all(
+      relationSetIds.map(async (setId) => {
+        const setData = (await notionClient.pages.retrieve({
+          page_id: setId,
+          filter_properties: ["kg", "rep", "memo", "exerciseNameRollup"],
+        })) as unknown as ExtractedExerciseSetLog;
+        return exerciseSetsDTO(setData);
+      }),
+    );
+    return exerciseSet;
+  };
+  const goalExerciseLogs = async (): Promise<ExerciseSet[]> => {
+    const exerciseLogs: ExtractExerciseLogData<ExtractedExerciseLogProperties>[] =
+      (await Promise.all(
+        exercises.results.map(async (exercise) => {
+          const queryResult = (await notionClient.dataSources.query({
+            data_source_id: process.env.NOTION_EXERCISE_LOGS_DATABASE_ID!,
+            filter: {
+              property: "trainingExerciseRelation",
+              relation: {
+                contains: exercise.id,
+              },
+            },
+            page_size: 1,
+            sorts: [
+              {
+                property: "todayMaxWeightFormula",
+                direction: "descending",
+              },
+            ],
+            filter_properties: ["exerciseSetsRelation", "rest", "memo"],
+          })) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>;
+          return queryResult;
+        }),
+      )) as unknown as ExtractExerciseLogData<ExtractedExerciseLogProperties>[];
+    const relationSetIds = exerciseLogs
+      .map((log) => log.results[0]?.properties.exerciseSetsRelation.relation)
+      .flat()
+      .map((relation) => relation.id);
+    // 直近のトレーニング記録の各セットデータを取得
+    const exerciseSet: ExerciseSet[] = await Promise.all(
+      relationSetIds.map(async (setId) => {
+        const setData = (await notionClient.pages.retrieve({
+          page_id: setId,
+          filter_properties: ["kg", "rep", "memo", "exerciseNameRollup"],
+        })) as unknown as ExtractedExerciseSetLog;
+        return exerciseSetsDTO(setData);
+      }),
+    );
+    return exerciseSet;
+  };
+  const maxWeightSets = await goalExerciseLogs();
+  const latestSets = await latestExerciseLogs();
 
-  const latestExerciseLogs = await Promise.all(
-    exercises.results.map(async (exercise) => {
-      const queryResult = (await notionClient.dataSources.query({
-        data_source_id: process.env.NOTION_EXERCISE_LOGS_DATABASE_ID!,
-        filter: {
-          property: "trainingExerciseRelation",
-          relation: {
-            contains: exercise.id,
-          },
-        },
-        page_size: 1,
-        sorts: [
-          {
-            timestamp: "created_time",
-            direction: "descending",
-          },
-        ],
-        // filter_properties: ["kg", "rep", "memo"],
-      })) as unknown as { results: ExtractedExerciseSetLog[] };
-      return queryResult;
-    }),
-  );
-  // ゴールに近いもしくは達成している種目を取得
-  // const goalExerciseLogs = await Promise.all(
-  //   exercises.results.map(async (exercise) => {
-  //     const maxWeightExerciseId = getFormula(
-  //       exercise.properties.maxWeightExerciseId,
-  //       "string",
-  //     );
-  //     if (!maxWeightExerciseId) {
-  //       return {
-  //         exerciseId: exercise.id,
-  //         log: null,
-  //       };
-  //     }
-
-  //     const goalLog = (await notionClient.pages.retrieve({
-  //       page_id: maxWeightExerciseId,
-  //       filter_properties: ["kg", "rep", "memo"],
-  //     })) as unknown as ExtractedExerciseSetLog;
-
-  //     return {
-  //       exerciseId: exercise.id,
-  //       log: goalLog,
-  //     };
-  //   }),
-  // );
-
-  // const exerciseSetsDTO = (data: ExtractedExerciseSetLog | null) => ({
-  //   id: data?.id || "",
-  //   kg: data?.properties.kg.number || 0,
-  //   rep: data?.properties.rep.number || 0,
-  //   memo: data?.properties.memo.rich_text[0]?.plain_text || "",
-  // });
-
-  // const latestByExerciseId = new Map(
-  //   latestExerciseLogs.map((item) => [item.exerciseId, item.log]),
-  // );
-  // const goalByExerciseId = new Map(
-  //   goalExerciseLogs.map((item) => [item.exerciseId, item.log]),
-  // );
-  // const responseData: ExerciseSummaryResponse = {
-  //   data: exercises.results.map((log) => ({
-  //     id: log.id,
-  //     currentMaxWeight:
-  //       Number(getRollup(log.properties.currentMaxWeightRollup, "number")) || 0,
-  //     trainingName: log.properties.name.title?.[0]?.plain_text || "",
-  //     isPr:
-  //       Number(getRollup(log.properties.currentMaxWeightRollup, "number")) >
-  //       (getRollupArrayValue(log.properties.maxGoalWeight, "number") || 0),
-  //     maxWeightSets: exerciseSetsDTO(goalByExerciseId.get(log.id) || null),
-  //     latestSets: exerciseSetsDTO(latestByExerciseId.get(log.id) || null),
-  //   })),
-  //   next_cursor: exercises.next_cursor || undefined,
-  //   has_more: exercises.has_more,
-  // };
-  return { data: latestExerciseLogs };
+  const responseData: ExerciseSummaryResponse = {
+    data: exercises.results.map((log) => ({
+      id: log.id,
+      maxGoalWeight:
+        getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") || 0,
+      currentMaxWeight:
+        Number(getRollup(log.properties.currentMaxWeightRollup, "number")) || 0,
+      trainingName: log.properties.name.title?.[0]?.plain_text || "",
+      isPr:
+        Number(getRollup(log.properties.currentMaxWeightRollup, "number")) >
+        (getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") ||
+          0),
+      maxWeightSets: maxWeightSets.filter((set) => set.exerciseId === log.id),
+      latestSets: latestSets.filter((set) => set.exerciseId === log.id),
+    })),
+    next_cursor: exercises.next_cursor || undefined,
+    has_more: exercises.has_more,
+  };
+  return responseData;
 }
-
-// id(prop("setsRollup").filter(current.prop("maxWeightFormula") == prop("currentMaxWeightRollup")).first() )
-
-// "exerciseNameRollup": {
-//       "id": "bltv",
-//       "type": "rollup",
-//       "rollup": {
-//         "type": "array",
-//         "array": [
-//           {
-//             "type": "relation",
-//             "relation": [
-//               {
-//                 "id": "172684c1-6338-8002-b527-d8f0b9a34943"
-//               }
-//             ]
-//           }
-//         ],
-//         "function": "show_original"
-//       }
-//     },

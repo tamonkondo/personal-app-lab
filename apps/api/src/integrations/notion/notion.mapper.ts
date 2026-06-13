@@ -12,6 +12,8 @@ export function isFormula<T extends NotionPropertyType>(
   type: T,
 ): property is NotionFormula<T> {
   return (
+    // リレーションを追加
+
     typeof property === "object" &&
     property !== null &&
     "type" in property &&
@@ -59,7 +61,7 @@ export function getRollup<T extends NotionPropertyType>(
   return value ?? null;
 }
 
-export function getRollupArray(property: unknown,): unknown[] | null {
+export function getRollupArray(property: unknown): unknown[] | null {
   const rollupArray = getRollup(property, "array");
   return Array.isArray(rollupArray) ? rollupArray : null;
 }
@@ -70,7 +72,24 @@ type RollupArrayItemMap = {
   date: { type: "date"; date: DateResponse | null };
   array: { type: "array"; array: unknown[] | null };
   title: { type: "title"; title: null };
+  relation: { type: "relation"; relation: { id: string }[] | null };
 };
+
+function isRollupRelationItem(
+  item: unknown,
+): item is RollupArrayItemMap["relation"] {
+  if (
+    typeof item !== "object" ||
+    item === null ||
+    !("type" in item) ||
+    item.type !== "relation" ||
+    !("relation" in item)
+  ) {
+    return false;
+  }
+
+  return item.relation === null || Array.isArray(item.relation);
+}
 
 function isRollupArrayItem<T extends NotionPropertyType>(
   item: unknown,
@@ -94,8 +113,30 @@ export function getRollupArrayValue<T extends NotionPropertyType>(
   if (!rollupArray || index < 0 || rollupArray.length <= index) return null;
   const item = rollupArray[index];
   if (!isRollupArrayItem(item, type)) return null;
-  const typedItem = item as RollupArrayItemMap[T] & Record<T, RollupValueMap[T]>;
+  const typedItem = item as RollupArrayItemMap[T] &
+    Record<T, RollupValueMap[T]>;
   return typedItem[type] ?? null;
+}
+
+export function getRollupRelationIds(
+  property: unknown,
+  index: number = 0,
+): string[] {
+  const rollupArray = getRollupArray(property);
+  if (!rollupArray || index < 0 || rollupArray.length <= index) return [];
+
+  const item = rollupArray[index];
+  if (!isRollupRelationItem(item) || !item.relation) return [];
+
+  return item.relation
+    .filter(
+      (relation): relation is { id: string } =>
+        typeof relation === "object" &&
+        relation !== null &&
+        "id" in relation &&
+        typeof relation.id === "string",
+    )
+    .map((relation) => relation.id);
 }
 
 export function getRollupFormulaDate(property: unknown): DateResponse | null {

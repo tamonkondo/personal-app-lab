@@ -44,6 +44,8 @@ export type ExtractExerciseLog<T extends keyof ExerciseLogProperties> =
   };
 
 export type ExerciseLogData = NotionResults<ExerciseLog>;
+export type ExtractExerciseLogData<T extends keyof ExerciseLogProperties> =
+  NotionResults<ExtractExerciseLog<T>>;
 
 export type ExerciseLogDetailData = NotionPageResults<ExerciseLog>;
 
@@ -59,4 +61,3 @@ export type ExerciseLogsResponse = {
     rest: number;
   }[];
 };
-

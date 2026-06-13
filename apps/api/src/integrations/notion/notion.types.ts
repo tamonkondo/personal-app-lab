@@ -46,7 +46,8 @@ export type NotionPropertyType =
   | "number"
   | "date"
   | "title"
-  | "array";
+  | "array"
+  | "relation";
 
 export type FormulaValueMap = {
   string: string | null;
@@ -54,6 +55,7 @@ export type FormulaValueMap = {
   date: DateResponse | null;
   title: null;
   array: unknown[] | null;
+  relation: unknown[] | null;
 };
 export type RollupValueMap = {
   string: string | null;
@@ -61,6 +63,7 @@ export type RollupValueMap = {
   date: DateResponse | null;
   title: null;
   array: unknown[] | null;
+  relation: unknown[] | null;
 };
 export type NotionFormula<T extends NotionPropertyType> = {
   id: string;
