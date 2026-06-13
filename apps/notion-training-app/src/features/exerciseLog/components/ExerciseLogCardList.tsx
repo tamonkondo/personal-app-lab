@@ -1,4 +1,4 @@
-import fetcher from "@/lib/fetch";
+import fetcher from "../../../lib/fetch";
 import { ExerciseSummaryResponse } from "@repo/types/notion-training-app";
 import useSWR from "swr";
 import { ExerciseLogCard } from "./ExerciseLogCard";
