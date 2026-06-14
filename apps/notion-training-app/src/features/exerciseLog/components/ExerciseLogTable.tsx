@@ -44,8 +44,8 @@ const ExerciseLogTable = ({ data }: Props) => {
                 })}
               >
                 <TableCell className="font-semibold">{index + 1}</TableCell>
-                <TableCell>{set.kg}</TableCell>
-                <TableCell>{set.rep}回</TableCell>
+                <TableCell className="lowercase">{set.kg}kg</TableCell>
+                <TableCell className="lowercase">{set.rep}rep</TableCell>
                 <TableCell className="lowercase">{set.maxWeight}kg</TableCell>
                 <TableCell className="hidden text-zinc-500 sm:block">
                   {set.memo || "-"}

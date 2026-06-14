@@ -1,15 +1,7 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@repo/ui";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui";
 import TrainingLogCardList from "../../../features/trainingLog/components/TrainingLogCardList";
 import ExerciseLogCardList from "../../../features/exerciseLog/components/ExerciseLogCardList";
+import TabPanelCard from "./TabPanelCard";
 const TabPanel = () => {
   return (
     <Tabs defaultValue="trainingLogs">
@@ -18,34 +10,18 @@ const TabPanel = () => {
         <TabsTrigger value="exerciseLogs">Exercise Logs</TabsTrigger>
       </TabsList>
       <TabsContent value="trainingLogs">
-        <Card>
-          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardTitle>Training Logs</CardTitle>
-              <p className="mt-2 text-sm text-zinc-500">
-                各種目ごとの重量、回数、メモを確認できます。
-              </p>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <TrainingLogCardList />
-          </CardContent>
-        </Card>
+        <TabPanelCard
+          title="Training Logs"
+          description="過去のトレーニング記録を確認できます。"
+          content={<TrainingLogCardList />}
+        />
       </TabsContent>
       <TabsContent value="exerciseLogs">
-        <Card>
-          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardTitle>Exercise Logs</CardTitle>
-              <p className="mt-2 text-sm text-zinc-500">
-                各種目ごとの重量、回数、メモを確認できます。
-              </p>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <ExerciseLogCardList />
-          </CardContent>
-        </Card>
+        <TabPanelCard
+          title="Exercise Logs"
+          description="各種目ごとの重量、回数、メモを確認できます。"
+          content={<ExerciseLogCardList />}
+        />
       </TabsContent>
     </Tabs>
   );

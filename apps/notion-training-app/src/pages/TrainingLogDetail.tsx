@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui";
+import { Link } from "react-router-dom";
 
 const trainingLog = {
   id: "log-1",
@@ -77,7 +78,6 @@ const exerciseDetails = [
 ];
 
 const summaryItems = [
-  { label: "時間", value: `${trainingLog.duration}分` },
   { label: "種目数", value: `${trainingLog.exerciseCount}` },
   { label: "セット数", value: `${trainingLog.sets}` },
   { label: "総重量", value: trainingLog.volume },
@@ -119,7 +119,10 @@ const TrainingLogDetail = () => {
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button variant="outline" className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto">
+              <Button
+                variant="outline"
+                className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
+              >
                 一覧へ戻る
               </Button>
               <Button className="w-full sm:w-auto">編集する</Button>
@@ -132,7 +135,7 @@ const TrainingLogDetail = () => {
             <Card key={item.label}>
               <CardContent className="p-5">
                 <p className="text-sm text-zinc-500">{item.label}</p>
-                <p className="mt-2 text-2xl font-bold">{item.value}</p>
+                <p className="mt-2 text-xl md:text-2xl font-bold">{item.value}</p>
               </CardContent>
             </Card>
           ))}
@@ -147,9 +150,15 @@ const TrainingLogDetail = () => {
                   各種目ごとの重量、回数、メモを確認できます。
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                セットを追加
-              </Button>
+              <Link to={`/training-log/${trainingLog.id}/edit`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  編集
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent className="space-y-5">
               {exerciseDetails.map((exercise) => (
@@ -172,7 +181,11 @@ const TrainingLogDetail = () => {
                         最大重量 {exercise.maxWeight} / 総重量 {exercise.volume}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                    >
                       種目詳細
                     </Button>
                   </div>
@@ -214,7 +227,9 @@ const TrainingLogDetail = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="rounded-2xl border border-yellow-100 bg-yellow-50 p-4">
-                  <p className="text-sm font-semibold text-yellow-800">PR更新</p>
+                  <p className="text-sm font-semibold text-yellow-800">
+                    PR更新
+                  </p>
                   <p className="mt-1 text-sm text-yellow-800">
                     ベンチプレス 92.5kg を記録しました。
                   </p>
@@ -243,7 +258,10 @@ const TrainingLogDetail = () => {
                 <Button variant="outline" className="w-full">
                   メモを編集
                 </Button>
-                <Button variant="outline" className="w-full text-red-600 hover:text-red-700">
+                <Button
+                  variant="outline"
+                  className="w-full text-red-600 hover:text-red-700"
+                >
                   記録を削除
                 </Button>
               </CardContent>

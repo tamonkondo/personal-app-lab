@@ -8,6 +8,7 @@ import {
   ExerciseData,
   ExerciseDetail,
   ExerciseDetailResponse,
+  ExerciseProperties,
   ExerciseResponse,
 } from "./exercise.types";
 import { ExerciseSummaryResponse } from "@repo/types/notion-training-app";
@@ -92,6 +93,16 @@ export async function fetchExerciseSummaryLogs(
   start_cursor?: string,
 ): Promise<ExerciseSummaryResponse> {
   // ゴール重量がある種目のみを取得
+  const exercisesFilterProperties = [
+    "name",
+    "musclesTypes",
+    "maxGoalStatusFormula",
+    "maxGoalWeightRollup",
+    "theGoalsWeightRelation",
+    "maxWeightExerciseId",
+    "latestExerciseId",
+    "currentMaxWeightRollup",
+  ] as const satisfies (keyof ExerciseProperties)[];
   const exercises: ExerciseData = (await notionClient.dataSources.query({
     data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
     filter: {
@@ -110,18 +121,17 @@ export async function fetchExerciseSummaryLogs(
             },
           },
         },
+        {
+          property: "maxWeightExerciseId",
+          formula: {
+            string: {
+              is_not_empty: true,
+            },
+          },
+        },
       ],
     },
-    filter_properties: [
-      "name",
-      "musclesTypes",
-      "maxGoalStatusFormula",
-      "maxGoalWeightRollup",
-      "theGoalsWeightRelation",
-      "maxWeightExerciseId",
-      "latestExerciseId",
-      "currentMaxWeightRollup",
-    ],
+    filter_properties: exercisesFilterProperties,
     page_size: limit,
     start_cursor: start_cursor,
   })) as unknown as ExerciseData;

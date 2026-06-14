@@ -9,9 +9,18 @@ export default defineConfig({
   resolve: {
     alias: {
       "@repo/ui": fileURLToPath(new URL("../../packages/ui", import.meta.url)),
-      "@repo/types": fileURLToPath(new URL("../../packages/types", import.meta.url)),
-      "@repo/schemas": fileURLToPath(new URL("../../packages/schemas", import.meta.url)),
-      "@repo/utils": fileURLToPath(new URL("../../packages/utils", import.meta.url))
-    }
-  }
+      "@repo/types": fileURLToPath(
+        new URL("../../packages/types", import.meta.url),
+      ),
+      "@repo/icons": fileURLToPath(
+        new URL("../../packages/ui/icons", import.meta.url),
+      ),
+      "@repo/schemas": fileURLToPath(
+        new URL("../../packages/schemas", import.meta.url),
+      ),
+      "@repo/utils": fileURLToPath(
+        new URL("../../packages/utils", import.meta.url),
+      ),
+    },
+  },
 });

@@ -17,7 +17,7 @@ const ExerciseLogCardList = () => {
     return (
       <AlertCard
         title="データの取得に失敗しました"
-        message="トレーニング記録のデータを取得できませんでした。時間をおいて再度お試しください。"
+        message="トレーニング種目のデータを取得できませんでした。時間をおいて再度お試しください。"
         action={<Button onClick={() => mutate()}>再読み込み</Button>}
       />
     );
@@ -26,7 +26,7 @@ const ExerciseLogCardList = () => {
     return (
       <AlertCard
         title="データが一件も存在しません"
-        message="トレーニング記録のデータが存在しません。新しい記録を追加してください。"
+        message="トレーニング種目のデータが存在しません。新しい記録を追加してください。"
         action={
           <Link to="/exercise/new">
             <Button>新しい記録を追加</Button>

@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@repo/ui";
 import { formatDate } from "@repo/utils/index";
+import { Link } from "react-router-dom";
 interface Props {
   data: TrainingLogSummary;
 }
@@ -24,46 +25,53 @@ export function TrainingLogCard({ data }: Props) {
   return (
     <article
       key={data.id}
-      className="rounded-2xl border bg-white p-5 shadow-sm"
+      className="min-w-0 rounded-2xl border bg-white p-3 md:p-5 shadow-sm"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-bold">
+            <h2 className="text-lg font-bold">
               {formatDate(data.createdTime)}
             </h2>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="w-full sm:w-auto">
-          詳細
-        </Button>
+        <Link to={`/training-log/${data.id}`}>
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            詳細
+          </Button>
+        </Link>
       </div>
 
-      <Table className="mt-5 overflow-hidden rounded-2xl border">
-        <TableHeader className=" bg-zinc-50 px-4 py-3 text-xs font-semibold text-zinc-500 uppercase sm:px-6">
-          <TableRow>
-            <TableHead>種目</TableHead>
-            <TableHead>最大重量</TableHead>
-            <TableHead>セット数</TableHead>
-            <TableHead className="">メモ</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="divide-y border-2 rounded-2xl">
-          {data.exercises.map((exercise) => (
-            <TableRow
-              key={`${data.id}-${exercise.name}`}
-              className=" border-t px-4 py-3 text-sm uppercase sm:px-6"
-            >
-              <TableCell className="font-semibold">{exercise.name}</TableCell>
-              <TableCell>{exercise.todayMaxWeight}</TableCell>
-              <TableCell>{exercise.sets}回</TableCell>
-              <TableCell className="hidden text-zinc-500 sm:block">
-                {exercise.memo || "-"}
-              </TableCell>
+      <div className="mt-5 w-full overflow-x-auto rounded-2xl border">
+        <Table className="w-full table-fixed">
+          <TableHeader className="bg-zinc-50 text-xs font-semibold text-zinc-500 uppercase">
+            <TableRow>
+              <TableHead className="w-[42%] whitespace-normal">種目</TableHead>
+              <TableHead className="w-[26%]">最大重量</TableHead>
+              <TableHead className="w-[32%]">セット数</TableHead>
+              <TableHead className="hidden w-[32%] sm:table-cell">
+                メモ
+              </TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {data.exercises.map((exercise) => (
+              <TableRow key={`${data.id}-${exercise.name}`} className="text-sm">
+                <TableCell className="font-semibold whitespace-normal wrap-break-word">
+                  {exercise.name}
+                </TableCell>
+                <TableCell className="lowercase">
+                  {exercise.todayMaxWeight}kg
+                </TableCell>
+                <TableCell className="lowercase">{exercise.sets}rep</TableCell>
+                <TableCell className="hidden text-zinc-500 whitespace-normal wrap-break-word sm:table-cell">
+                  {exercise.memo || "-"}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </article>
   );
 }

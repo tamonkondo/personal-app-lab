@@ -11,7 +11,7 @@ export type ExerciseProperties = {
   maxGoalStatusFormula: NotionProp<"maxGoalStatusFormula", "formula">;
   musclesTypes: NotionProp<"musclesTypes", "multi_select">;
   rest: NotionProp<"rest", "number">;
-  maxGoalWeightRollup: NotionProp<"maxGoalWeight", "rollup">;
+  maxGoalWeightRollup: NotionProp<"maxGoalWeightRollup", "rollup">;
   maxWeightDateFormula: NotionProp<"maxWeightDateFormula", "formula">;
   maxWeightFormula: NotionProp<"maxWeightFormula", "formula">;
   maxLogsDetailsFormula: NotionProp<"maxLogsDetailsFormula", "formula">;
@@ -23,7 +23,15 @@ export type Exercise = BasePageMeta & {
   properties: ExerciseProperties;
 };
 
+export type ExtractExercise<T extends keyof ExerciseProperties> =
+  BasePageMeta & {
+    properties: Pick<ExerciseProperties, T>;
+  };
+
 export type ExerciseData = NotionResults<Exercise>;
+export type ExtractExerciseData<T extends keyof ExerciseProperties> =
+  NotionResults<ExtractExercise<T>>;
+
 export type ExerciseResponse = {
   id: string;
   name: string;

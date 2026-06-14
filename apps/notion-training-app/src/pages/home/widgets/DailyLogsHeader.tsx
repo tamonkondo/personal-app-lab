@@ -85,7 +85,7 @@ const DailyLogsHeader = () => {
           <Card key={item.label}>
             <CardContent className="p-3 xl:p-5">
               <p className="text-sm text-zinc-500">{item.label}</p>
-              <p className="mt-2 text-2xl font-bold">{item.value}</p>
+              <p className="mt-2 text-xl md:text-2xl font-bold">{item.value}</p>
             </CardContent>
           </Card>
         ))}
