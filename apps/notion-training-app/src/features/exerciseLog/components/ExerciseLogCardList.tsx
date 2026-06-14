@@ -6,11 +6,17 @@ import { Button, Spinner } from "@repo/ui";
 import AlertCard from "../../../components/AlertCard";
 import { Link } from "react-router-dom";
 import * as Sentry from "@sentry/react";
-const ExerciseLogCardList = () => {
+const ExerciseLogCardList = ({ enabled }: { enabled: boolean }) => {
   const { data, error, isLoading, mutate } = useSWR<ExerciseSummaryResponse>(
-    `${import.meta.env.VITE_API_URL}/exercise/summary/`,
+    enabled ? `${import.meta.env.VITE_API_URL}/exercise/summary/` : null,
     fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 10_000,
+    },
   );
+
   if (isLoading) return <Spinner />;
   if (error) {
     Sentry.captureException(error);

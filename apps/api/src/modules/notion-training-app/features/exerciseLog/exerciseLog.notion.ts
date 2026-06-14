@@ -5,20 +5,14 @@ import {
   ExerciseLogsResponse,
   ExtractExerciseLog,
 } from "./exerciseLog.types";
-import {
-  getFormula,
-  getRelatonIds,
-  getRollup,
-} from "@/integrations/notion/notion.mapper";
-import {
-  ExerciseSetProperties,
-  ExtractExerciseSetLog,
-} from "../exerciseSet/exerciseSet.types";
+import { getFormula, getRollup } from "@/integrations/notion/notion.mapper";
+
 import {
   ExerciseSet,
   ExerciseLogWithSets,
 } from "@repo/types/notion-training-app";
 import { ExerciseData } from "../exercise/exercise.types";
+import notionLimit from "@/libs/notion/notionLimit";
 export async function fetchExerciseLogs(
   exerciseId: string,
   limit: number = 20,
@@ -74,83 +68,82 @@ interface FetchExerciseLogWithSetsRes {
 export async function fetchExerciseLogWithSets({
   exercises,
 }: Props): Promise<FetchExerciseLogWithSetsRes[]> {
-  const extractExerciseSetsProperties = [
-    "kg",
-    "rep",
-    "memo",
-    "exerciseNameRollup",
-    "maxWeightFormula",
-  ] as const satisfies (keyof ExerciseSetProperties)[];
   const extractExerciseProperties = [
     "exerciseSetsRelation",
     "rest",
     "trainingNameFormula",
     "memo",
+    "setsJsonFormula",
   ] as const satisfies (keyof ExerciseLogProperties)[];
   type ExtractedExerciseLogProperties =
     (typeof extractExerciseProperties)[number];
-  type ExtractedExerciseSetLog = ExtractExerciseSetLog<
-    (typeof extractExerciseSetsProperties)[number]
-  >;
-  const exerciseSetsDTO = (
-    data: ExtractedExerciseSetLog | null,
-  ): ExerciseSet => ({
-    exerciseId: getRollup(data?.properties.exerciseNameRollup, "string") || "",
-    id: data?.id || "",
-    kg: data?.properties.kg.number || 0,
-    rep: data?.properties.rep.number || 0,
-    memo: data?.properties.memo.rich_text[0]?.plain_text || "",
-    maxWeight: getFormula(data?.properties.maxWeightFormula, "number") || 0,
-    notionUrl: data?.url || "",
-  });
+
   /* exercisesからlatestExerciseLogIdとmaxWeightExerciseLogIdを抜き取り、重複を除外する */
-  const exerciseLogIds = () => {
-    const latestExerciseLogIds = exercises.results.map((exercise) =>
-      getFormula(exercise.properties.latestExerciseLogId, "string"),
-    );
-    const maxWeightExerciseLogIds = exercises.results.map((exercise) =>
-      getFormula(exercise.properties.maxWeightExerciseLogId, "string"),
-    );
-    const filteredLogIds = [
-      ...latestExerciseLogIds,
-      ...maxWeightExerciseLogIds,
+  const exerciseLogIds = () =>
+    [
+      ...new Set(
+        exercises.results.flatMap((exercise) => [
+          getFormula(exercise.properties.latestExerciseLogId, "string"),
+          getFormula(exercise.properties.maxWeightExerciseLogId, "string"),
+        ]),
+      ),
     ].filter((id): id is string => typeof id === "string" && id.length > 0);
-
-    return [...new Set(filteredLogIds)];
-  };
-
-  const exerciseLogIdToLogMap = new Map<string, ExerciseLogWithSets>();
-
-  await Promise.all(
-    exerciseLogIds().map(async (exerciseLogId) => {
-      const exerciseLog = (await notionClient.pages.retrieve({
-        page_id: exerciseLogId,
-        filter_properties: extractExerciseProperties,
-      })) as unknown as ExtractExerciseLog<ExtractedExerciseLogProperties>;
-      const relationIds = getRelatonIds(
-        exerciseLog?.properties.exerciseSetsRelation,
-      );
-      const exerciseSet: ExerciseSet[] = await Promise.all(
-        relationIds.map(async (setId) => {
-          const setData = (await notionClient.pages.retrieve({
-            page_id: setId,
-            filter_properties: extractExerciseSetsProperties,
-          })) as unknown as ExtractedExerciseSetLog;
-          return exerciseSetsDTO(setData);
-        }),
-      );
-
-      exerciseLogIdToLogMap.set(exerciseLogId, {
-        exerciseId: exerciseLog.id,
-        rest: exerciseLog.properties.rest.number || 0,
-        trainingName:
-          getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
-          "",
-        createdTime: exerciseLog.created_time,
-        sets: exerciseSet,
-        notionUrl: exerciseLog.url,
+  console.log("log count", exerciseLogIds().length);
+  const parseSetsText = (value: string | null | undefined): ExerciseSet[] => {
+    if (!value) return [];
+    return value
+      .replace(/^\[/, "")
+      .replace(/\]$/, "")
+      .split(";;")
+      .map((row) => row.replace(/^,/, "").trim())
+      .filter(Boolean)
+      .map((row) => {
+        const [kg, rep, memo, exerciseName, maxWeight] = row.split("|");
+        return {
+          exerciseId: exerciseName?.replace(/^@/, "") || "",
+          id: "",
+          kg: Number(kg) || 0,
+          rep: Number(rep) || 0,
+          memo: memo || "",
+          maxWeight: Number(maxWeight) || 0,
+          notionUrl: "",
+        };
       });
+  };
+  console.time("exerciseLogs");
+  const exerciseLogs = await Promise.all(
+    exerciseLogIds().map(async (exerciseLogId) => {
+      const exerciseLog = (await notionLimit(() =>
+        notionClient.pages.retrieve({
+          page_id: exerciseLogId,
+          filter_properties: extractExerciseProperties,
+        }),
+      )) as unknown as ExtractExerciseLog<ExtractedExerciseLogProperties>;
+
+      return {
+        exerciseLogId,
+        exerciseLog: {
+          exerciseId: exerciseLog.id,
+          rest: exerciseLog.properties.rest.number || 0,
+          trainingName:
+            getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
+            "",
+          createdTime: exerciseLog.created_time,
+          sets: parseSetsText(
+            getFormula(exerciseLog.properties.setsJsonFormula, "string"),
+          ),
+          notionUrl: exerciseLog.url,
+        },
+      };
     }),
+  );
+  console.timeEnd("exerciseLogs");
+
+  const exerciseLogIdToLogMap = new Map<string, ExerciseLogWithSets>(
+    exerciseLogs.map(({ exerciseLogId, exerciseLog }) => [
+      exerciseLogId,
+      exerciseLog,
+    ]),
   );
   // exerciseIdをキーにして、maxWeightExerciseLogとlatestExerciseLogを振り分ける
   const exerciseIdToLogsMap: Record<

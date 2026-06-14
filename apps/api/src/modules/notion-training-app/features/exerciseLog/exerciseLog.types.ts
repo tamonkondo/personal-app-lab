@@ -9,6 +9,7 @@ export interface ExerciseLogProperties {
   todayMaxWeightRollup: NotionProp<"todayMaxWeightRollup", "rollup">;
   trainingNameFormula: NotionProp<"trainingNameFormula", "formula">;
   exerciseSetsRelation: NotionProp<"exerciseSetsRelation", "relation">;
+  setsJsonFormula: NotionProp<"setsJsonFormula", "formula">;
   rest: NotionProp<"rest", "number">;
   memo: NotionProp<"memo", "rich_text">;
   trainingExercisesRelation: NotionProp<

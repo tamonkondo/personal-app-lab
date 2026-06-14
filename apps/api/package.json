@@ -20,6 +20,7 @@
     "express": "latest",
     "jsonwebtoken": "latest",
     "morgan": "^1.10.1",
+    "p-limit": "^7.3.0",
     "zod": "catalog:"
   },
   "devDependencies": {

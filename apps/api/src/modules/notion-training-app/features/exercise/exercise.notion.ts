@@ -93,6 +93,7 @@ export async function fetchExerciseSummaryLogs(
   start_cursor?: string,
 ): Promise<ExerciseSummaryResponse> {
   // ゴール重量がある種目のみを取得
+  console.time("fetchExerciseSummaryLogs");
   const exercisesFilterProperties = [
     "name",
     "musclesTypes",
@@ -170,5 +171,6 @@ export async function fetchExerciseSummaryLogs(
 
     has_more: exercises.has_more,
   };
+  console.timeEnd("fetchExerciseSummaryLogs");
   return responseData;
 }

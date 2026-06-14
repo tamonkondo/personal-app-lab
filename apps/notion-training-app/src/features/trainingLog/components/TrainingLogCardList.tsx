@@ -7,9 +7,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@repo/ui/components/ui/button";
 import AlertCard from "../../../components/AlertCard";
 import * as Sentry from "@sentry/react";
-const TrainingLogCardList = () => {
+const TrainingLogCardList = ({ enabled }: { enabled: boolean }) => {
   const { data, error, isLoading, mutate } = useSWR<TrainingLogSummaryResponse>(
-    `${import.meta.env.VITE_API_URL}/training-logs/`,
+    enabled ? `${import.meta.env.VITE_API_URL}/training-logs/` : null,
     fetcher,
   );
   if (isLoading) return <Spinner />;
