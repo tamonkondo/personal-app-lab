@@ -99,8 +99,8 @@ export async function fetchExerciseSummaryLogs(
     "maxGoalStatusFormula",
     "maxGoalWeightRollup",
     "theGoalsWeightRelation",
-    "maxWeightExerciseId",
-    "latestExerciseId",
+    "maxWeightExerciseLogId",
+    "latestExerciseLogId",
     "currentMaxWeightRollup",
   ] as const satisfies (keyof ExerciseProperties)[];
   const exercises: ExerciseData = (await notionClient.dataSources.query({
@@ -122,7 +122,7 @@ export async function fetchExerciseSummaryLogs(
           },
         },
         {
-          property: "maxWeightExerciseId",
+          property: "maxWeightExerciseLogId",
           formula: {
             string: {
               is_not_empty: true,
@@ -136,23 +136,8 @@ export async function fetchExerciseSummaryLogs(
     start_cursor: start_cursor,
   })) as unknown as ExerciseData;
 
-  const maxWeightSets = await fetchExerciseLogWithSets({
+  const exerciseLogWithSets = await fetchExerciseLogWithSets({
     exercises,
-    sorts: [
-      {
-        property: "todayMaxWeightFormula",
-        direction: "descending",
-      },
-    ],
-  });
-  const latestSets = await fetchExerciseLogWithSets({
-    exercises,
-    sorts: [
-      {
-        timestamp: "created_time",
-        direction: "descending",
-      },
-    ],
   });
 
   const responseData: ExerciseSummaryResponse = {
@@ -172,8 +157,11 @@ export async function fetchExerciseSummaryLogs(
         Number(getRollup(log.properties.currentMaxWeightRollup, "number")) >
         (getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") ||
           0),
-      maxWeightSets: maxWeightSets.find((set) => set.exerciseId === log.id)!,
-      latestSets: latestSets.find((set) => set.exerciseId === log.id)!,
+      maxWeightSets: exerciseLogWithSets.find(
+        (set) => set.exerciseId === log.id,
+      )?.maxWeightSets,
+      latestSets: exerciseLogWithSets.find((set) => set.exerciseId === log.id)!
+        .latestSets,
     })),
     next_cursor: exercises.next_cursor || undefined,
     has_more: exercises.has_more,

@@ -136,8 +136,9 @@ export async function fetchTrainingLogDetail(id: string) {
       name:
         getFormula(exerciseLog.properties.trainingNameFormula, "string") || "",
       todayMaxWeight:
-        Number(getRollup(exerciseLog.properties.todayMaxWeightRollup, "number")) ||
-        0,
+        Number(
+          getRollup(exerciseLog.properties.todayMaxWeightRollup, "number"),
+        ) || 0,
       rest: exerciseLog.properties.rest.number || 0,
       memo: getTitle(exerciseLog.properties.memo),
       sets: exerciseSets
