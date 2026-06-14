@@ -103,22 +103,25 @@ export async function fetchExerciseLogWithSets({
     maxWeight: getFormula(data?.properties.maxWeightFormula, "number") || 0,
     notionUrl: data?.url || "",
   });
-  /* exercisesからlatestExerciseLogIdとmaxWeightExerciseLogIdを抜き取る*/
+  /* exercisesからlatestExerciseLogIdとmaxWeightExerciseLogIdを抜き取り、重複を除外する */
   const exerciseLogIds = () => {
-    // latestExerciseLogId
     const latestExerciseLogIds = exercises.results.map((exercise) =>
       getFormula(exercise.properties.latestExerciseLogId, "string"),
     );
-    // maxWeightExerciseLogId
     const maxWeightExerciseLogIds = exercises.results.map((exercise) =>
       getFormula(exercise.properties.maxWeightExerciseLogId, "string"),
     );
-    return [...latestExerciseLogIds, ...maxWeightExerciseLogIds].filter(
-      (id): id is string => typeof id === "string" && id.length > 0,
-    );
+    const filteredLogIds = [
+      ...latestExerciseLogIds,
+      ...maxWeightExerciseLogIds,
+    ].filter((id): id is string => typeof id === "string" && id.length > 0);
+
+    return [...new Set(filteredLogIds)];
   };
 
-  const exerciseLogs: ExerciseLogWithSets[] = (await Promise.all(
+  const exerciseLogIdToLogMap = new Map<string, ExerciseLogWithSets>();
+
+  await Promise.all(
     exerciseLogIds().map(async (exerciseLogId) => {
       const exerciseLog = (await notionClient.pages.retrieve({
         page_id: exerciseLogId,
@@ -136,8 +139,9 @@ export async function fetchExerciseLogWithSets({
           return exerciseSetsDTO(setData);
         }),
       );
-      return {
-        exerciseId: exerciseLogId,
+
+      exerciseLogIdToLogMap.set(exerciseLogId, {
+        exerciseId: exerciseLog.id,
         rest: exerciseLog.properties.rest.number || 0,
         trainingName:
           getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
@@ -145,9 +149,9 @@ export async function fetchExerciseLogWithSets({
         createdTime: exerciseLog.created_time,
         sets: exerciseSet,
         notionUrl: exerciseLog.url,
-      };
+      });
     }),
-  )) as unknown as ExerciseLogWithSets[];
+  );
   // exerciseIdをキーにして、maxWeightExerciseLogとlatestExerciseLogを振り分ける
   const exerciseIdToLogsMap: Record<
     string,
@@ -167,12 +171,12 @@ export async function fetchExerciseLogWithSets({
       "string",
     );
     exerciseIdToLogsMap[exerciseId] = {
-      maxWeightLog:
-        exerciseLogs.find((log) => log.exerciseId === maxWeightExerciseLogId) ||
-        null,
-      latestLog:
-        exerciseLogs.find((log) => log.exerciseId === latestExerciseLogId) ||
-        null,
+      maxWeightLog: maxWeightExerciseLogId
+        ? exerciseLogIdToLogMap.get(maxWeightExerciseLogId) || null
+        : null,
+      latestLog: latestExerciseLogId
+        ? exerciseLogIdToLogMap.get(latestExerciseLogId) || null
+        : null,
     };
   });
   const responseData: FetchExerciseLogWithSetsRes[] = Object.entries(

@@ -61,8 +61,8 @@ export type ExerciseSummary = {
   trainingName: string;
   isPr: boolean;
   musclesTypes: string[];
-  maxWeightSets: ExerciseLogWithSets;
-  latestSets: ExerciseLogWithSets;
+  maxWeightSets?: ExerciseLogWithSets;
+  latestSets?: ExerciseLogWithSets;
 };
 
 export interface ExerciseSummaryResponse extends BaseMeta {

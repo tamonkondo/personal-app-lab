@@ -140,30 +140,34 @@ export async function fetchExerciseSummaryLogs(
     exercises,
   });
 
-  const responseData: ExerciseSummaryResponse = {
-    data: exercises.results.map((log) => ({
-      id: log.id,
-      musclesTypes:
-        log.properties.musclesTypes.multi_select?.map(
-          (muscle) => muscle.name,
-        ) || [],
-      trainingName: log.properties.name.title?.[0]?.plain_text || "",
-      maxGoalWeight:
-        getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") || 0,
-      currentMaxWeight:
-        Number(getRollup(log.properties.currentMaxWeightRollup, "number")) || 0,
+  const exerciseLogWithSetsMap = new Map(
+    exerciseLogWithSets.map((log) => [log.exerciseId, log]),
+  );
 
-      isPr:
-        Number(getRollup(log.properties.currentMaxWeightRollup, "number")) >
-        (getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") ||
-          0),
-      maxWeightSets: exerciseLogWithSets.find(
-        (set) => set.exerciseId === log.id,
-      )?.maxWeightSets,
-      latestSets: exerciseLogWithSets.find((set) => set.exerciseId === log.id)!
-        .latestSets,
-    })),
+  const responseData: ExerciseSummaryResponse = {
+    data: exercises.results.map((log) => {
+      const logWithSets = exerciseLogWithSetsMap.get(log.id);
+      const maxGoalWeight =
+        getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") || 0;
+      const currentMaxWeight =
+        Number(getRollup(log.properties.currentMaxWeightRollup, "number")) || 0;
+      return {
+        id: log.id,
+        musclesTypes:
+          log.properties.musclesTypes.multi_select?.map(
+            (muscle) => muscle.name,
+          ) || [],
+        trainingName: log.properties.name.title?.[0]?.plain_text || "",
+        maxGoalWeight,
+        currentMaxWeight,
+        isPr: currentMaxWeight > maxGoalWeight,
+        maxWeightSets: logWithSets?.maxWeightSets,
+        latestSets: logWithSets?.latestSets,
+      };
+    }),
+
     next_cursor: exercises.next_cursor || undefined,
+
     has_more: exercises.has_more,
   };
   return responseData;
