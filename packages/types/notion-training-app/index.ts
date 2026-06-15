@@ -1,4 +1,4 @@
-import { BaseMeta } from "../index";
+import { ApiResponse, BaseMeta } from "../index";
 /**
  *  共通のAPIを定義する。
  * APIの出入口
@@ -10,13 +10,7 @@ import { BaseMeta } from "../index";
 //
 
 // 最新のトレーニングログを取得するAPI
-export interface NewestTrainingLog {
-  id: string;
-  createdTime: string;
-  bodyWeight: number;
-  memo: string;
-  trainingExercisesRelation: string[];
-}
+
 // トレーニングログ
 export interface TrainingLogSummary {
   id: string;
@@ -33,6 +27,13 @@ export interface TrainingLogSummary {
 }
 export type TrainingLogSummaryResponse = BaseMeta & {
   data: TrainingLogSummary[];
+};
+export type TrainingLogDetailResponse = {
+  id: string;
+  createdTime: string;
+  bodyWeight: number;
+  memo: string;
+  exercises: ExerciseLogWithSets[];
 };
 
 export type ExerciseSet = {
@@ -68,3 +69,15 @@ export type ExerciseSummary = {
 export interface ExerciseSummaryResponse extends BaseMeta {
   data: ExerciseSummary[];
 }
+
+export type NewestTrainingLog = {
+  id: string;
+  createdTime: string;
+  bodyWeight: number;
+  memo: string;
+  exerciseCount: number;
+  totalWeight: number;
+};
+
+export type NewestTrainingLogSummaryResponse =
+  ApiResponse<NewestTrainingLog | null>;

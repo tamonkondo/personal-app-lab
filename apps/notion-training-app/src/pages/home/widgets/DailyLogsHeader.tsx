@@ -1,20 +1,11 @@
 import { Badge, Button, Card, CardContent } from "@repo/ui";
-import { ApiResponse } from "@repo/types/index";
 import * as Sentry from "@sentry/react";
 import useSWR from "swr";
 import fetcher from "../../../lib/fetch";
 import DailyLogsHeaderSkeleton from "./DailyLogsHeaderSkeleton";
 import { formatDate } from "@repo/utils";
-
-type NewestTrainingLog = {
-  createdTime: string;
-  bodyWeight: number;
-  memo: string;
-  exerciseCount: number;
-  totalWeight: number;
-};
-
-type NewestTrainingLogSummaryResponse = ApiResponse<NewestTrainingLog | null>;
+import { Link } from "react-router-dom";
+import { NewestTrainingLogSummaryResponse } from "@repo/types/notion-training-app";
 
 const DailyLogsHeader = () => {
   const {
@@ -74,9 +65,9 @@ const DailyLogsHeader = () => {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="w-full sm:w-auto" variant="outline">
-              編集する
-            </Button>
+            <Link to={`/training-logs/${newestLog.id}`}>
+              <Button className="w-full sm:w-auto">詳細</Button>
+            </Link>
           </div>
         </div>
       </section>

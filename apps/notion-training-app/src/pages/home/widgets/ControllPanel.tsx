@@ -1,21 +1,25 @@
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@repo/ui";
+import { Link } from "react-router-dom";
 const ControllPanel = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>操作</CardTitle>
+        <CardTitle>Actions</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <Button className="w-full">同じ内容で記録作成</Button>
-        <Button variant="outline" className="w-full">
-          メモを編集
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full text-red-600 hover:text-red-700"
-        >
-          記録を削除
-        </Button>
+      <CardContent className="grid gap-3">
+        <Link to="/training-logs/new" viewTransition>
+          <Button className="w-full">New Training Record</Button>
+        </Link>
+        <Link to="/training-exercises/new" viewTransition>
+          <Button variant="outline" className="w-full">
+            New Training Exercise
+          </Button>
+        </Link>
+        <Link to="/goal-weights/new" viewTransition>
+          <Button variant="outline" className="w-full">
+            New Goal Weight of Exercise
+          </Button>
+        </Link>
       </CardContent>
     </Card>
   );
