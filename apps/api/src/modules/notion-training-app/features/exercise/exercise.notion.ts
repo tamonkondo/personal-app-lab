@@ -1,92 +1,11 @@
 import {
-  getFormula,
   getRollup,
   getRollupArrayValue,
 } from "@/integrations/notion/notion.mapper";
 import notionClient from "@/integrations/notion/notion.client";
-import {
-  ExerciseData,
-  ExerciseDetail,
-  ExerciseDetailResponse,
-  ExerciseProperties,
-  ExerciseResponse,
-} from "./exercise.types";
+import { ExerciseData, ExerciseProperties } from "./exercise.types";
 import { ExerciseSummaryResponse } from "@repo/types/notion-training-app";
 import { fetchExerciseLogWithSets } from "../exerciseLog/exerciseLog.notion";
-
-// トレーニング種目一覧の取得
-export async function fetchExercises() {
-  const exercises: ExerciseData = (await notionClient.dataSources.query({
-    data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
-    filter_properties: [
-      "name",
-      "maxGoalWeightFormula",
-      "currentMaxWeightRollup",
-      "maxGoalStatusFormula",
-      "musclesTypes",
-    ],
-  })) as unknown as ExerciseData;
-
-  const responseData: ExerciseResponse[] = exercises.results.map(
-    (exercise) => ({
-      id: exercise.id,
-      name: exercise.properties.name.title?.[0]?.plain_text || "",
-      maxGoalWeight:
-        Number(
-          getFormula(exercise.properties.maxGoalWeightFormula, "number"),
-        ) || 0,
-      currentMaxWeight:
-        Number(
-          getRollup(exercise.properties.currentMaxWeightRollup, "number"),
-        ) || 0,
-      maxGoalStatus:
-        getFormula(exercise.properties.maxGoalStatusFormula, "string") || "",
-      musclesTypes:
-        exercise.properties.musclesTypes.multi_select?.map(
-          (muscle) => muscle.name,
-        ) || [],
-    }),
-  );
-  return responseData;
-}
-// トレーニング種目の取得
-export async function fetchExerciseDetail(id: string) {
-  const exercise: ExerciseDetail = (await notionClient.pages.retrieve({
-    page_id: id,
-    filter_properties: [
-      "name",
-      "maxGoalWeightFormula",
-      "currentMaxWeightRollup",
-      "maxGoalStatusFormula",
-      "musclesTypes",
-      "trainingRecordRelation",
-      "theGoalsWeightRelation",
-    ],
-  })) as unknown as ExerciseDetail;
-  const responseData: ExerciseDetailResponse = {
-    id: exercise.id,
-    name: exercise.properties.name.title?.[0]?.plain_text || "",
-    maxGoalWeight:
-      Number(getFormula(exercise.properties.maxGoalWeightFormula, "number")) ||
-      0,
-    currentMaxWeight:
-      Number(getRollup(exercise.properties.currentMaxWeightRollup, "number")) ||
-      0,
-    maxGoalStatus:
-      getFormula(exercise.properties.maxGoalStatusFormula, "string") || "",
-    musclesTypes:
-      exercise.properties.musclesTypes.multi_select?.map(
-        (muscle) => muscle.name,
-      ) || [],
-    trainingRecordIds:
-      exercise.properties.trainingRecordRelation.relation?.map(
-        (relation) => relation.id,
-      ) || [],
-    theGoalsWeightId:
-      exercise.properties.theGoalsWeightRelation.relation?.[0]?.id || null,
-  };
-  return responseData;
-}
 
 export async function fetchExerciseSummaryLogs(
   limit: number = 7,
@@ -97,9 +16,7 @@ export async function fetchExerciseSummaryLogs(
   const exercisesFilterProperties = [
     "name",
     "musclesTypes",
-    "maxGoalStatusFormula",
     "maxGoalWeightRollup",
-    "theGoalsWeightRelation",
     "maxWeightExerciseLogId",
     "latestExerciseLogId",
     "currentMaxWeightRollup",
@@ -148,6 +65,9 @@ export async function fetchExerciseSummaryLogs(
   const responseData: ExerciseSummaryResponse = {
     data: exercises.results.map((log) => {
       const logWithSets = exerciseLogWithSetsMap.get(log.id);
+      if (!logWithSets) {
+        throw new Error(`Exercise log summary not found: ${log.id}`);
+      }
       const maxGoalWeight =
         getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") || 0;
       const currentMaxWeight =
@@ -162,8 +82,8 @@ export async function fetchExerciseSummaryLogs(
         maxGoalWeight,
         currentMaxWeight,
         isPr: currentMaxWeight > maxGoalWeight,
-        maxWeightSets: logWithSets?.maxWeightSets,
-        latestSets: logWithSets?.latestSets,
+        maxWeightSets: logWithSets.maxWeightSets,
+        latestSets: logWithSets.latestSets,
       };
     }),
 

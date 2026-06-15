@@ -13,7 +13,6 @@ export type TrainingLog = BasePageMeta & {
     >;
     createdTime: NotionProp<"createdTime", "created_time">;
     bodyWeight: NotionProp<"bodyWeight", "number">;
-    name: NotionProp<"name", "title">;
   };
 };
 export type TrainingLogData = NotionResults<TrainingLog>;

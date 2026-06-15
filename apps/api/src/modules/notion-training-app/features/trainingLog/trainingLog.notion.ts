@@ -9,7 +9,6 @@ import {
 import { TrainingLogData } from "./trainingLog.types";
 import { ExerciseSetWeightData } from "../exerciseSet/exerciseSet.types";
 import {
-  ExerciseLogData,
   ExerciseLogProperties,
   ExtractExerciseLog,
 } from "../exerciseLog/exerciseLog.types";
@@ -92,10 +91,6 @@ export async function fetchTrainingLogs(
   };
   return responseData;
 }
-// トレーニングログの詳細を取得
-export async function fetchTrainingLogDetail(id: string) {
-
-}
 // 最新のトレーニングログを1件取得するクエリ
 export async function fetchNewestTrainingLog(): Promise<NewestTrainingLog> {
   /**
@@ -119,14 +114,15 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLog> {
   // リレーションですべてのトレーニング種目を取得するために、最新のトレーニングログのIDを取得
   const relationIds = getRelatonIds(log.properties.trainingExercisesRelation);
   // 最新のトレーニングログのIDをもとに、リレーションでつながっているトレーニング種目をすべて取得
-  const exerciseLogs: ExerciseLogData[] = (await Promise.all(
-    relationIds?.map((id) =>
-      notionClient.pages.retrieve({
-        page_id: id,
-        filter_properties: ["exerciseSetsRelation"],
-      }),
-    ) || [],
-  )) as unknown as ExerciseLogData[];
+  const exerciseLogs: ExtractExerciseLog<"exerciseSetsRelation">[] =
+    (await Promise.all(
+      relationIds?.map((id) =>
+        notionClient.pages.retrieve({
+          page_id: id,
+          filter_properties: ["exerciseSetsRelation"],
+        }),
+      ) || [],
+    )) as unknown as ExtractExerciseLog<"exerciseSetsRelation">[];
   const exerciseSetsRelationIds = exerciseLogs.flatMap(
     (exerciseLog) =>
       getRelatonIds(exerciseLog.properties.exerciseSetsRelation) || [],
