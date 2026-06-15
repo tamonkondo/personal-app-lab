@@ -3,7 +3,7 @@ import {
   NotionProp,
 } from "@/integrations/notion/notion.types";
 
-export interface ExerciseLogProperties {
+export interface NotionExerciseLogProperties {
   todayMaxWeightRollup: NotionProp<"todayMaxWeightRollup", "rollup">;
   trainingNameFormula: NotionProp<"trainingNameFormula", "formula">;
   exerciseSetsRelation: NotionProp<"exerciseSetsRelation", "relation">;
@@ -12,7 +12,9 @@ export interface ExerciseLogProperties {
   memo: NotionProp<"memo", "rich_text">;
 }
 
-export type ExtractExerciseLog<T extends keyof ExerciseLogProperties> =
+export type NotionExerciseLogPage<
+  T extends keyof NotionExerciseLogProperties,
+> =
   BasePageMeta & {
-    properties: Pick<ExerciseLogProperties, T>;
+    properties: Pick<NotionExerciseLogProperties, T>;
   };

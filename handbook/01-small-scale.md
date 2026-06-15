@@ -1,5 +1,7 @@
 # 01. 小規模時の型定義と構成
 
+> 対象: 開発者
+
 ## 結論
 
 小規模では、最初から `domain`, `application`, `infra`, `presentation` を厳密に分けなくてよい。

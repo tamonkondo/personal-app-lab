@@ -3,10 +3,10 @@ import {
   NotionProp,
 } from "@/integrations/notion/notion.types";
 
-type ExerciseSetWeightProperties = {
+type NotionExerciseSetWeightProperties = {
   kg: NotionProp<"kg", "number">;
   rep: NotionProp<"rep", "number">;
 };
 
-export type ExerciseSetWeightData =
-  NotionPageResults<ExerciseSetWeightProperties>;
+export type NotionExerciseSetWeightPage =
+  NotionPageResults<NotionExerciseSetWeightProperties>;

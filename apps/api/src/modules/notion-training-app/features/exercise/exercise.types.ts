@@ -4,7 +4,7 @@ import {
   NotionResults,
 } from "@/integrations/notion/notion.types";
 
-export type ExerciseProperties = {
+export type NotionExerciseProperties = {
   name: NotionProp<"name", "title">;
   currentMaxWeightRollup: NotionProp<"currentMaxWeightRollup", "rollup">;
   musclesTypes: NotionProp<"musclesTypes", "multi_select">;
@@ -12,8 +12,8 @@ export type ExerciseProperties = {
   maxWeightExerciseLogId: NotionProp<"maxWeightExerciseLogId", "formula">;
   latestExerciseLogId: NotionProp<"latestExerciseLogId", "formula">;
 };
-export type Exercise = BasePageMeta & {
-  properties: ExerciseProperties;
+export type NotionExercisePage = BasePageMeta & {
+  properties: NotionExerciseProperties;
 };
 
-export type ExerciseData = NotionResults<Exercise>;
+export type NotionExerciseQueryResult = NotionResults<NotionExercisePage>;

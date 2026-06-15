@@ -1,4 +1,4 @@
-import { ExerciseLogWithSets } from "@repo/types/notion-training-app";
+import type { ExerciseLogWithSetsItemResponse } from "@repo/types/notion-training-app";
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { formatDate } from "@repo/utils";
 
 interface Props {
-  data: ExerciseLogWithSets;
+  data: ExerciseLogWithSetsItemResponse;
 }
 const ExerciseLogTable = ({ data }: Props) => {
   // setsのmaxWeightが一番大きいidを取得

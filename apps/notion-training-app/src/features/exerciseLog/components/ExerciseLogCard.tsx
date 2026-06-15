@@ -1,4 +1,4 @@
-import { ExerciseSummary } from "@repo/types/notion-training-app";
+import type { ExerciseSummaryItemResponse } from "@repo/types/notion-training-app";
 import {
   Badge,
   Button,
@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import ExerciseLogTable from "./ExerciseLogTable";
 
 interface Props {
-  data: ExerciseSummary;
+  data: ExerciseSummaryItemResponse;
 }
 export function ExerciseLogCard({ data }: Props) {
   return (

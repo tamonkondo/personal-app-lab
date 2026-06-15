@@ -6,7 +6,7 @@
  * - メモ
  * - 遷移ボタン
  * */
-import { TrainingLogSummary } from "@repo/types/notion-training-app";
+import type { TrainingLogSummaryItemResponse } from "@repo/types/notion-training-app";
 import {
   Button,
   Table,
@@ -19,7 +19,7 @@ import {
 import { formatDate } from "@repo/utils/index";
 import { Link } from "react-router-dom";
 interface Props {
-  data: TrainingLogSummary;
+  data: TrainingLogSummaryItemResponse;
 }
 export function TrainingLogCard({ data }: Props) {
   return (

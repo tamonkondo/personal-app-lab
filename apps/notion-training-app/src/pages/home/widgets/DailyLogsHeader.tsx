@@ -5,14 +5,14 @@ import fetcher from "../../../lib/fetch";
 import DailyLogsHeaderSkeleton from "./DailyLogsHeaderSkeleton";
 import { formatDate } from "@repo/utils";
 import { Link } from "react-router-dom";
-import { NewestTrainingLogSummaryResponse } from "@repo/types/notion-training-app";
+import type { NewestTrainingLogResponse } from "@repo/types/notion-training-app";
 
 const DailyLogsHeader = () => {
   const {
     data: newestLogData,
     error,
     isLoading,
-  } = useSWR<NewestTrainingLogSummaryResponse>(
+  } = useSWR<NewestTrainingLogResponse>(
     `${import.meta.env.VITE_API_URL}/training-logs/newest`,
     fetcher,
   );

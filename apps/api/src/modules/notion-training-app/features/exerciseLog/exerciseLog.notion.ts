@@ -1,25 +1,25 @@
 import notionClient from "@/integrations/notion/notion.client";
-import {
-  ExerciseLogProperties,
-  ExtractExerciseLog,
+import type {
+  NotionExerciseLogPage,
+  NotionExerciseLogProperties,
 } from "./exerciseLog.types";
 import { getFormula } from "@/integrations/notion/notion.mapper";
 
-import {
-  ExerciseSet,
-  ExerciseLogWithSets,
+import type {
+  ExerciseLogWithSetsItemResponse,
+  ExerciseSetItemResponse,
 } from "@repo/types/notion-training-app";
-import { ExerciseData } from "../exercise/exercise.types";
+import type { NotionExerciseQueryResult } from "../exercise/exercise.types";
 import notionLimit from "@/libs/notion/notionLimit";
 
 interface Props {
-  exercises: ExerciseData;
+  exercises: NotionExerciseQueryResult;
 }
 
 interface FetchExerciseLogWithSetsRes {
   exerciseId: string;
-  maxWeightSets: ExerciseLogWithSets;
-  latestSets: ExerciseLogWithSets;
+  maxWeightSets: ExerciseLogWithSetsItemResponse;
+  latestSets: ExerciseLogWithSetsItemResponse;
 }
 
 export async function fetchExerciseLogWithSets({
@@ -29,7 +29,7 @@ export async function fetchExerciseLogWithSets({
     "rest",
     "trainingNameFormula",
     "setsJsonFormula",
-  ] as const satisfies (keyof ExerciseLogProperties)[];
+  ] as const satisfies (keyof NotionExerciseLogProperties)[];
   type ExtractedExerciseLogProperties =
     (typeof extractExerciseProperties)[number];
 
@@ -44,7 +44,9 @@ export async function fetchExerciseLogWithSets({
       ),
     ].filter((id): id is string => typeof id === "string" && id.length > 0);
   console.log("log count", exerciseLogIds().length);
-  const parseSetsText = (value: string | null | undefined): ExerciseSet[] => {
+  const parseSetsText = (
+    value: string | null | undefined,
+  ): ExerciseSetItemResponse[] => {
     if (!value) return [];
     return value
       .replace(/^\[/, "")
@@ -73,7 +75,7 @@ export async function fetchExerciseLogWithSets({
           page_id: exerciseLogId,
           filter_properties: extractExerciseProperties,
         }),
-      )) as unknown as ExtractExerciseLog<ExtractedExerciseLogProperties>;
+      )) as unknown as NotionExerciseLogPage<ExtractedExerciseLogProperties>;
 
       return {
         exerciseLogId,
@@ -94,7 +96,10 @@ export async function fetchExerciseLogWithSets({
   );
   console.timeEnd("exerciseLogs");
 
-  const exerciseLogIdToLogMap = new Map<string, ExerciseLogWithSets>(
+  const exerciseLogIdToLogMap = new Map<
+    string,
+    ExerciseLogWithSetsItemResponse
+  >(
     exerciseLogs.map(({ exerciseLogId, exerciseLog }) => [
       exerciseLogId,
       exerciseLog,
@@ -104,8 +109,8 @@ export async function fetchExerciseLogWithSets({
   const exerciseIdToLogsMap: Record<
     string,
     {
-      maxWeightLog: ExerciseLogWithSets | null;
-      latestLog: ExerciseLogWithSets | null;
+      maxWeightLog: ExerciseLogWithSetsItemResponse | null;
+      latestLog: ExerciseLogWithSetsItemResponse | null;
     }
   > = {};
   exercises.results.forEach((exercise) => {

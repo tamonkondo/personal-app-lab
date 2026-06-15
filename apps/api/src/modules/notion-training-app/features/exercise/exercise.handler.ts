@@ -1,4 +1,5 @@
 import { asyncHandler } from "@/libs/asyncHandler";
+import type { ExerciseSummaryResponse } from "@repo/types/notion-training-app";
 import * as fetches from "./exercise.notion";
 
 export const getExerciseSummaryLogs = asyncHandler(
@@ -9,11 +10,10 @@ export const getExerciseSummaryLogs = asyncHandler(
       limit ? Number(limit) : undefined,
       start_cursor,
     );
-    const meta = {
-      next_cursor: exerciseSummaryLogs.next_cursor,
-      has_more: exerciseSummaryLogs.has_more,
+    const response: ExerciseSummaryResponse = {
+      message: "getExerciseSummaryLogs",
+      ...exerciseSummaryLogs,
     };
-    const data = exerciseSummaryLogs.data;
-    res.status(200).json({ message: "getExerciseSummaryLogs", data, meta });
+    res.status(200).json(response);
   },
 );

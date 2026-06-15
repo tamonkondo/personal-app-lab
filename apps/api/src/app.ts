@@ -5,7 +5,7 @@ import morgan from "morgan";
 import "./libs/sentry";
 import { errorHandler } from "./middleware/errorHandler";
 import { healthRouter } from "./routes/health.routes";
-import { notionRouter } from "./routes/notion.routes";
+
 import { notionTrainingAppRouter } from "./routes/notion-training-app.routes";
 import * as Sentry from "@sentry/node";
 
@@ -41,5 +41,5 @@ app.use(errorHandler);
 app.use("/api/health", healthRouter);
 
 // Notion関連のエンドポイント
-app.use("/api/notion", notionRouter);
+
 app.use("/api/notion-training-app", notionTrainingAppRouter);

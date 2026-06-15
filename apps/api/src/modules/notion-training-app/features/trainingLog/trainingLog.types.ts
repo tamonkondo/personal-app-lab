@@ -4,7 +4,7 @@ import {
   NotionResults,
 } from "@/integrations/notion/notion.types";
 
-export type TrainingLog = BasePageMeta & {
+export type NotionTrainingLogPage = BasePageMeta & {
   properties: {
     memo: NotionProp<"memo", "rich_text">;
     trainingExercisesRelation: NotionProp<
@@ -15,4 +15,5 @@ export type TrainingLog = BasePageMeta & {
     bodyWeight: NotionProp<"bodyWeight", "number">;
   };
 };
-export type TrainingLogData = NotionResults<TrainingLog>;
+export type NotionTrainingLogQueryResult =
+  NotionResults<NotionTrainingLogPage>;

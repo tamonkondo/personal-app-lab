@@ -9,7 +9,11 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export type BaseMeta = {
+export type PaginationMetaResponse = {
   has_more: boolean;
   next_cursor?: string;
+};
+
+export type PaginatedResponse<T> = ApiResponse<T[]> & {
+  meta: PaginationMetaResponse;
 };

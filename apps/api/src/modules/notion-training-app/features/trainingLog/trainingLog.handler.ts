@@ -1,4 +1,8 @@
 import { asyncHandler } from "@/libs/asyncHandler";
+import type {
+  NewestTrainingLogResponse,
+  TrainingLogSummaryResponse,
+} from "@repo/types/notion-training-app";
 import * as fetches from "./trainingLog.notion";
 
 // トレーニングログ一覧の取得エンドポイント
@@ -9,12 +13,11 @@ export const getTrainingLogs = asyncHandler(
       cursor,
       limit ? Number(limit) : undefined,
     );
-    const meta = {
-      next_cursor: trainingLogs.next_cursor,
-      has_more: trainingLogs.has_more,
+    const response: TrainingLogSummaryResponse = {
+      message: "getTrainingLogs",
+      ...trainingLogs,
     };
-    const data = trainingLogs.data;
-    res.status(200).json({ message: "getTrainingLogs", data, meta });
+    res.status(200).json(response);
   },
 );
 
@@ -22,8 +25,9 @@ export const getTrainingLogs = asyncHandler(
 export const getNewestTrainingLog = asyncHandler(async (_, res) => {
   // idがない場合は今日の日付を反映
   const trainingLog = await fetches.fetchNewestTrainingLog();
-  res.status(200).json({
+  const response: NewestTrainingLogResponse = {
     message: "getNewestTrainingLog",
     data: trainingLog,
-  });
+  };
+  res.status(200).json(response);
 });

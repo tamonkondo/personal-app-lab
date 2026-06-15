@@ -1,5 +1,7 @@
 # 06. Sentry 導入手順（Express + React）
 
+> 対象: 開発者
+
 このドキュメントは、この monorepo に Sentry を導入するための実践手順です。
 
 - API: `apps/api`（Express）

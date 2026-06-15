@@ -24,6 +24,11 @@ React + Vite の複数アプリと Express API を pnpm workspace で管理す�
 - APIはtsupでESMバンドル
 - shadcn/uiは `packages/ui` に集約
 
+## Documentation
+
+- [`handbook/`](./handbook/): 開発者向けの設計資料、手順、命名規約
+- [`docs/`](./docs/): AIエージェント向けのプロジェクトコンテキスト
+
 ## Scripts
 
 ```bash
