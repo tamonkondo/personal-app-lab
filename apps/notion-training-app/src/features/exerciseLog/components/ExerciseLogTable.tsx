@@ -15,10 +15,11 @@ interface Props {
 }
 const ExerciseLogTable = ({ data }: Props) => {
   // setsのmaxWeightが一番大きいidを取得
+
   const maxWeightSet = data.sets.reduce((maxSet, currentSet) => {
     return currentSet.maxWeight > maxSet.maxWeight ? currentSet : maxSet;
   }, data.sets[0]);
-  console.log("maxWeightSet", maxWeightSet.id);
+  console.log("maxWeightSet", data);
   return (
     <>
       {" "}
@@ -38,7 +39,7 @@ const ExerciseLogTable = ({ data }: Props) => {
           <TableBody className="divide-y border-2 rounded-2xl">
             {data.sets.map((set, index) => (
               <TableRow
-                key={`${set.exerciseId}-${set.id}`}
+                key={`${set.id}-${index}`}
                 className={cn(" border-t px-4 py-3 text-sm uppercase sm:px-6", {
                   "bg-yellow-100": set.id === maxWeightSet.id,
                 })}

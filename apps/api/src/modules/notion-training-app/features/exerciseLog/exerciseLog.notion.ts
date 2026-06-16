@@ -46,6 +46,7 @@ export async function fetchExerciseLogWithSets({
   console.log("log count", exerciseLogIds().length);
   const parseSetsText = (
     value: string | null | undefined,
+    exerciseLogId: string = "",
   ): ExerciseSetItemResponse[] => {
     if (!value) return [];
     return value
@@ -55,10 +56,10 @@ export async function fetchExerciseLogWithSets({
       .map((row) => row.replace(/^,/, "").trim())
       .filter(Boolean)
       .map((row) => {
-        const [kg, rep, memo, exerciseName, maxWeight] = row.split("|");
+        const [kg, rep, memo, exerciseName, maxWeight, id] = row.split("|");
         return {
-          exerciseId: exerciseName?.replace(/^@/, "") || "",
-          id: "",
+          exerciseId: exerciseLogId,
+          id,
           kg: Number(kg) || 0,
           rep: Number(rep) || 0,
           memo: memo || "",
@@ -88,6 +89,7 @@ export async function fetchExerciseLogWithSets({
           createdTime: exerciseLog.created_time,
           sets: parseSetsText(
             getFormula(exerciseLog.properties.setsJsonFormula, "string"),
+            exerciseLog.id,
           ),
           notionUrl: exerciseLog.url,
         },
