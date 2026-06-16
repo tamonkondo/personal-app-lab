@@ -4,6 +4,7 @@ import {
   NotionResults,
 } from "@/integrations/notion/notion.types";
 
+
 export type NotionTrainingLogProperties = {
   memo: NotionProp<"memo", "rich_text">;
   trainingExercisesRelation: NotionProp<
