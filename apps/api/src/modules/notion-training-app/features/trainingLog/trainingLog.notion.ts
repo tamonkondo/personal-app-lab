@@ -2,7 +2,7 @@ import notionClient from "@/integrations/notion/notion.client";
 
 import {
   getFormula,
-  getRelatonIds,
+  getRelationIds,
   getRollup,
   getTitle,
 } from "@/integrations/notion/notion.mapper";
@@ -45,7 +45,7 @@ export async function fetchTrainingLogs(
     })) as unknown as NotionTrainingLogQueryResult;
   const exercisesRelationIds = trainingLogs.results.flatMap(
     (trainingLog) =>
-      getRelatonIds(trainingLog.properties.trainingExercisesRelation) || [],
+      getRelationIds(trainingLog.properties.trainingExercisesRelation) || [],
   );
   const extractExerciseProperties = [
     "exerciseSetsRelation",
@@ -89,7 +89,7 @@ export async function fetchTrainingLogs(
           rest: exerciseLog.properties.rest.number || 0,
           memo: getTitle(exerciseLog.properties.memo),
           sets:
-            getRelatonIds(exerciseLog.properties.exerciseSetsRelation)
+            getRelationIds(exerciseLog.properties.exerciseSetsRelation)
               ?.length || 0,
         })),
     })),
@@ -101,9 +101,7 @@ export async function fetchTrainingLogs(
   return responseData;
 }
 // 最新のトレーニングログを1件取得するクエリ
-export async function fetchNewestTrainingLog(): Promise<
-  NewestTrainingLogItemResponse | null
-> {
+export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemResponse | null> {
   /**
    * 取得したいもの
    * ・日付、メモ、種目数、セット数、総重量数
@@ -126,7 +124,7 @@ export async function fetchNewestTrainingLog(): Promise<
   }
 
   // リレーションですべてのトレーニング種目を取得するために、最新のトレーニングログのIDを取得
-  const relationIds = getRelatonIds(log.properties.trainingExercisesRelation);
+  const relationIds = getRelationIds(log.properties.trainingExercisesRelation);
   // 最新のトレーニングログのIDをもとに、リレーションでつながっているトレーニング種目をすべて取得
   const exerciseLogs: NotionExerciseLogPage<"exerciseSetsRelation">[] =
     (await Promise.all(
@@ -139,7 +137,7 @@ export async function fetchNewestTrainingLog(): Promise<
     )) as unknown as NotionExerciseLogPage<"exerciseSetsRelation">[];
   const exerciseSetsRelationIds = exerciseLogs.flatMap(
     (exerciseLog) =>
-      getRelatonIds(exerciseLog.properties.exerciseSetsRelation) || [],
+      getRelationIds(exerciseLog.properties.exerciseSetsRelation) || [],
   );
   // トレーニング種目に紐づくセットのリレーションをすべて取得
 

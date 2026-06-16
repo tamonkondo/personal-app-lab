@@ -161,7 +161,7 @@ export function getTitle(property: unknown): string {
   return "";
 }
 
-export function getRelatonIds(property: unknown): string[] {
+export function getRelationIds(property: unknown): string[] {
   if (
     typeof property === "object" &&
     property !== null &&
