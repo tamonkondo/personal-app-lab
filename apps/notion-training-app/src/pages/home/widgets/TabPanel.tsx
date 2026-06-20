@@ -3,6 +3,7 @@ import TrainingLogCardList from "../../../features/trainingLog/components/Traini
 import ExerciseLogCardList from "../../../features/exerciseLog/components/ExerciseLogCardList";
 import TabPanelCard from "./TabPanelCard";
 import { useState } from "react";
+import TrainingLogFilterArea from "../../../features/trainingLog/components/TrainingLogFilterArea";
 const TabPanel = () => {
   const [tab, setTab] = useState("trainingLogs");
   return (
@@ -19,7 +20,12 @@ const TabPanel = () => {
         <TabPanelCard
           title="Training Logs"
           description="過去のトレーニング記録を確認できます。"
-          content={<TrainingLogCardList enabled={tab === "trainingLogs"} />}
+          content={
+            <>
+              <TrainingLogFilterArea />
+              <TrainingLogCardList enabled={tab === "trainingLogs"} />
+            </>
+          }
         />
       </TabsContent>
       <TabsContent value="exerciseLogs">
