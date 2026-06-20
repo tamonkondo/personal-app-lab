@@ -12,3 +12,7 @@ export * from "./components/ui/spinner";
 export * from "./components/ui/alert";
 
 export * from "./components/ui/calendar";
+export * from "./components/ui/popover";
+export * from "./components/ui/select";
+export * from "./components/ui/command";
+export * from "./components/ui/multiple-selector";
