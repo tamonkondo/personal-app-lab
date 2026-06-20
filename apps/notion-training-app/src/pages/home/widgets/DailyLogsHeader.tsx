@@ -15,6 +15,11 @@ const DailyLogsHeader = () => {
   } = useSWR<NewestTrainingLogResponse>(
     `${import.meta.env.VITE_API_URL}/training-logs/newest`,
     fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 10_000,
+    },
   );
   const newestLog = newestLogData?.data || null;
   const summaryItems = newestLog
@@ -33,7 +38,7 @@ const DailyLogsHeader = () => {
   }
   if (error) {
     // ここでエラーログをSentryなどに送信するロジックがいるかもしれない
-    Sentry.logger.error("エラーが発生しました:", error);
+    Sentry.captureException(error);
 
     return (
       <DailyLogsHeaderSkeleton statusMessage={"最新ログの取得に失敗しました"} />

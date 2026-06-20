@@ -1,4 +1,5 @@
 import notionClient from "@/integrations/notion/notion.client";
+import notionLimit from "@/libs/notion/notionLimit";
 
 import {
   getFormula,
@@ -58,10 +59,12 @@ export async function fetchTrainingLogs(
     (typeof extractExerciseProperties)[number]
   >[] = (await Promise.all(
     exercisesRelationIds.map((id) =>
-      notionClient.pages.retrieve({
-        page_id: id,
-        filter_properties: [...extractExerciseProperties],
-      }),
+      notionLimit(() =>
+        notionClient.pages.retrieve({
+          page_id: id,
+          filter_properties: [...extractExerciseProperties],
+        }),
+      ),
     ),
   )) as unknown as NotionExerciseLogPage<
     (typeof extractExerciseProperties)[number]
@@ -129,10 +132,12 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
   const exerciseLogs: NotionExerciseLogPage<"exerciseSetsRelation">[] =
     (await Promise.all(
       relationIds?.map((id) =>
-        notionClient.pages.retrieve({
-          page_id: id,
-          filter_properties: ["exerciseSetsRelation"],
-        }),
+        notionLimit(() =>
+          notionClient.pages.retrieve({
+            page_id: id,
+            filter_properties: ["exerciseSetsRelation"],
+          }),
+        ),
       ) || [],
     )) as unknown as NotionExerciseLogPage<"exerciseSetsRelation">[];
   const exerciseSetsRelationIds = exerciseLogs.flatMap(
@@ -143,10 +148,12 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
 
   const exerciseSets = (await Promise.all(
     exerciseSetsRelationIds.map((id) =>
-      notionClient.pages.retrieve({
-        page_id: id,
-        filter_properties: ["kg", "rep"],
-      }),
+      notionLimit(() =>
+        notionClient.pages.retrieve({
+          page_id: id,
+          filter_properties: ["kg", "rep"],
+        }),
+      ),
     ),
   )) as unknown as NotionExerciseSetWeightPage[];
   // 取得したkgとrepをもとに、総重量数を計算

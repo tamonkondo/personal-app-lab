@@ -1,4 +1,4 @@
 import pLimit from "p-limit";
-const notionLimit = pLimit(5); 
+const notionLimit = pLimit(3); 
 
 export default notionLimit;

@@ -12,6 +12,10 @@ import * as Sentry from "@sentry/node";
 export const app = express();
 
 /** Initial Set Up */
+app.use((req, _res, next) => {
+  console.log(`[START] ${req.method} ${req.originalUrl} ${Date.now()}`);
+  next();
+});
 
 // Logging middleware
 const loggerStream = {
@@ -33,7 +37,6 @@ app.use(cookieParser());
 // JSON body parser middleware
 app.use(express.json());
 // Error handling middleware
-app.use(errorHandler);
 
 /** API */
 
@@ -43,3 +46,5 @@ app.use("/api/health", healthRouter);
 // Notion関連のエンドポイント
 
 app.use("/api/notion-training-app", notionTrainingAppRouter);
+
+app.use(errorHandler);
