@@ -15,7 +15,7 @@ import {
 
 import { ChevronDownIcon } from "@repo/ui/icons";
 import { formatDate } from "@repo/utils";
-import { useSearchParams } from "react-router-dom";
+import { useTrainingLogParams } from "../hooks/useTrainingLogParams";
 // const OPTIONS: Option[] = [
 //   { label: "全身", value: "theWholeBody" },
 //   { label: "胸", value: "chest" },
@@ -30,13 +30,19 @@ import { useSearchParams } from "react-router-dom";
 // ];
 const TrainingLogFilterArea = () => {
   // クエリパラメータの取得
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tlSort = searchParams.get("tlSort");
-  const tlStartDate = searchParams.get("tlStartDate");
-  const tlEndDate = searchParams.get("tlEndDate");
+
+  const { tlSort, tlStartDate, tlEndDate, setSearchParamsWithReset } =
+    useTrainingLogParams();
+  function handleReset() {
+    setSearchParamsWithReset({
+      tlSort: null,
+      tlStartDate: null,
+      tlEndDate: null,
+    });
+  }
 
   return (
-    <div className="flex gap-4 flex-wrap mb-4">
+    <div className="flex gap-4 flex-wrap mb-4 items-end">
       <div className="">
         <p>Sort Schedule</p>
         <div className="flex gap-4 mt-2">
@@ -62,8 +68,8 @@ const TrainingLogFilterArea = () => {
                 selected={tlStartDate ? new Date(tlStartDate) : undefined}
                 onSelect={(date) => {
                   // クエリパラメータに反映
-                  setSearchParams({
-                    tlStartDate: date ? formatDate(date, "hyphen") : "",
+                  setSearchParamsWithReset({
+                    tlStartDate: date ? formatDate(date, "hyphen") : null,
                   });
                 }}
                 disabled={(date) => {
@@ -95,8 +101,8 @@ const TrainingLogFilterArea = () => {
                 selected={tlEndDate ? new Date(tlEndDate) : undefined}
                 onSelect={(date) => {
                   // クエリパラメータに反映
-                  setSearchParams({
-                    tlEndDate: date ? formatDate(date, "hyphen") : "",
+                  setSearchParamsWithReset({
+                    tlEndDate: date ? formatDate(date, "hyphen") : null,
                   });
                 }}
                 disabled={(date) => {
@@ -122,9 +128,11 @@ const TrainingLogFilterArea = () => {
       <div className="">
         <p>Sort</p>
         <Select
-          value={tlSort || undefined}
+          value={tlSort || ""}
           onValueChange={(value) => {
-            setSearchParams({ tlSort: value });
+            setSearchParamsWithReset({
+              tlSort: value,
+            });
           }}
         >
           <SelectTrigger className="w-53 mt-2 justify-between">
@@ -135,6 +143,11 @@ const TrainingLogFilterArea = () => {
             <SelectItem value="desc">Descending</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div className="h-full">
+        <Button className=" mt-auto" onClick={handleReset}>
+          Reset
+        </Button>
       </div>
     </div>
   );

@@ -2,21 +2,19 @@ import fetcher from "../../../lib/fetch";
 import { TrainingLogSummaryResponse } from "@repo/types/notion-training-app";
 import { TrainingLogCard } from "./TrainingLogCard";
 import { Spinner } from "@repo/ui/components/ui/spinner";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@repo/ui/components/ui/button";
 import AlertCard from "../../../components/AlertCard";
 import * as Sentry from "@sentry/react";
 import useSWRInfinite from "swr/infinite";
 import { formatDate } from "@repo/utils";
 import { useCallback } from "react";
+import { useTrainingLogParams } from "../hooks/useTrainingLogParams";
 
 const TrainingLogCardList = ({ enabled }: { enabled: boolean }) => {
   if (!enabled) return null;
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tlSort = searchParams.get("tlSort");
-  const tlStartDate = searchParams.get("tlStartDate");
-  const tlEndDate = searchParams.get("tlEndDate");
-  const tlPage = Number(searchParams.get("tlPage") || 1);
+  const { tlPage, tlSort, tlStartDate, tlEndDate, setSearchParamsWithReset } =
+    useTrainingLogParams();
   const getKey = useCallback(
     (
       pageIndex: number,
@@ -37,13 +35,10 @@ const TrainingLogCardList = ({ enabled }: { enabled: boolean }) => {
   for (let i = 0; i < Number(tlPage); i++) {
     if (size < i + 1) setSize(i + 1);
   }
+
   const handlePageChange = (newPage: number) => {
     setSize(newPage);
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.set("tlPage", String(newPage));
-      return newParams;
-    });
+    setSearchParamsWithReset({ tlPage: String(newPage) });
   };
   if (isLoading) return <Spinner />;
   if (error) {
