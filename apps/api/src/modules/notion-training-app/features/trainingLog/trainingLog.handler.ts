@@ -6,12 +6,32 @@ import type {
 import * as fetches from "./trainingLog.notion";
 
 // トレーニングログ一覧の取得エンドポイント
+type GetTrainingLogsRequest = {
+  query: {
+    cursor?: string;
+    limit?: number;
+    startDate?: string;
+    endDate?: string;
+    sort?: "asc" | "desc";
+    parts?: string;
+  };
+};
 export const getTrainingLogs = asyncHandler(
-  async (req: { query: { cursor?: string; limit?: number } }, res) => {
-    const { cursor, limit } = req.query;
+  async (req: GetTrainingLogsRequest, res) => {
+    const { cursor, limit, startDate, endDate, sort, parts } = req.query;
+    const arrayParts = parts
+      ? parts
+          .split(",")
+          .map((part) => part.trim())
+          .filter((part) => part.length > 0)
+      : undefined;
     const trainingLogs = await fetches.fetchTrainingLogs(
       cursor,
       limit ? Number(limit) : undefined,
+      startDate,
+      endDate,
+      sort,
+      arrayParts,
     );
     const response: TrainingLogSummaryResponse = {
       message: "getTrainingLogs",

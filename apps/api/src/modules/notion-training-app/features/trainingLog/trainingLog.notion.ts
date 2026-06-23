@@ -1,6 +1,5 @@
 import notionClient from "@/integrations/notion/notion.client";
 import notionLimit from "@/libs/notion/notionLimit";
-
 import {
   getFormula,
   getRelationIds,
@@ -28,6 +27,7 @@ const FILTER_PROPERTIES = [
   "createdTime",
   "bodyWeight",
   "memo",
+  "musleTypesFormula",
 ];
 
 // トレーニングログ一覧の取得
@@ -36,13 +36,70 @@ const FILTER_PROPERTIES = [
 export async function fetchTrainingLogs(
   cursor?: string,
   limit: number = 20,
+  startDate?: string,
+  endDate?: string,
+  sort?: "asc" | "desc",
+  parts?: string[],
 ): Promise<FetchTrainingLogsResult> {
+  const partsFilters = parts?.length
+    ? parts.map((part) => ({
+        property: "musleTypesFormula",
+        formula: {
+          string: {
+            contains: part,
+          },
+        },
+      }))
+    : [];
+
+  const dateFilters = [
+    startDate
+      ? {
+          property: "createdTime",
+          date: {
+            on_or_after: startDate,
+          },
+        }
+      : undefined,
+    endDate
+      ? {
+          property: "createdTime",
+          date: {
+            on_or_before: endDate,
+          },
+        }
+      : undefined,
+  ].filter((filter): filter is NonNullable<typeof filter> => !!filter);
+  const filters =
+    partsFilters.length > 0
+      ? {
+          and: [
+            ...dateFilters,
+            {
+              or: partsFilters,
+            },
+          ],
+        }
+      : // parts がないときは日付だけ
+        {
+          and: dateFilters,
+        };
+
   const trainingLogs: NotionTrainingLogQueryResult =
     (await notionClient.dataSources.query({
       data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
       page_size: limit,
       start_cursor: cursor,
       filter_properties: FILTER_PROPERTIES,
+      filter: filters,
+      sorts: sort
+        ? [
+            {
+              property: "createdTime",
+              direction: sort === "asc" ? "ascending" : "descending",
+            },
+          ]
+        : undefined,
     })) as unknown as NotionTrainingLogQueryResult;
   const exercisesRelationIds = trainingLogs.results.flatMap(
     (trainingLog) =>

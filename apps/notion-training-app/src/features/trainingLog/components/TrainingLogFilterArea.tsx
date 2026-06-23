@@ -2,35 +2,38 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  MultipleSelector,
+  // MultipleSelector,
   Calendar,
   Button,
-  Option,
+  // Option,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
 } from "@repo/ui";
 
 import { ChevronDownIcon } from "@repo/ui/icons";
 import { formatDate } from "@repo/utils";
-import useTrainingFilterStore from "../store/useTrainingFilterStore";
-
+import { useSearchParams } from "react-router-dom";
+// const OPTIONS: Option[] = [
+//   { label: "全身", value: "theWholeBody" },
+//   { label: "胸", value: "chest" },
+//   { label: "上腕二頭筋", value: "biceps" },
+//   { label: "上腕三頭筋", value: "triceps" },
+//   { label: "ハムストリングス", value: "hamstrings" },
+//   { label: "肩", value: "shoulder" },
+//   { label: "大腿四頭筋", value: "quadricepsFemoris" },
+//   { label: "腹筋", value: "abs" },
+//   { label: "脊柱", value: "spine" },
+//   { label: "臀部", value: "buttocks" },
+// ];
 const TrainingLogFilterArea = () => {
-  // zustand呼び出し
-  const startDate = useTrainingFilterStore((state) => state.startDate);
-  const endDate = useTrainingFilterStore((state) => state.endDate);
-  const setStartDate = useTrainingFilterStore((state) => state.setStartDate);
-  const setEndDate = useTrainingFilterStore((state) => state.setEndDate);
-  const OPTIONS: Option[] = [
-    { label: "nextjs", value: "nextjs" },
-    { label: "React", value: "react" },
-    { label: "Remix", value: "remix" },
-    { label: "Vite", value: "vite" },
-    { label: "Nuxt", value: "nuxt" },
-    { label: "Vue", value: "vue" },
-    { label: "Svelte", value: "svelte" },
-    { label: "Angular", value: "angular" },
-    { label: "Ember", value: "ember", disable: true },
-    { label: "Gatsby", value: "gatsby", disable: true },
-    { label: "Astro", value: "astro" },
-  ];
+  // クエリパラメータの取得
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tlSort = searchParams.get("tlSort");
+  const tlStartDate = searchParams.get("tlStartDate");
+  const tlEndDate = searchParams.get("tlEndDate");
 
   return (
     <div className="flex gap-4 flex-wrap mb-4">
@@ -41,19 +44,32 @@ const TrainingLogFilterArea = () => {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                data-empty={!startDate}
+                data-empty={!tlStartDate}
                 className="w-53 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
               >
-                {startDate ? formatDate(startDate) : <span>Pick a date</span>}
+                {tlStartDate ? (
+                  formatDate(new Date(tlStartDate))
+                ) : (
+                  <span>Pick a date</span>
+                )}
                 <ChevronDownIcon />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                defaultMonth={startDate || new Date()}
-                selected={startDate}
-                onSelect={setStartDate}
+                defaultMonth={tlStartDate ? new Date(tlStartDate) : new Date()}
+                selected={tlStartDate ? new Date(tlStartDate) : undefined}
+                onSelect={(date) => {
+                  // クエリパラメータに反映
+                  setSearchParams({
+                    tlStartDate: date ? formatDate(date, "hyphen") : "",
+                  });
+                }}
+                disabled={(date) => {
+                  if (!tlEndDate) return false;
+                  return date > new Date(tlEndDate);
+                }}
               />
             </PopoverContent>
           </Popover>
@@ -61,29 +77,64 @@ const TrainingLogFilterArea = () => {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                data-empty={!endDate}
+                data-empty={!tlEndDate}
                 className="w-53 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
               >
-                {endDate ? formatDate(endDate) : <span>Pick a date</span>}
+                {tlEndDate ? (
+                  formatDate(new Date(tlEndDate))
+                ) : (
+                  <span>Pick a date</span>
+                )}
                 <ChevronDownIcon />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                defaultMonth={endDate || new Date()}
-                selected={endDate}
-                onSelect={setEndDate}
+                defaultMonth={tlEndDate ? new Date(tlEndDate) : new Date()}
+                selected={tlEndDate ? new Date(tlEndDate) : undefined}
+                onSelect={(date) => {
+                  // クエリパラメータに反映
+                  setSearchParams({
+                    tlEndDate: date ? formatDate(date, "hyphen") : "",
+                  });
+                }}
+                disabled={(date) => {
+                  if (!tlStartDate) return false;
+                  return date < new Date(tlStartDate);
+                }}
               />
             </PopoverContent>
           </Popover>
         </div>
       </div>
-      <div className="">
+      {/* <div className="">
         <p>Sort Parts</p>
         <div className="flex gap-4 mt-2">
-          <MultipleSelector options={OPTIONS} />
+          <MultipleSelector
+            options={OPTIONS}
+            onChange={(selected) =>
+              setParts((selected as Option[]).map((option) => option.value))
+            }
+          />
         </div>
+      </div> */}
+      <div className="">
+        <p>Sort</p>
+        <Select
+          value={tlSort || undefined}
+          onValueChange={(value) => {
+            setSearchParams({ tlSort: value });
+          }}
+        >
+          <SelectTrigger className="w-53 mt-2 justify-between">
+            <SelectValue placeholder="Select a Sort" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="asc">Ascending</SelectItem>
+            <SelectItem value="desc">Descending</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

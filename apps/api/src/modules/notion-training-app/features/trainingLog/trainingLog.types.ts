@@ -4,7 +4,6 @@ import {
   NotionResults,
 } from "@/integrations/notion/notion.types";
 
-
 export type NotionTrainingLogProperties = {
   memo: NotionProp<"memo", "rich_text">;
   trainingExercisesRelation: NotionProp<
@@ -13,6 +12,8 @@ export type NotionTrainingLogProperties = {
   >;
   createdTime: NotionProp<"createdTime", "created_time">;
   bodyWeight: NotionProp<"bodyWeight", "number">;
+  exerciseRollup: NotionProp<"exerciseRollup", "rollup">;
+  musleTypesFormula: NotionProp<"musleTypesFormula", "formula">;
 };
 
 export type NotionTrainingLogPage = BasePageMeta & {

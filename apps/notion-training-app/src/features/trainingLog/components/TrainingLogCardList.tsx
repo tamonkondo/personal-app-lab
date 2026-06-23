@@ -7,25 +7,29 @@ import { Button } from "@repo/ui/components/ui/button";
 import AlertCard from "../../../components/AlertCard";
 import * as Sentry from "@sentry/react";
 import useSWRInfinite from "swr/infinite";
-import useTrainingFilterStore from "../store/useTrainingFilterStore";
+import { formatDate } from "@repo/utils";
+import { useCallback } from "react";
 
 const TrainingLogCardList = ({ enabled }: { enabled: boolean }) => {
   if (!enabled) return null;
   const [searchParams, setSearchParams] = useSearchParams();
+  const tlSort = searchParams.get("tlSort");
+  const tlStartDate = searchParams.get("tlStartDate");
+  const tlEndDate = searchParams.get("tlEndDate");
   const tlPage = Number(searchParams.get("tlPage") || 1);
-  const startDate = useTrainingFilterStore((state) => state.startDate);
-  const endDate = useTrainingFilterStore((state) => state.endDate);
-
-  const getKey = (
-    pageIndex: number,
-    previousPageData: TrainingLogSummaryResponse | null,
-  ) => {
-    if (previousPageData && !previousPageData.data.length) return null; // reached the end
-    if (pageIndex === 0)
-      return `${import.meta.env.VITE_API_URL}/training-logs/?limit=5&startDate=${startDate?.toISOString()}&endDate=${endDate?.toISOString()}`; // first page
-    if (!previousPageData?.meta.next_cursor) return null; // reached the end
-    return `${import.meta.env.VITE_API_URL}/training-logs/?cursor=${previousPageData?.meta.next_cursor}&limit=5&startDate=${startDate?.toISOString()}&endDate=${endDate?.toISOString()}`; // SWR key
-  };
+  const getKey = useCallback(
+    (
+      pageIndex: number,
+      previousPageData: TrainingLogSummaryResponse | null,
+    ) => {
+      if (previousPageData && !previousPageData.data.length) return null; // reached the end
+      if (pageIndex === 0)
+        return `${import.meta.env.VITE_API_URL}/training-logs/?limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}`; // first page
+      if (!previousPageData?.meta.next_cursor) return null; // reached the end
+      return `${import.meta.env.VITE_API_URL}/training-logs/?cursor=${previousPageData?.meta.next_cursor}&limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}`; // SWR key
+    },
+    [tlStartDate, tlEndDate, tlSort],
+  );
   const { data, error, isLoading, mutate, size, setSize, isValidating } =
     useSWRInfinite<TrainingLogSummaryResponse>(getKey, fetcher, {
       revalidateOnFocus: false,
@@ -74,13 +78,15 @@ const TrainingLogCardList = ({ enabled }: { enabled: boolean }) => {
       ))}
       <div className="grid place-items-center mt-4 gap-2">
         {isValidating && size > 0 && <Spinner />}
-        <Button
-          onClick={() => {
-            handlePageChange(Number(tlPage) + 1);
-          }}
-        >
-          さらに読み込む
-        </Button>
+        {!isValidating && data && data[data.length - 1]?.meta.has_more && (
+          <Button
+            onClick={() => {
+              handlePageChange(Number(tlPage) + 1);
+            }}
+          >
+            さらに読み込む
+          </Button>
+        )}
       </div>
     </>
   );
