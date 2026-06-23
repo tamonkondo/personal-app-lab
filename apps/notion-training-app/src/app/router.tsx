@@ -8,7 +8,7 @@ import HomePage from "../pages/home/HomePage";
 
 export function RootRouter() {
   return (
-    <BrowserRouter basename="/notion-training-app">
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/training-logs" element={<TrainingLogList />} />
