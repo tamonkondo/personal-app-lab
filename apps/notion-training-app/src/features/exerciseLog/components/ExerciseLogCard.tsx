@@ -48,7 +48,7 @@ export function ExerciseLogCard({ data }: Props) {
             ) : null}
           </div>
         </div>
-        <Link to={`/exercise/${data.id}`}>
+        <Link to={`/exercise-log/${data.id}`}>
           <Button variant="outline" size="sm" className="w-full sm:w-auto">
             種目詳細
           </Button>

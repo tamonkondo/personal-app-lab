@@ -119,12 +119,14 @@ const TrainingLogDetail = () => {
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                variant="outline"
-                className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
-              >
-                一覧へ戻る
-              </Button>
+              <Link to="/training-logs">
+                <Button
+                  variant="outline"
+                  className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
+                >
+                  一覧へ戻る
+                </Button>
+              </Link>
               <Button className="w-full sm:w-auto">編集する</Button>
             </div>
           </div>
@@ -181,13 +183,15 @@ const TrainingLogDetail = () => {
                         最大重量 {exercise.maxWeight} / 総重量 {exercise.volume}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto"
-                    >
-                      種目詳細
-                    </Button>
+                    <Link to={`/exercise-log/${exercise.id}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                      >
+                        種目詳細
+                      </Button>
+                    </Link>
                   </div>
 
                   <div className="mt-5 overflow-hidden rounded-2xl border">

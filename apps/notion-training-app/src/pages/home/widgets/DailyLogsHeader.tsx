@@ -70,7 +70,7 @@ const DailyLogsHeader = () => {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Link to={`/training-logs/${newestLog.id}`}>
+            <Link to={`/training-log/${newestLog.id}`}>
               <Button className="w-full sm:w-auto">詳細</Button>
             </Link>
           </div>
