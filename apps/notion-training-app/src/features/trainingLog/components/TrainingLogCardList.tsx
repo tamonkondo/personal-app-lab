@@ -1,41 +1,20 @@
-import fetcher from "../../../lib/fetch";
-import { TrainingLogSummaryResponse } from "@repo/types/notion-training-app";
 import { TrainingLogCard } from "./TrainingLogCard";
 import { Spinner } from "@repo/ui/components/ui/spinner";
 import { Link } from "react-router-dom";
 import { Button } from "@repo/ui/components/ui/button";
 import AlertCard from "../../../components/AlertCard";
 import * as Sentry from "@sentry/react";
-import useSWRInfinite from "swr/infinite";
-import { formatDate } from "@repo/utils";
-import { useCallback } from "react";
 import { useTrainingLogParams } from "../hooks/useTrainingLogParams";
+import { useTrainingLogInfinite } from "../hooks/useTrainingLogsInfinite";
 
 const TrainingLogCardList = ({ enabled }: { enabled: boolean }) => {
   if (!enabled) return null;
   const { tlPage, tlSort, tlStartDate, tlEndDate, setSearchParamsWithReset } =
     useTrainingLogParams();
-  const getKey = useCallback(
-    (
-      pageIndex: number,
-      previousPageData: TrainingLogSummaryResponse | null,
-    ) => {
-      if (previousPageData && !previousPageData.data.length) return null; // reached the end
-      if (pageIndex === 0)
-        return `${import.meta.env.VITE_API_URL}/training-logs/?limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}`; // first page
-      if (!previousPageData?.meta.next_cursor) return null; // reached the end
-      return `${import.meta.env.VITE_API_URL}/training-logs/?cursor=${previousPageData?.meta.next_cursor}&limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}`; // SWR key
-    },
-    [tlStartDate, tlEndDate, tlSort],
-  );
   const { data, error, isLoading, mutate, size, setSize, isValidating } =
-    useSWRInfinite<TrainingLogSummaryResponse>(getKey, fetcher, {
-      revalidateOnFocus: false,
+    useTrainingLogInfinite({
+      params: { tlPage, tlSort, tlStartDate, tlEndDate },
     });
-  for (let i = 0; i < Number(tlPage); i++) {
-    if (size < i + 1) setSize(i + 1);
-  }
-
   const handlePageChange = (newPage: number) => {
     setSize(newPage);
     setSearchParamsWithReset({ tlPage: String(newPage) });
@@ -51,7 +30,7 @@ const TrainingLogCardList = ({ enabled }: { enabled: boolean }) => {
       />
     );
   }
-  if (!data || !data[0]?.data)
+  if (!data || !data[0]?.data.length)
     return (
       <AlertCard
         title="データが一件も存在しません"

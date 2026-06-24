@@ -1,20 +1,20 @@
 import { useSearchParams } from "react-router-dom";
 
-interface Params {
+export interface TrainingLogParams {
   tlStartDate: string | null;
   tlEndDate: string | null;
   tlSort: string | null;
   tlPage: number;
 }
 
-export interface TrainingLogParams extends Params {
+export interface UseTrainingLogParams extends TrainingLogParams {
   setSearchParams: (params: URLSearchParams) => void;
   setSearchParamsWithReset: (
-    newParams: Partial<Record<keyof Params, string | null>>,
+    newParams: Partial<Record<keyof TrainingLogParams, string | null>>,
   ) => void;
 }
 
-export function useTrainingLogParams(): TrainingLogParams {
+export function useTrainingLogParams(): UseTrainingLogParams {
   const [searchParams, setSearchParams] = useSearchParams();
   const tlStartDate = searchParams.get("tlStartDate");
   const tlEndDate = searchParams.get("tlEndDate");
@@ -22,7 +22,7 @@ export function useTrainingLogParams(): TrainingLogParams {
   const tlPage = Number(searchParams.get("tlPage") || 1);
 
   function setSearchParamsWithReset(
-    newParams: Partial<Record<keyof Params, string | null>>,
+    newParams: Partial<Record<keyof TrainingLogParams, string | null>>,
   ) {
     setSearchParams((prevParams) => {
       const updatedParams = new URLSearchParams(prevParams);
