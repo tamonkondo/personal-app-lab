@@ -13,7 +13,7 @@ import { formatDate } from "@repo/utils";
 interface Props {
   data: ExerciseLogWithSetsItemResponse;
 }
-const ExerciseLogTable = ({ data }: Props) => {
+const ExerciseSetTable = ({ data }: Props) => {
   // setsのmaxWeightが一番大きいidを取得
 
   const maxWeightSet = data.sets.reduce((maxSet, currentSet) => {
@@ -60,4 +60,4 @@ const ExerciseLogTable = ({ data }: Props) => {
   );
 };
 
-export default ExerciseLogTable;
+export default ExerciseSetTable;

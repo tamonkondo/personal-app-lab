@@ -27,7 +27,7 @@ const FILTER_PROPERTIES = [
   "createdTime",
   "bodyWeight",
   "memo",
-  "musleTypesFormula",
+  "musleTypesFormulaWrapper",
 ];
 
 // トレーニングログ一覧の取得
@@ -43,7 +43,7 @@ export async function fetchTrainingLogs(
 ): Promise<FetchTrainingLogsResult> {
   const partsFilters = parts?.length
     ? parts.map((part) => ({
-        property: "musleTypesFormula",
+        property: "musleTypesFormulaWrapper",
         formula: {
           string: {
             contains: part,

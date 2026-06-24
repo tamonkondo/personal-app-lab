@@ -11,33 +11,25 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
+  MultipleSelector,
 } from "@repo/ui";
 
 import { ChevronDownIcon } from "@repo/ui/icons";
 import { formatDate } from "@repo/utils";
 import { useTrainingLogParams } from "../hooks/useTrainingLogParams";
-// const OPTIONS: Option[] = [
-//   { label: "全身", value: "theWholeBody" },
-//   { label: "胸", value: "chest" },
-//   { label: "上腕二頭筋", value: "biceps" },
-//   { label: "上腕三頭筋", value: "triceps" },
-//   { label: "ハムストリングス", value: "hamstrings" },
-//   { label: "肩", value: "shoulder" },
-//   { label: "大腿四頭筋", value: "quadricepsFemoris" },
-//   { label: "腹筋", value: "abs" },
-//   { label: "脊柱", value: "spine" },
-//   { label: "臀部", value: "buttocks" },
-// ];
+import BODY_PARTS from "../../../constants/parts";
+
 const TrainingLogFilterArea = () => {
   // クエリパラメータの取得
 
-  const { tlSort, tlStartDate, tlEndDate, setSearchParamsWithReset } =
+  const { tlSort, tlStartDate, tlEndDate, tlParts, setSearchParamsWithReset } =
     useTrainingLogParams();
   function handleReset() {
     setSearchParamsWithReset({
       tlSort: null,
       tlStartDate: null,
       tlEndDate: null,
+      tlParts: null,
     });
   }
 
@@ -114,17 +106,29 @@ const TrainingLogFilterArea = () => {
           </Popover>
         </div>
       </div>
-      {/* <div className="">
+      <div className="">
         <p>Sort Parts</p>
         <div className="flex gap-4 mt-2">
           <MultipleSelector
-            options={OPTIONS}
+            value={
+              tlParts
+                ? tlParts
+                    .split(",")
+                    .map((part) => ({ label: part, value: part }))
+                : []
+            }
+            options={BODY_PARTS}
             onChange={(selected) =>
-              setParts((selected as Option[]).map((option) => option.value))
+              setSearchParamsWithReset({
+                tlParts:
+                  selected.length > 0
+                    ? selected.map((option) => option.value).join(",")
+                    : null,
+              })
             }
           />
         </div>
-      </div> */}
+      </div>
       <div className="">
         <p>Sort</p>
         <Select

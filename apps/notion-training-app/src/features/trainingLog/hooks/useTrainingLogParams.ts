@@ -5,6 +5,7 @@ export interface TrainingLogParams {
   tlEndDate: string | null;
   tlSort: string | null;
   tlPage: number;
+  tlParts: string | null;
 }
 
 export interface UseTrainingLogParams extends TrainingLogParams {
@@ -19,6 +20,7 @@ export function useTrainingLogParams(): UseTrainingLogParams {
   const tlStartDate = searchParams.get("tlStartDate");
   const tlEndDate = searchParams.get("tlEndDate");
   const tlSort = searchParams.get("tlSort");
+  const tlParts = searchParams.get("tlParts");
   const tlPage = Number(searchParams.get("tlPage") || 1);
 
   function setSearchParamsWithReset(
@@ -41,6 +43,7 @@ export function useTrainingLogParams(): UseTrainingLogParams {
     tlEndDate,
     tlSort,
     tlPage,
+    tlParts,
     setSearchParams,
     setSearchParamsWithReset,
   };

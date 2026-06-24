@@ -1,6 +1,6 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui";
 import TrainingLogCardList from "../../../features/trainingLog/components/TrainingLogCardList";
-import ExerciseLogCardList from "../../../features/exerciseLog/components/ExerciseLogCardList";
+import ExerciseSummaryList from "../../../features/exerciseLog/components/ExerciseSummaryList";
 import TabPanelCard from "./TabPanelCard";
 import { useState } from "react";
 import TrainingLogFilterArea from "../../../features/trainingLog/components/TrainingLogFilterArea";
@@ -32,7 +32,7 @@ const TabPanel = () => {
         <TabPanelCard
           title="Exercise Logs"
           description="各種目ごとの重量、回数、メモを確認できます。"
-          content={<ExerciseLogCardList enabled={tab === "exerciseLogs"} />}
+          content={<ExerciseSummaryList enabled={tab === "exerciseLogs"} />}
         />
       </TabsContent>
     </Tabs>

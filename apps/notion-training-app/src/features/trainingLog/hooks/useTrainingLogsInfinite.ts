@@ -9,7 +9,8 @@ interface UseTrainingLogInfinite {
 }
 
 export function useTrainingLogInfinite({ params }: UseTrainingLogInfinite) {
-  const { tlStartDate, tlEndDate, tlSort, tlPage } = params;
+  const { tlStartDate, tlEndDate, tlSort, tlPage, tlParts } = params;
+  console.log("tlParts in useTrainingLogInfinite:", tlParts);
   const getKey = useCallback(
     (
       pageIndex: number,
@@ -17,11 +18,11 @@ export function useTrainingLogInfinite({ params }: UseTrainingLogInfinite) {
     ) => {
       if (previousPageData && !previousPageData.data.length) return null;
       if (pageIndex === 0)
-        return `${import.meta.env.VITE_API_URL}/training-logs/?limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}`; // first page
+        return `${import.meta.env.VITE_API_URL}/training-logs/?limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}&parts=${tlParts || ""}`; // first page
       if (!previousPageData?.meta.next_cursor) return null;
-      return `${import.meta.env.VITE_API_URL}/training-logs/?cursor=${previousPageData?.meta.next_cursor}&limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}`; // SWR key
+      return `${import.meta.env.VITE_API_URL}/training-logs/?cursor=${previousPageData?.meta.next_cursor}&limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}&parts=${tlParts || ""}`; // SWR key
     },
-    [tlStartDate, tlEndDate, tlSort],
+    [tlStartDate, tlEndDate, tlSort, tlParts],
   );
   const { data, error, isLoading, mutate, size, setSize, isValidating } =
     useSWRInfinite<TrainingLogSummaryResponse>(getKey, fetcher, {

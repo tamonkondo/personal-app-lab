@@ -19,6 +19,7 @@ type GetTrainingLogsRequest = {
 export const getTrainingLogs = asyncHandler(
   async (req: GetTrainingLogsRequest, res) => {
     const { cursor, limit, startDate, endDate, sort, parts } = req.query;
+    console.log("getTrainingLogs query:", parts);
     const arrayParts = parts
       ? parts
           .split(",")

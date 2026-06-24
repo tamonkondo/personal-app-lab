@@ -17,7 +17,7 @@ type FetchExerciseSummaryLogsResult = Pick<
 
 export async function fetchExerciseSummaryLogs(
   limit: number = 7,
-  start_cursor?: string,
+  cursor?: string,
 ): Promise<FetchExerciseSummaryLogsResult> {
   // ゴール重量がある種目のみを取得
   console.time("fetchExerciseSummaryLogs");
@@ -60,7 +60,7 @@ export async function fetchExerciseSummaryLogs(
       },
       filter_properties: exercisesFilterProperties,
       page_size: limit,
-      start_cursor: start_cursor,
+      start_cursor: cursor,
     })) as unknown as NotionExerciseQueryResult;
 
   const exerciseLogWithSets = await fetchExerciseLogWithSets({
@@ -73,6 +73,8 @@ export async function fetchExerciseSummaryLogs(
 
   const responseData: FetchExerciseSummaryLogsResult = {
     data: exercises.results.map((log) => {
+      console.log("log", log);
+
       const logWithSets = exerciseLogWithSetsMap.get(log.id);
       if (!logWithSets) {
         throw new Error(`Exercise log summary not found: ${log.id}`);

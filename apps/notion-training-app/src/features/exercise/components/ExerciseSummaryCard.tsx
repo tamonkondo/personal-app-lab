@@ -8,12 +8,12 @@ import {
   TabsTrigger,
 } from "@repo/ui";
 import { Link } from "react-router-dom";
-import ExerciseLogTable from "./ExerciseLogTable";
+import ExerciseSetTable from "./ExerciseSetTable";
 
 interface Props {
   data: ExerciseSummaryItemResponse;
 }
-export function ExerciseLogCard({ data }: Props) {
+export function ExerciseSummaryCard({ data }: Props) {
   return (
     <article
       key={data.id}
@@ -65,14 +65,14 @@ export function ExerciseLogCard({ data }: Props) {
         </TabsList>
         <TabsContent value="maxWeightLogs">
           {data.maxWeightSets.sets.length > 0 ? (
-            <ExerciseLogTable data={data.maxWeightSets} />
+            <ExerciseSetTable data={data.maxWeightSets} />
           ) : (
             <p>No max weight logs available.</p>
           )}
         </TabsContent>
         <TabsContent value="latestExerciseLogs">
           {data.latestSets.sets.length > 0 ? (
-            <ExerciseLogTable data={data.latestSets} />
+            <ExerciseSetTable data={data.latestSets} />
           ) : (
             <p>No latest exercise logs available.</p>
           )}

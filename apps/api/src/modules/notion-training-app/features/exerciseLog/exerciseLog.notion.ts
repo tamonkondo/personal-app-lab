@@ -56,7 +56,7 @@ export async function fetchExerciseLogWithSets({
       .map((row) => row.replace(/^,/, "").trim())
       .filter(Boolean)
       .map((row) => {
-        const [kg, rep, memo, exerciseName, maxWeight, id] = row.split("|");
+        const [kg, rep, memo,  maxWeight, id] = row.split("|");
         return {
           exerciseId: exerciseLogId,
           id,
