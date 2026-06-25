@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@notionhq/client": "^5.22.0",
-    "@sentry/node": "^10.59.0",
-    "@sentry/profiling-node": "^10.59.0",
+    "@sentry/node": "^10.61.0",
+    "@sentry/profiling-node": "^10.61.0",
     "bcrypt": "latest",
     "cookie-parser": "latest",
     "cors": "latest",
