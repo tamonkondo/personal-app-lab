@@ -10,6 +10,10 @@ notionTrainingAppRouter.get(
   "/training-logs",
   trainingLogHandlers.getTrainingLogs,
 );
+notionTrainingAppRouter.get(
+  "/training-logs/:id",
+  trainingLogHandlers.getTrainingLogDetail,
+);
 // 最新のトレーニングログの取得
 notionTrainingAppRouter.get(
   "/training-logs/newest",
@@ -19,3 +23,4 @@ notionTrainingAppRouter.get(
   "/exercise/summary",
   exerciseHandlers.getExerciseSummaryLogs,
 );
+

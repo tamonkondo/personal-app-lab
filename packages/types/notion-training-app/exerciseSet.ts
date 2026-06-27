@@ -1,4 +1,4 @@
-export type ExerciseSetItemResponse = {
+export type ExerciseSetBase = {
   exerciseId: string;
   id: string;
   kg: number;

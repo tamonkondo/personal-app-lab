@@ -14,6 +14,7 @@ export type NotionTrainingLogProperties = {
   bodyWeight: NotionProp<"bodyWeight", "number">;
   exerciseRollup: NotionProp<"exerciseRollup", "rollup">;
   musleTypesFormula: NotionProp<"musleTypesFormula", "formula">;
+  musleTypesFormulaWrapper: NotionProp<"musleTypesFormulaWrapper", "formula">;
 };
 
 export type NotionTrainingLogPage = BasePageMeta & {

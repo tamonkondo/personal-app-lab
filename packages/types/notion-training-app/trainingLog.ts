@@ -1,6 +1,8 @@
 import type { ApiResponse, PaginatedResponse } from "../index";
+import { ExerciseBase } from "./exercise";
+import { ExerciseLogWithSetsItemResponse } from "./exerciseLog";
 
-export type TrainingLogExerciseItemResponse = {
+export type TrainingLogExerciseItem = {
   name: string;
   todayMaxWeight: number;
   rest: number;
@@ -8,16 +10,16 @@ export type TrainingLogExerciseItemResponse = {
   sets: number;
 };
 
-export type TrainingLogSummaryItemResponse = {
+export type TrainingLogSummaryItem = {
   id: string;
   createdTime: string;
   bodyWeight: number;
   memo: string;
-  exercises: TrainingLogExerciseItemResponse[];
+  exercises: TrainingLogExerciseItem[];
 };
 
 export type TrainingLogSummaryResponse =
-  PaginatedResponse<TrainingLogSummaryItemResponse>;
+  PaginatedResponse<TrainingLogSummaryItem>;
 
 export type NewestTrainingLogItemResponse = {
   id: string;
@@ -30,3 +32,19 @@ export type NewestTrainingLogItemResponse = {
 
 export type NewestTrainingLogResponse =
   ApiResponse<NewestTrainingLogItemResponse | null>;
+
+export type TrainingLogDetail = {
+  id: string;
+  createdTime: string;
+  bodyParts: string[];
+  bodyWeight: number;
+  totalExerciseCount: number;
+  totalSetsCount: number;
+  totalTrainingVolumeWeight: number;
+  memo: string;
+  exercises: ExerciseBase & {
+    sets: ExerciseLogWithSetsItemResponse;
+  };
+};
+
+export type TrainingLogDetailResponse = ApiResponse<TrainingLogDetail | null>;

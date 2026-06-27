@@ -41,6 +41,21 @@ export const getTrainingLogs = asyncHandler(
     res.status(200).json(response);
   },
 );
+// トレーニングログ一詳細のエンドポイント
+export const getTrainingLogDetail = asyncHandler(
+  async (req: { params: { id: string } }, res) => {
+    const { id } = req.params;
+    const trainingLogDetail = await fetches.fetchTrainingLogDetail(id);
+    if (!trainingLogDetail) {
+      res.status(404).json({ message: "Training log not found" });
+      return;
+    }
+    res.status(200).json({
+      message: "getTrainingLogDetail",
+      data: trainingLogDetail,
+    });
+  },
+);
 
 // 最新のトレーニングログを取得するエンドポイント
 export const getNewestTrainingLog = asyncHandler(async (_, res) => {

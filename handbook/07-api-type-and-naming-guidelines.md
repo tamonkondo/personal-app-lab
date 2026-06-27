@@ -97,9 +97,9 @@ APIからフロントへ渡す型には必ず `Response` 接尾辞を付ける�
 HTTPレスポンス全体は `〇〇Response` とする。
 
 ```ts
-TrainingLogSummaryResponse
-ExerciseSummaryResponse
-NewestTrainingLogResponse
+TrainingLogSummaryResponse;
+ExerciseSummaryResponse;
+NewestTrainingLogResponse;
 ```
 
 ### 一覧要素と入れ子要素
@@ -107,11 +107,11 @@ NewestTrainingLogResponse
 `data` 配列の要素やレスポンス内の構造体は `〇〇ItemResponse` とする。
 
 ```ts
-TrainingLogSummaryItemResponse
-TrainingLogExerciseItemResponse
-ExerciseSummaryItemResponse
-ExerciseLogWithSetsItemResponse
-ExerciseSetItemResponse
+TrainingLogSummaryItem;
+TrainingLogExerciseItem;
+ExerciseSummaryItemResponse;
+ExerciseLogWithSetsItemResponse;
+ExerciseSetBase;
 ```
 
 最上位と要素に同じ名前を使用しない。
@@ -123,8 +123,7 @@ type ExerciseSummaryResponse = ExerciseSummary[];
 
 // Good
 type ExerciseSummaryItemResponse = {};
-type ExerciseSummaryResponse =
-  PaginatedResponse<ExerciseSummaryItemResponse>;
+type ExerciseSummaryResponse = PaginatedResponse<ExerciseSummaryItemResponse>;
 ```
 
 ### 未実装APIの型
@@ -162,21 +161,21 @@ export * from "./trainingLog";
 Notion SDKから取得した未変換データには `Notion` 接頭辞を付ける。
 
 ```ts
-NotionExerciseProperties
-NotionExercisePage
-NotionExerciseQueryResult
-NotionExerciseLogProperties
-NotionExerciseLogPage
-NotionExerciseSetWeightPage
+NotionExerciseProperties;
+NotionExercisePage;
+NotionExerciseQueryResult;
+NotionExerciseLogProperties;
+NotionExerciseLogPage;
+NotionExerciseSetWeightPage;
 ```
 
 接尾辞はデータの形に合わせる。
 
-| 接尾辞 | 用途 |
-| --- | --- |
-| `Properties` | Notionページの `properties` |
-| `Page` | Notionの単一ページ |
-| `QueryResult` | Notionの一覧クエリ結果 |
+| 接尾辞        | 用途                        |
+| ------------- | --------------------------- |
+| `Properties`  | Notionページの `properties` |
+| `Page`        | Notionの単一ページ          |
+| `QueryResult` | Notionの一覧クエリ結果      |
 
 外部サービス型に `Response` を付けない。`Response` はHTTPで公開する型のために予約する。
 
@@ -185,8 +184,7 @@ NotionExerciseSetWeightPage
 type ExerciseResponse = NotionResults<Exercise>;
 
 // Good
-type NotionExerciseQueryResult =
-  NotionResults<NotionExercisePage>;
+type NotionExerciseQueryResult = NotionResults<NotionExercisePage>;
 ```
 
 ## API内部処理の責務
@@ -196,9 +194,9 @@ type NotionExerciseQueryResult =
 Notionアクセスを行う関数は `fetch〇〇` とする。
 
 ```ts
-fetchTrainingLogs
-fetchNewestTrainingLog
-fetchExerciseSummaryLogs
+fetchTrainingLogs;
+fetchNewestTrainingLog;
+fetchExerciseSummaryLogs;
 ```
 
 取得関数はHTTPの `message` を組み立てない。必要な `data` と `meta`、または単体データだけを返す。
@@ -240,15 +238,15 @@ DELETE → delete〇〇
 
 変数名からデータの役割と単数・複数が判断できるようにする。
 
-| 役割 | 推奨名 |
-| --- | --- |
-| Notionのクエリ結果 | `trainingLogs`, `exercises` |
-| 単一データ | `trainingLog`, `exerciseLog` |
-| 取得関数の戻り値 | `result` または内容を表す名前 |
-| HTTPレスポンス全体 | `response` |
-| 配列要素 | `trainingLog`, `exercise`, `set` |
-| IDの配列 | `exerciseLogIds`, `relationIds` |
-| IDをキーにしたMap | `exerciseLogById` |
+| 役割               | 推奨名                           |
+| ------------------ | -------------------------------- |
+| Notionのクエリ結果 | `trainingLogs`, `exercises`      |
+| 単一データ         | `trainingLog`, `exerciseLog`     |
+| 取得関数の戻り値   | `result` または内容を表す名前    |
+| HTTPレスポンス全体 | `response`                       |
+| 配列要素           | `trainingLog`, `exercise`, `set` |
+| IDの配列           | `exerciseLogIds`, `relationIds`  |
+| IDをキーにしたMap  | `exerciseLogById`                |
 
 ### 単数形と複数形
 

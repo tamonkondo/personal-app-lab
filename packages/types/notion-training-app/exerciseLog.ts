@@ -1,10 +1,10 @@
-import type { ExerciseSetItemResponse } from "./exerciseSet";
+import type { ExerciseSetBase } from "./exerciseSet";
 
 export type ExerciseLogWithSetsItemResponse = {
   exerciseId: string;
   createdTime: string;
   rest: number;
   trainingName: string;
-  sets: ExerciseSetItemResponse[];
+  sets: ExerciseSetBase[];
   notionUrl: string;
 };

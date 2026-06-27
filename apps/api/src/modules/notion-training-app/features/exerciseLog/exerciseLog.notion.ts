@@ -7,7 +7,7 @@ import { getFormula } from "@/integrations/notion/notion.mapper";
 
 import type {
   ExerciseLogWithSetsItemResponse,
-  ExerciseSetItemResponse,
+  ExerciseSetBase,
 } from "@repo/types/notion-training-app";
 import type { NotionExerciseQueryResult } from "../exercise/exercise.types";
 import notionLimit from "@/libs/notion/notionLimit";
@@ -47,7 +47,7 @@ export async function fetchExerciseLogWithSets({
   const parseSetsText = (
     value: string | null | undefined,
     exerciseLogId: string = "",
-  ): ExerciseSetItemResponse[] => {
+  ): ExerciseSetBase[] => {
     if (!value) return [];
     return value
       .replace(/^\[/, "")
@@ -56,7 +56,7 @@ export async function fetchExerciseLogWithSets({
       .map((row) => row.replace(/^,/, "").trim())
       .filter(Boolean)
       .map((row) => {
-        const [kg, rep, memo,  maxWeight, id] = row.split("|");
+        const [kg, rep, memo, maxWeight, id] = row.split("|");
         return {
           exerciseId: exerciseLogId,
           id,
