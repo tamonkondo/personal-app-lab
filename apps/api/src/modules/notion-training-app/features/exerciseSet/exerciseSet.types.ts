@@ -13,6 +13,10 @@ type NotionExerciseSetWeightProperties = {
   exerciseNameRollup: NotionProp<"exerciseNameRollup", "rollup">;
   trainingNameFormula: NotionProp<"trainingNameFormula", "formula">;
   createdTime: NotionProp<"createdTime", "created_time">;
+  trainingVolumeWeightFormula: NotionProp<
+    "trainingVolumeWeightFormula",
+    "formula"
+  >;
   rmTypeRollup: NotionProp<"rmTypeRollup", "rollup">;
 };
 

@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import ExerciseLogDetail from "../pages/ExerciseLogDetail";
-import ExerciseLogList from "../pages/ExerciseLogList";
+import ExerciseDetail from "../pages/ExerciseDetail";
+import ExerciseList from "../pages/ExerciseList";
 import TrainingLogDetail from "../pages/TrainingLogDetail";
 import TrainingLogList from "../pages/TrainingLogList";
 import HomePage from "../pages/home/HomePage";
@@ -12,9 +12,12 @@ export function RootRouter() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/training-logs" element={<TrainingLogList />} />
-        <Route path="/training-logs/:trainingId" element={<TrainingLogDetail />} />
-        <Route path="/exercise-logs" element={<ExerciseLogList />} />
-        <Route path="/exercise-logs/:exerciseId" element={<ExerciseLogDetail />} />
+        <Route
+          path="/training-logs/:trainingId"
+          element={<TrainingLogDetail />}
+        />
+        <Route path="/exercises" element={<ExerciseList />} />
+        <Route path="/exercises/:exerciseId" element={<ExerciseDetail />} />
       </Routes>
     </BrowserRouter>
   );

@@ -149,7 +149,6 @@ const ExerciseLogDetail = () => {
                   一覧へ戻る
                 </Button>
               </Link>
-              <Button className="w-full sm:w-auto">編集する</Button>
             </div>
           </div>
         </section>

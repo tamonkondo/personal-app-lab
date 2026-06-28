@@ -18,6 +18,12 @@ export type NotionExerciseProperties = {
   theGoalsWeightRelation: NotionProp<"theGoalsWeightRelation", "relation">;
   maxWeightExerciseLogId: NotionProp<"maxWeightExerciseLogId", "formula">;
   latestExerciseLogId: NotionProp<"latestExerciseLogId", "formula">;
+  totalSetsCountFormula: NotionProp<"totalSetsCountFormula", "formula">;
+  totalTrainingDaysFormula: NotionProp<"totalTrainingDaysFormula", "formula">;
+  totalTrainingVolumeWeightFormula: NotionProp<
+    "totalTrainingVolumeWeightFormula",
+    "formula"
+  >;
 };
 export type NotionExercisePage = BasePageMeta & {
   properties: NotionExerciseProperties;
