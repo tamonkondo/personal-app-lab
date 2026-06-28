@@ -37,14 +37,14 @@ export type TrainingLogDetail = {
   id: string;
   createdTime: string;
   bodyParts: string[];
+  memo: string;
   bodyWeight: number;
   totalExerciseCount: number;
   totalSetsCount: number;
   totalTrainingVolumeWeight: number;
-  memo: string;
-  exercises: ExerciseBase & {
-    sets: ExerciseLogWithSetsItemResponse;
-  };
+  exercises: (ExerciseBase & {
+    exerciseSets: ExerciseLogWithSetsItemResponse;
+  })[];
 };
 
 export type TrainingLogDetailResponse = ApiResponse<TrainingLogDetail | null>;

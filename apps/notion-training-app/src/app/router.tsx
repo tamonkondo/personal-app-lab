@@ -12,9 +12,9 @@ export function RootRouter() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/training-logs" element={<TrainingLogList />} />
-        <Route path="/training-logs/:id" element={<TrainingLogDetail />} />
+        <Route path="/training-logs/:trainingId" element={<TrainingLogDetail />} />
         <Route path="/exercise-logs" element={<ExerciseLogList />} />
-        <Route path="/exercise-logs/:id" element={<ExerciseLogDetail />} />
+        <Route path="/exercise-logs/:exerciseId" element={<ExerciseLogDetail />} />
       </Routes>
     </BrowserRouter>
   );

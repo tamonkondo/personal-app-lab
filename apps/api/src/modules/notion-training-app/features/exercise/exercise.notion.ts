@@ -73,7 +73,6 @@ export async function fetchExerciseSummaryLogs(
 
   const responseData: FetchExerciseSummaryLogsResult = {
     data: exercises.results.map((log) => {
-      console.log("log", log);
 
       const logWithSets = exerciseLogWithSetsMap.get(log.id);
       if (!logWithSets) {

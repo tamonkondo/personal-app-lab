@@ -6,7 +6,10 @@ import {
   getRollup,
   getTitle,
 } from "@/integrations/notion/notion.mapper";
-import type { NotionTrainingLogQueryResult } from "./trainingLog.types";
+import type {
+  NotionTrainingLogPage,
+  NotionTrainingLogQueryResult,
+} from "./trainingLog.types";
 import type { NotionExerciseSetWeightPage } from "../exerciseSet/exerciseSet.types";
 import type {
   NotionExerciseLogPage,
@@ -17,19 +20,12 @@ import type {
   TrainingLogDetail,
   TrainingLogSummaryResponse,
 } from "@repo/types/notion-training-app/index";
+import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
 
 type FetchTrainingLogsResult = Pick<
   TrainingLogSummaryResponse,
   "data" | "meta"
 >;
-
-const FILTER_PROPERTIES = [
-  "trainingExercisesRelation",
-  "createdTime",
-  "bodyWeight",
-  "memo",
-  "musleTypesFormulaWrapper",
-];
 
 // トレーニングログ一覧の取得
 // /api/notion-training-app/training-logs/?cursor=xxx&limit=20
@@ -91,7 +87,13 @@ export async function fetchTrainingLogs(
       data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
       page_size: limit,
       start_cursor: cursor,
-      filter_properties: FILTER_PROPERTIES,
+      filter_properties: [
+        "trainingExercisesRelation",
+        "createdTime",
+        "bodyWeight",
+        "memo",
+        "musleTypesFormulaWrapper",
+      ],
       filter: filters,
       sorts: sort
         ? [
@@ -165,28 +167,34 @@ export async function fetchTrainingLogs(
 // /api/notion-training-app/training-logs/:id
 export async function fetchTrainingLogDetail(
   id: string,
-): Promise<TrainingLogSummaryResponse["data"][number] | null> {
+): Promise<TrainingLogDetail | null> {
   const trainingLog = (await notionLimit(() =>
     notionClient.pages.retrieve({
       page_id: id,
-      filter_properties: FILTER_PROPERTIES,
     }),
-  )) as unknown as NotionTrainingLogQueryResult["results"][number];
+  )) as unknown as NotionTrainingLogPage;
+  const trainingLogProperties = trainingLog.properties;
+  console.log(trainingLog);
   if (!trainingLog) {
     return null;
   }
+  const totalExerciseCount =
+    trainingLogProperties.trainingExercisesRelation.relation?.length || 0;
+
   const exercisesRelationIds =
     getRelationIds(trainingLog.properties.trainingExercisesRelation) || [];
   const extractExerciseProperties = [
     "exerciseSetsRelation",
     "todayMaxWeightRollup",
     "trainingNameFormula",
+    "setsJsonFormula",
+    "muslesTypesRollup",
     "memo",
     "rest",
+    "goalWeightRollup",
   ] as const satisfies (keyof NotionExerciseLogProperties)[];
-  const exerciseLogs: NotionExerciseLogPage<
-    (typeof extractExerciseProperties)[number]
-  >[] = (await Promise.all(
+  // 種目ごとの記録データを取得
+  const exerciseLogs = (await Promise.all(
     exercisesRelationIds.map((id) =>
       notionLimit(() =>
         notionClient.pages.retrieve({
@@ -198,63 +206,67 @@ export async function fetchTrainingLogDetail(
   )) as unknown as NotionExerciseLogPage<
     (typeof extractExerciseProperties)[number]
   >[];
-  const responseData: TrainingLogDetail = {
-    id: trainingLog.id,
-    createdTime: trainingLog.properties.createdTime.created_time,
-    bodyParts:
-      getFormula(trainingLog.properties.musleTypesFormulaWrapper, "string")
-        ?.split(",")
-        .map((part) => part.trim())
-        .filter((part) => part.length > 0) || [],
-    bodyWeight: trainingLog.properties.bodyWeight.number || 0,
-    totalExerciseCount: exercisesRelationIds.length,
-    totalSetsCount: exerciseLogs.reduce((acc, exerciseLog) => {
-      const setsCount =
-        getRelationIds(exerciseLog.properties.exerciseSetsRelation)?.length ||
-        0;
-      return acc + setsCount;
-    }, 0),
-    totalTrainingVolumeWeight: exerciseLogs.reduce((acc, exerciseLog) => {
-      const setsRelationIds =
-        getRelationIds(exerciseLog.properties.exerciseSetsRelation) || [];
-      const exerciseSets = setsRelationIds.map((setId) =>
-        notionLimit(() =>
-          notionClient.pages.retrieve({
-            page_id: setId,
-            filter_properties: ["kg", "rep"],
-          }),
-        ),
-      );
-      const totalWeight = exerciseSets.reduce((setAcc, set) => {
-        const kg =
-          (set as NotionExerciseSetWeightPage).properties.kg.number || 0;
-        const rep =
-          (set as NotionExerciseSetWeightPage).properties.rep.number || 0;
-        return setAcc + kg * rep;
-      }, 0);
-      return acc + totalWeight;
-    }, 0),
-    memo: trainingLog.properties.memo.rich_text[0]?.plain_text || "",
-    exercises: exerciseLogs
-      .filter((exerciseLog) =>
-        trainingLog.properties.trainingExercisesRelation.relation?.some(
-          (relation) => relation.id === exerciseLog.id,
-        ),
-      )
-      .map((exerciseLog) => ({
-        name:
+
+  const exercises: TrainingLogDetail["exercises"] = exerciseLogs.map(
+    (exerciseLog) => {
+      return {
+        id: exerciseLog.id,
+        trainingName:
           getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
           "",
-        todayMaxWeight:
-          Number(
-            getRollup(exerciseLog.properties.todayMaxWeightRollup, "number"),
-          ) || 0,
-        rest: exerciseLog.properties.rest.number || 0,
-        memo: getTitle(exerciseLog.properties.memo),
-        sets:
-          getRelationIds(exerciseLog.properties.exerciseSetsRelation)?.length ||
-          0,
-      })),
+        maxGoalWeight:
+          getRollup(exerciseLog.properties.goalWeightRollup, "number") || 0,
+        currentMaxWeight:
+          getRollup(exerciseLog.properties.todayMaxWeightRollup, "number") || 0,
+        isPr:
+          getRollup(exerciseLog.properties.todayMaxWeightRollup, "number") ===
+          getRollup(exerciseLog.properties.goalWeightRollup, "number"),
+        musclesTypes:
+          getFormula(exerciseLog.properties.muslesTypesRollup, "string")
+            ?.split(",")
+            .map((part) => part.trim()) || [],
+        exerciseSets: {
+          exerciseId: exerciseLog.id,
+          createdTime: exerciseLog.created_time,
+          rest: exerciseLog.properties.rest.number || 0,
+          trainingName:
+            getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
+            "",
+          sets: parseExerciseSetsText(
+            getFormula(exerciseLog.properties.setsJsonFormula, "string"),
+            exerciseLog.id,
+          ),
+          notionUrl: exerciseLog.url,
+        },
+      };
+    },
+  );
+  const totalSetsCount = exercises.reduce(
+    (acc, exercise) => acc + exercise.exerciseSets.sets.length,
+    0,
+  );
+  const totalTrainingVolumeWeight = exercises.reduce(
+    (acc, exercise) =>
+      acc +
+      exercise.exerciseSets.sets.reduce(
+        (setAcc, set) => setAcc + set.kg * set.rep,
+        0,
+      ),
+    0,
+  );
+  const responseData: TrainingLogDetail = {
+    id: trainingLog.id,
+    createdTime: trainingLogProperties.createdTime.created_time,
+    bodyParts:
+      getFormula(trainingLogProperties.musleTypesFormula, "string")
+        ?.split(",")
+        .map((part) => part.trim()) || [],
+    memo: trainingLogProperties.memo.rich_text[0]?.plain_text || "",
+    bodyWeight: trainingLogProperties.bodyWeight.number || 0,
+    totalExerciseCount,
+    totalSetsCount,
+    totalTrainingVolumeWeight,
+    exercises,
   };
   return responseData;
 }

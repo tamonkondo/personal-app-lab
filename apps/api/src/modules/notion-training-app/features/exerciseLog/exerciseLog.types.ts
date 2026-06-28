@@ -28,6 +28,7 @@ export interface NotionExerciseLogProperties {
   theGoalWeightRelation: NotionProp<"theGoalWeightRelation", "relation">;
   trainingExerciseRelation: NotionProp<"trainingExerciseRelation", "relation">;
   trainingRecordRelation: NotionProp<"trainingRecordRelation", "relation">;
+  muslesTypesRollup: NotionProp<"muslesTypesRollup", "rollup">;
 }
 
 export type NotionExerciseLogPage<T extends keyof NotionExerciseLogProperties> =

@@ -6,7 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import useSWR from "swr";
+import fetcher from "../lib/fetch";
 
 const trainingLog = {
   id: "log-1",
@@ -90,6 +92,13 @@ const statusClassName: Record<string, string> = {
 };
 
 const TrainingLogDetail = () => {
+  const { trainingId } = useParams();
+  const { data } = useSWR(
+    `${import.meta.env.VITE_API_URL}/training-logs/${trainingId}`,
+    fetcher,
+  );
+  console.log("trainingId:", trainingId);
+  console.log(data);
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -137,7 +146,9 @@ const TrainingLogDetail = () => {
             <Card key={item.label}>
               <CardContent className="p-5">
                 <p className="text-sm text-zinc-500">{item.label}</p>
-                <p className="mt-2 text-xl md:text-2xl font-bold">{item.value}</p>
+                <p className="mt-2 text-xl md:text-2xl font-bold">
+                  {item.value}
+                </p>
               </CardContent>
             </Card>
           ))}

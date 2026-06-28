@@ -11,6 +11,7 @@ import type {
 } from "@repo/types/notion-training-app";
 import type { NotionExerciseQueryResult } from "../exercise/exercise.types";
 import notionLimit from "@/libs/notion/notionLimit";
+import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
 
 interface Props {
   exercises: NotionExerciseQueryResult;
@@ -44,30 +45,7 @@ export async function fetchExerciseLogWithSets({
       ),
     ].filter((id): id is string => typeof id === "string" && id.length > 0);
   console.log("log count", exerciseLogIds().length);
-  const parseSetsText = (
-    value: string | null | undefined,
-    exerciseLogId: string = "",
-  ): ExerciseSetBase[] => {
-    if (!value) return [];
-    return value
-      .replace(/^\[/, "")
-      .replace(/\]$/, "")
-      .split(";;")
-      .map((row) => row.replace(/^,/, "").trim())
-      .filter(Boolean)
-      .map((row) => {
-        const [kg, rep, memo, maxWeight, id] = row.split("|");
-        return {
-          exerciseId: exerciseLogId,
-          id,
-          kg: Number(kg) || 0,
-          rep: Number(rep) || 0,
-          memo: memo || "",
-          maxWeight: Number(maxWeight) || 0,
-          notionUrl: "",
-        };
-      });
-  };
+
   console.time("exerciseLogs");
   const exerciseLogs = await Promise.all(
     exerciseLogIds().map(async (exerciseLogId) => {
@@ -87,7 +65,7 @@ export async function fetchExerciseLogWithSets({
             getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
             "",
           createdTime: exerciseLog.created_time,
-          sets: parseSetsText(
+          sets: parseExerciseSetsText(
             getFormula(exerciseLog.properties.setsJsonFormula, "string"),
             exerciseLog.id,
           ),
@@ -97,7 +75,7 @@ export async function fetchExerciseLogWithSets({
     }),
   );
   console.timeEnd("exerciseLogs");
-
+  console.log("exerciseLogs", exerciseLogs);
   const exerciseLogIdToLogMap = new Map<
     string,
     ExerciseLogWithSetsItemResponse

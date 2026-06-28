@@ -60,6 +60,7 @@ export const getTrainingLogDetail = asyncHandler(
 // 最新のトレーニングログを取得するエンドポイント
 export const getNewestTrainingLog = asyncHandler(async (_, res) => {
   // idがない場合は今日の日付を反映
+  console.log("取得開始");
   const trainingLog = await fetches.fetchNewestTrainingLog();
   const response: NewestTrainingLogResponse = {
     message: "getNewestTrainingLog",
