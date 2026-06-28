@@ -5,18 +5,28 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
 } from "@repo/ui";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { EXERCISE_TREND_PERIOD_OPTIONS } from "../features/exercise/constants/constants";
+import { useExerciseTrendsParams } from "../features/exercise/hooks/useExerciseTrendsParams";
+import { useMemo } from "react";
+import {
+  ExerciseDetail,
+  ExerciseTrendPeriod,
+} from "@repo/types/notion-training-app/exercise";
+import fetcher from "../lib/fetch";
+import useSWR from "swr";
 
 const exerciseLog = {
   id: "exercise-1",
@@ -30,7 +40,6 @@ const exerciseLog = {
   totalSets: 86,
   totalVolume: "74,280kg",
   averageRest: "3分",
-  memo: "胸の日のメイン種目。高重量日は肩甲骨の固定と足の踏み込みを優先する。",
 };
 
 const sessionLogs = [
@@ -48,7 +57,13 @@ const sessionLogs = [
       { set: 1, weight: "80kg", reps: 8, oneRm: "101.3kg", memo: "アップ" },
       { set: 2, weight: "87.5kg", reps: 6, oneRm: "105kg", memo: "余裕あり" },
       { set: 3, weight: "92.5kg", reps: 3, oneRm: "101.8kg", memo: "PR" },
-      { set: 4, weight: "85kg", reps: 7, oneRm: "104.8kg", memo: "フォーム重視" },
+      {
+        set: 4,
+        weight: "85kg",
+        reps: 7,
+        oneRm: "104.8kg",
+        memo: "フォーム重視",
+      },
     ],
   },
   {
@@ -87,31 +102,54 @@ const sessionLogs = [
   },
 ];
 
-const personalRecords = [
-  { label: "最高重量", value: "92.5kg", date: "2026/06/01" },
-  { label: "最多回数", value: "80kg x 10", date: "2026/05/04" },
-  { label: "推定1RM", value: "105kg", date: "2026/06/01" },
-  { label: "最大総重量", value: "3,450kg", date: "2026/06/01" },
-];
-
-const trendItems = [
-  { label: "直近4週の伸び", value: "+5kg", tone: "text-emerald-700" },
-  { label: "平均セット数", value: "4.0 set", tone: "text-zinc-950" },
-  { label: "次回目安", value: "90kg x 5", tone: "text-zinc-950" },
-];
-
-const summaryItems = [
-  { label: "現在MAX", value: `${exerciseLog.currentMaxWeight}kg` },
-  { label: "目標重量", value: `${exerciseLog.goalWeight}kg` },
-  { label: "記録回数", value: `${exerciseLog.totalSessions}` },
-  { label: "総重量", value: exerciseLog.totalVolume },
-];
-
 const goalProgress = Math.round(
   (exerciseLog.currentMaxWeight / exerciseLog.goalWeight) * 100,
 );
 
 const ExerciseLogDetail = () => {
+  const { trendPeriod, setSearchParamsWithReset } = useExerciseTrendsParams();
+  const { exerciseId } = useParams();
+  const { data: exerciseDetail } = useSWR(
+    `${import.meta.env.VITE_API_URL}/exercise/${exerciseId}`,
+    fetcher,
+  );
+  console.log("exerciseId:", exerciseId);
+  console.log(exerciseDetail);
+  const exerciseDetailData: ExerciseDetail = exerciseDetail?.data || null;
+  const trendItems = useMemo(
+    () => [
+      {
+        label: `直近${EXERCISE_TREND_PERIOD_OPTIONS.find((option) => option.value === trendPeriod)?.label}の伸び`,
+        value: "+5kg",
+        tone: "text-emerald-700",
+      },
+      { label: "平均セット数", value: "4.0 set", tone: "text-zinc-950" },
+      { label: "次回目安", value: "90kg x 5", tone: "text-zinc-950" },
+    ],
+    [trendPeriod],
+  );
+  const summaryItems = useMemo(
+    () => [
+      {
+        label: "現在MAX重量",
+        value: `${exerciseDetailData?.currentMaxWeight}kg`,
+      },
+      {
+        label: "目標重量",
+        value: `${exerciseDetailData?.maxGoalWeight ?? 0}kg`,
+      },
+      {
+        label: "トータルセット記録回数",
+        value: `${exerciseDetailData?.totalSetsCount ?? 0}`,
+      },
+      {
+        label: "総重量",
+        value: `${exerciseDetailData?.totalTrainingVolumeWeight ?? 0}kg`,
+      },
+    ],
+    [exerciseDetailData],
+  );
+
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -134,9 +172,6 @@ const ExerciseLogDetail = () => {
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
                   {exerciseLog.name}
                 </h1>
-                <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
-                  {exerciseLog.memo}
-                </p>
               </div>
             </div>
 
@@ -180,113 +215,77 @@ const ExerciseLogDetail = () => {
               </Button>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="history">
-                <TabsList className="h-auto gap-2 px-3 py-2 [&>button]:h-auto [&>button]:cursor-pointer">
-                  <TabsTrigger value="history">History</TabsTrigger>
-                  <TabsTrigger value="records">Records</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="history" className="mt-5 space-y-5">
-                  {sessionLogs.map((session) => (
-                    <article
-                      key={session.id}
-                      className="rounded-2xl border bg-white p-5 shadow-sm"
-                    >
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="text-xl font-bold">
-                              {session.date} {session.day}
-                            </h2>
-                            <Badge variant="secondary">{session.title}</Badge>
-                            {session.isPr ? (
-                              <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-                                PR更新
-                              </Badge>
-                            ) : null}
-                          </div>
-                          <p className="text-sm text-zinc-500">
-                            Best {session.bestSet} / Volume {session.volume} /
-                            Rest {session.rest}
-                          </p>
-                        </div>
-                        <Link to={`/training-log/${session.trainingLogId}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full sm:w-auto"
-                          >
-                            トレーニング詳細
-                          </Button>
-                        </Link>
+              {sessionLogs.map((session) => (
+                <article
+                  key={session.id}
+                  className="rounded-2xl border bg-white p-5 shadow-sm"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-xl font-bold">
+                          {session.date} {session.day}
+                        </h2>
+                        <Badge variant="secondary">{session.title}</Badge>
+                        {session.isPr ? (
+                          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                            PR更新
+                          </Badge>
+                        ) : null}
                       </div>
+                      <p className="text-sm text-zinc-500">
+                        Best {session.bestSet} / Volume {session.volume} / Rest{" "}
+                        {session.rest}
+                      </p>
+                    </div>
+                    <Link to={`/training-log/${session.trainingLogId}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                      >
+                        トレーニング詳細
+                      </Button>
+                    </Link>
+                  </div>
 
-                      <div className="mt-5 overflow-x-auto rounded-2xl border">
-                        <Table>
-                          <TableHeader className="bg-zinc-50 text-xs font-semibold text-zinc-500 uppercase">
-                            <TableRow>
-                              <TableHead>Set</TableHead>
-                              <TableHead>重量</TableHead>
-                              <TableHead>回数</TableHead>
-                              <TableHead>1RM</TableHead>
-                              <TableHead className="hidden sm:table-cell">
-                                メモ
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {session.sets.map((set) => (
-                              <TableRow
-                                key={`${session.id}-${set.set}`}
-                                className={
-                                  set.memo === "PR" ? "bg-yellow-50" : undefined
-                                }
-                              >
-                                <TableCell className="font-semibold">
-                                  {set.set}
-                                </TableCell>
-                                <TableCell>{set.weight}</TableCell>
-                                <TableCell>{set.reps}回</TableCell>
-                                <TableCell>{set.oneRm}</TableCell>
-                                <TableCell className="hidden text-zinc-500 sm:table-cell">
-                                  {set.memo || "-"}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </article>
-                  ))}
-                </TabsContent>
-
-                <TabsContent value="records" className="mt-5">
-                  <div className="overflow-hidden rounded-2xl border bg-white">
+                  <div className="mt-5 overflow-x-auto rounded-2xl border">
                     <Table>
                       <TableHeader className="bg-zinc-50 text-xs font-semibold text-zinc-500 uppercase">
                         <TableRow>
-                          <TableHead>項目</TableHead>
-                          <TableHead>記録</TableHead>
-                          <TableHead>日付</TableHead>
+                          <TableHead>Set</TableHead>
+                          <TableHead>重量</TableHead>
+                          <TableHead>回数</TableHead>
+                          <TableHead>1RM</TableHead>
+                          <TableHead className="hidden sm:table-cell">
+                            メモ
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {personalRecords.map((record) => (
-                          <TableRow key={record.label}>
+                        {session.sets.map((set) => (
+                          <TableRow
+                            key={`${session.id}-${set.set}`}
+                            className={
+                              set.memo === "PR" ? "bg-yellow-50" : undefined
+                            }
+                          >
                             <TableCell className="font-semibold">
-                              {record.label}
+                              {set.set}
                             </TableCell>
-                            <TableCell>{record.value}</TableCell>
-                            <TableCell className="text-zinc-500">
-                              {record.date}
+                            <TableCell>{set.weight}</TableCell>
+                            <TableCell>{set.reps}回</TableCell>
+                            <TableCell>{set.oneRm}</TableCell>
+                            <TableCell className="hidden text-zinc-500 sm:table-cell">
+                              {set.memo || "-"}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </div>
-                </TabsContent>
-              </Tabs>
+                </article>
+              ))}
             </CardContent>
           </Card>
 
@@ -296,9 +295,9 @@ const ExerciseLogDetail = () => {
                 <CardTitle>目標進捗</CardTitle>
                 <p className="mt-1 text-sm text-zinc-500">
                   目標重量まであと{" "}
-                  {(exerciseLog.goalWeight - exerciseLog.currentMaxWeight).toFixed(
-                    1,
-                  )}
+                  {(
+                    exerciseLog.goalWeight - exerciseLog.currentMaxWeight
+                  ).toFixed(1)}
                   kg です。
                 </p>
               </CardHeader>
@@ -321,6 +320,25 @@ const ExerciseLogDetail = () => {
                 <CardTitle>最近の傾向</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <Select
+                  value={trendPeriod || ""}
+                  onValueChange={(value: ExerciseTrendPeriod) => {
+                    setSearchParamsWithReset({
+                      trendPeriod: value,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="期間を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EXERCISE_TREND_PERIOD_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {trendItems.map((item) => (
                   <div
                     key={item.label}

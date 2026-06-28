@@ -24,6 +24,7 @@ export type NotionExerciseProperties = {
     "totalTrainingVolumeWeightFormula",
     "formula"
   >;
+  latestTrainingDateFormula: NotionProp<"latestTrainingDateFormula", "formula">;
 };
 export type NotionExercisePage = BasePageMeta & {
   properties: NotionExerciseProperties;

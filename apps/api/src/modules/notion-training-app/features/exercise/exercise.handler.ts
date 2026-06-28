@@ -33,3 +33,15 @@ export const getExerciseSummaryLogs = asyncHandler(
     res.status(200).json(response);
   },
 );
+export const getExerciseDetail = asyncHandler(
+  async (req: { params: { exerciseId: string } }, res) => {
+    const { exerciseId } = req.params;
+
+    const exerciseDetail = await fetches.fetchExerciseDetail(exerciseId);
+
+    res.status(200).json({
+      message: "getExerciseDetail",
+      data: exerciseDetail,
+    });
+  },
+);

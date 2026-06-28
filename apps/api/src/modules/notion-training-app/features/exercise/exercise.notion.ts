@@ -104,3 +104,32 @@ export async function fetchExerciseSummaryLogs(
   console.timeEnd("fetchExerciseSummaryLogs");
   return responseData;
 }
+export async function fetchExerciseDetail(
+  exerciseId: string,
+): Promise<ExerciseDetail> {
+  console.log("fetchExerciseDetail:", exerciseId);
+  const exercise: NotionExercisePage = (await notionClient.pages.retrieve({
+    page_id: exerciseId,
+  })) as unknown as NotionExercisePage;
+  const properties = exercise.properties;
+
+  const responseData: ExerciseDetail = {
+    id: exercise.id,
+    exerciseName: properties.name.title?.[0]?.plain_text || "",
+    latestTrainingDate:
+      getFormula(properties.latestTrainingDateFormula, "date")?.start || "",
+    musclesTypes:
+      properties.musclesTypes.multi_select?.map((muscle) => muscle.name) || [],
+    trainingName: properties.name.title?.[0]?.plain_text || "",
+    maxGoalWeight:
+      getRollupArrayValue(properties.maxGoalWeightRollup, "number") || 0,
+    currentMaxWeight:
+      Number(getRollup(properties.currentMaxWeightRollup, "number")) || 0,
+    totalSetsCount: getFormula(properties.totalSetsCountFormula, "number") || 0,
+    totalTrainingDays:
+      getFormula(properties.totalTrainingDaysFormula, "number") || 0,
+    totalTrainingVolumeWeight:
+      getFormula(properties.totalTrainingVolumeWeightFormula, "number") || 0,
+  };
+  return responseData;
+}

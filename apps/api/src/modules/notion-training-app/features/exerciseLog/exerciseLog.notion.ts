@@ -7,7 +7,6 @@ import { getFormula } from "@/integrations/notion/notion.mapper";
 
 import type {
   ExerciseLogWithSetsItemResponse,
-  ExerciseSetBase,
 } from "@repo/types/notion-training-app";
 import type { NotionExerciseQueryResult } from "../exercise/exercise.types";
 import notionLimit from "@/libs/notion/notionLimit";
@@ -75,7 +74,6 @@ export async function fetchExerciseLogWithSets({
     }),
   );
   console.timeEnd("exerciseLogs");
-  console.log("exerciseLogs", exerciseLogs);
   const exerciseLogIdToLogMap = new Map<
     string,
     ExerciseLogWithSetsItemResponse
