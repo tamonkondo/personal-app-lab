@@ -109,7 +109,7 @@ NewestTrainingLogResponse;
 ```ts
 TrainingLogSummaryItem;
 TrainingLogExerciseItem;
-ExerciseSummaryItemResponse;
+ExerciseSummaryItem;
 ExerciseLogWithSetsItemResponse;
 ExerciseSetBase;
 ```
@@ -122,8 +122,8 @@ type ExerciseSummary = {};
 type ExerciseSummaryResponse = ExerciseSummary[];
 
 // Good
-type ExerciseSummaryItemResponse = {};
-type ExerciseSummaryResponse = PaginatedResponse<ExerciseSummaryItemResponse>;
+type ExerciseSummaryItem = {};
+type ExerciseSummaryResponse = PaginatedResponse<ExerciseSummaryItem>;
 ```
 
 ### 未実装APIの型

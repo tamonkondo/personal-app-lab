@@ -4,6 +4,7 @@ import type {
   TrainingLogSummaryResponse,
 } from "@repo/types/notion-training-app";
 import * as fetches from "./trainingLog.notion";
+import { SortOrder } from "@repo/types";
 
 // トレーニングログ一覧の取得エンドポイント
 type GetTrainingLogsRequest = {
@@ -12,7 +13,7 @@ type GetTrainingLogsRequest = {
     limit?: number;
     startDate?: string;
     endDate?: string;
-    sort?: "asc" | "desc";
+    sort?: SortOrder;
     parts?: string;
   };
 };

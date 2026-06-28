@@ -21,6 +21,7 @@ import type {
   TrainingLogSummaryResponse,
 } from "@repo/types/notion-training-app/index";
 import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
+import { SortOrder } from "@repo/types";
 
 type FetchTrainingLogsResult = Pick<
   TrainingLogSummaryResponse,
@@ -35,7 +36,7 @@ export async function fetchTrainingLogs(
   limit: number = 20,
   startDate?: string,
   endDate?: string,
-  sort?: "asc" | "desc",
+  sort?: SortOrder,
   parts?: string[],
 ): Promise<FetchTrainingLogsResult> {
   const partsFilters = parts?.length

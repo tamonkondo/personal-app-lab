@@ -4,6 +4,8 @@ export type User = {
   email: string;
 };
 
+export type SortOrder = "asc" | "desc";
+
 export interface ApiResponse<T> {
   data: T;
   message?: string;

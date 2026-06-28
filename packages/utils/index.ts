@@ -19,6 +19,5 @@ export function formatDate(
 
   const separator = formatMap[format];
   // 2重で出ているseparatorを1つにする
-  console.log(separator);
   return `${year}${separator}${month}${separator}${day}`;
 }

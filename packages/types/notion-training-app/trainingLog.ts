@@ -1,5 +1,5 @@
 import type { ApiResponse, PaginatedResponse } from "../index";
-import { ExerciseBase } from "./exercise";
+import { ExerciseDisplayBase } from "./exercise";
 import { ExerciseLogWithSetsItemResponse } from "./exerciseLog";
 
 export type TrainingLogExerciseItem = {
@@ -42,7 +42,7 @@ export type TrainingLogDetail = {
   totalExerciseCount: number;
   totalSetsCount: number;
   totalTrainingVolumeWeight: number;
-  exercises: (ExerciseBase & {
+  exercises: (ExerciseDisplayBase & {
     exerciseSets: ExerciseLogWithSetsItemResponse;
   })[];
 };

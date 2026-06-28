@@ -18,6 +18,7 @@ import { ChevronDownIcon } from "@repo/ui/icons";
 import { formatDate } from "@repo/utils";
 import { useTrainingLogParams } from "../hooks/useTrainingLogParams";
 import BODY_PARTS from "../../../constants/parts";
+import { SortOrder } from "@repo/types";
 
 const TrainingLogFilterArea = () => {
   // クエリパラメータの取得
@@ -133,7 +134,7 @@ const TrainingLogFilterArea = () => {
         <p>Sort</p>
         <Select
           value={tlSort || ""}
-          onValueChange={(value) => {
+          onValueChange={(value: SortOrder) => {
             setSearchParamsWithReset({
               tlSort: value,
             });

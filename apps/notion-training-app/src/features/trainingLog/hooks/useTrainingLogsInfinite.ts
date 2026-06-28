@@ -10,7 +10,6 @@ interface UseTrainingLogInfinite {
 
 export function useTrainingLogInfinite({ params }: UseTrainingLogInfinite) {
   const { tlStartDate, tlEndDate, tlSort, tlPage, tlParts } = params;
-  console.log("tlParts in useTrainingLogInfinite:", tlParts);
   const getKey = useCallback(
     (
       pageIndex: number,

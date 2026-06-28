@@ -19,7 +19,6 @@ const ExerciseSetTable = ({ data }: Props) => {
   const maxWeightSet = data.sets.reduce((maxSet, currentSet) => {
     return currentSet.maxWeight > maxSet.maxWeight ? currentSet : maxSet;
   }, data.sets[0]);
-  console.log("maxWeightSet", data);
   return (
     <>
       {" "}
