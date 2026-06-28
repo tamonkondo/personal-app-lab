@@ -16,3 +16,4 @@ export * from "./components/ui/popover";
 export * from "./components/ui/select";
 export * from "./components/ui/command";
 export * from "./components/ui/multiple-selector";
+export * from "./components/ui/progress";
