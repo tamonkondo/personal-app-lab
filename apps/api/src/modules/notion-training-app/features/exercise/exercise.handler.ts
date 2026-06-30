@@ -26,6 +26,7 @@ export const getExerciseSummaryLogs = asyncHandler(
       limit ? Number(limit) : undefined,
       cursor,
     );
+    console.log(exerciseSummaryLogs);
     const response: ExerciseSummaryResponse = {
       message: "getExerciseSummaryLogs",
       ...exerciseSummaryLogs,
@@ -33,6 +34,34 @@ export const getExerciseSummaryLogs = asyncHandler(
     res.status(200).json(response);
   },
 );
+
+export const getExerciseLogs = asyncHandler(
+  async (
+    req: {
+      params: { exerciseId: string };
+      query: { limit?: string; cursor?: string };
+    },
+    res,
+  ) => {
+    const { exerciseId } = req.params;
+    const { limit, cursor } = req.query as Partial<{
+      limit: string;
+      cursor: string;
+    }>;
+
+    const exerciseLogs = await fetches.fetchExerciseLogs(
+      exerciseId,
+      limit ? Number(limit) : undefined,
+      cursor,
+    );
+
+    res.status(200).json({
+      message: "getExerciseLogs",
+      ...exerciseLogs,
+    });
+  },
+);
+
 export const getExerciseDetail = asyncHandler(
   async (req: { params: { exerciseId: string } }, res) => {
     const { exerciseId } = req.params;
@@ -42,6 +71,19 @@ export const getExerciseDetail = asyncHandler(
     res.status(200).json({
       message: "getExerciseDetail",
       data: exerciseDetail,
+    });
+  },
+);
+
+export const getExerciseTrends = asyncHandler(
+  async (req: { params: { exerciseId: string } }, res) => {
+    const { exerciseId } = req.params;
+
+    const exerciseTrends = await fetches.fetchExerciseTrends(exerciseId);
+
+    res.status(200).json({
+      message: "getExerciseTrends",
+      ...exerciseTrends,
     });
   },
 );

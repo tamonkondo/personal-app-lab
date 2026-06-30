@@ -27,3 +27,11 @@ notionTrainingAppRouter.get(
   "/exercise/:exerciseId",
   exerciseHandlers.getExerciseDetail,
 );
+notionTrainingAppRouter.get(
+  "/exercise/:exerciseId/logs",
+  exerciseHandlers.getExerciseLogs,
+);
+notionTrainingAppRouter.get(
+  "/exercise/:exerciseId/trends",
+  exerciseHandlers.getExerciseTrends,
+);
