@@ -193,6 +193,7 @@ export async function fetchTrainingLogDetail(
     "memo",
     "rest",
     "goalWeightRollup",
+    "trainingExerciseRelation",
   ] as const satisfies (keyof NotionExerciseLogProperties)[];
   // 種目ごとの記録データを取得
   const exerciseLogs = (await Promise.all(
@@ -227,7 +228,10 @@ export async function fetchTrainingLogDetail(
             ?.split(",")
             .map((part) => part.trim()) || [],
         exerciseSets: {
-          exerciseId: exerciseLog.id,
+          exerciseLogId: exerciseLog.id,
+          exerciseId:
+            getRelationIds(exerciseLog.properties.trainingExerciseRelation)[0] ||
+            "",
           createdTime: exerciseLog.created_time,
           rest: exerciseLog.properties.rest.number || 0,
           trainingName:

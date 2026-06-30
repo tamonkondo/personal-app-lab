@@ -1,4 +1,8 @@
-import { BasePageMeta, NotionProp } from "@/integrations/notion/notion.types";
+import {
+  BasePageMeta,
+  NotionProp,
+  NotionResults,
+} from "@/integrations/notion/notion.types";
 
 export interface NotionExerciseLogProperties {
   todayMaxWeightRollup: NotionProp<"todayMaxWeightRollup", "rollup">;
@@ -35,3 +39,7 @@ export type NotionExerciseLogPage<T extends keyof NotionExerciseLogProperties> =
   BasePageMeta & {
     properties: Pick<NotionExerciseLogProperties, T>;
   };
+
+export type NotionExerciseLogQueryResult<
+  T extends keyof NotionExerciseLogProperties = keyof NotionExerciseLogProperties,
+> = NotionResults<NotionExerciseLogPage<T>>;

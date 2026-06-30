@@ -10,6 +10,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -27,20 +28,8 @@ import {
 } from "@repo/types/notion-training-app/exercise";
 import fetcher from "../lib/fetch";
 import useSWR from "swr";
-
-const exerciseLog = {
-  id: "exercise-1",
-  name: "ベンチプレス",
-  part: "胸",
-  status: "更新中",
-  latestDate: "2026/06/01",
-  currentMaxWeight: 92.5,
-  goalWeight: 100,
-  totalSessions: 24,
-  totalSets: 86,
-  totalVolume: "74,280kg",
-  averageRest: "3分",
-};
+import AlertCard from "../components/AlertCard";
+import { formatDate } from "@repo/utils";
 
 const sessionLogs = [
   {
@@ -102,20 +91,26 @@ const sessionLogs = [
   },
 ];
 
-const goalProgress = Math.round(
-  (exerciseLog.currentMaxWeight / exerciseLog.goalWeight) * 100,
-);
-
 const ExerciseLogDetail = () => {
   const { trendPeriod, setSearchParamsWithReset } = useExerciseTrendsParams();
   const { exerciseId } = useParams();
-  const { data: exerciseDetail } = useSWR(
+  const { data: exerciseDetail, isLoading } = useSWR(
     `${import.meta.env.VITE_API_URL}/exercise/${exerciseId}`,
     fetcher,
   );
-  console.log("exerciseId:", exerciseId);
-  console.log(exerciseDetail);
+  const { data: exerciseLogs, isLoading: isLoadingWithExerciseLogs } = useSWR(
+    `${import.meta.env.VITE_API_URL}/exercise/${exerciseId}/logs`,
+    fetcher,
+  );
+  console.log(exerciseLogs);
   const exerciseDetailData: ExerciseDetail = exerciseDetail?.data || null;
+  const goalProgress = exerciseDetailData
+    ? Math.round(
+        (exerciseDetailData.currentMaxWeight /
+          exerciseDetailData.maxGoalWeight) *
+          100,
+      )
+    : 0;
   const trendItems = useMemo(
     () => [
       {
@@ -149,30 +144,33 @@ const ExerciseLogDetail = () => {
     ],
     [exerciseDetailData],
   );
+  if (isLoading) return <Spinner />;
+  if (!exerciseDetailData)
+    return (
+      <AlertCard
+        title="データが一件も存在しません"
+        message="トレーニング種目のデータが存在しません。新しい記録を追加してください。"
+        action={
+          <Link to="/exercise/new">
+            <Button>新しい記録を追加</Button>
+          </Link>
+        }
+      />
+    );
 
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-white/10 text-white hover:bg-white/10">
-                  Exercise Log Detail
-                </Badge>
-                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-                  {exerciseLog.status}
-                </Badge>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-zinc-300">
-                  Latest {exerciseLog.latestDate}
-                </p>
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  {exerciseLog.name}
-                </h1>
-              </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-zinc-300">
+                Latest{" "}
+                {formatDate(exerciseDetailData.latestTrainingDate, "slash")}
+              </p>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {exerciseDetailData.exerciseName}
+              </h1>
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -296,7 +294,8 @@ const ExerciseLogDetail = () => {
                 <p className="mt-1 text-sm text-zinc-500">
                   目標重量まであと{" "}
                   {(
-                    exerciseLog.goalWeight - exerciseLog.currentMaxWeight
+                    exerciseDetailData.maxGoalWeight -
+                    exerciseDetailData.currentMaxWeight
                   ).toFixed(1)}
                   kg です。
                 </p>

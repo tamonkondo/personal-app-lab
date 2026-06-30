@@ -1,13 +1,12 @@
 import notionClient from "@/integrations/notion/notion.client";
 import type {
+  NotionExerciseLogQueryResult,
   NotionExerciseLogPage,
   NotionExerciseLogProperties,
 } from "./exerciseLog.types";
 import { getFormula } from "@/integrations/notion/notion.mapper";
 
-import type {
-  ExerciseLogWithSetsItemResponse,
-} from "@repo/types/notion-training-app";
+import type { ExerciseLogWithSetsItemResponse } from "@repo/types/notion-training-app";
 import type { NotionExerciseQueryResult } from "../exercise/exercise.types";
 import notionLimit from "@/libs/notion/notionLimit";
 import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
@@ -22,54 +21,101 @@ interface FetchExerciseLogWithSetsRes {
   latestSets: ExerciseLogWithSetsItemResponse;
 }
 
+export const exerciseLogWithSetsProperties = [
+  "rest",
+  "trainingNameFormula",
+  "setsJsonFormula",
+] as const satisfies (keyof NotionExerciseLogProperties)[];
+
+export type ExerciseLogWithSetsProperties =
+  (typeof exerciseLogWithSetsProperties)[number];
+
+function mapExerciseLogWithSetsItem(
+  exerciseLog: NotionExerciseLogPage<ExerciseLogWithSetsProperties>,
+  exerciseId: string,
+): ExerciseLogWithSetsItemResponse {
+  return {
+    exerciseLogId: exerciseLog.id,
+    exerciseId,
+    rest: exerciseLog.properties.rest.number || 0,
+    trainingName:
+      getFormula(exerciseLog.properties.trainingNameFormula, "string") || "",
+    createdTime: exerciseLog.created_time,
+    sets: parseExerciseSetsText(
+      getFormula(exerciseLog.properties.setsJsonFormula, "string"),
+      exerciseLog.id,
+    ),
+    notionUrl: exerciseLog.url,
+  };
+}
+
+function emptyExerciseLogWithSets(
+  exerciseId: string,
+): ExerciseLogWithSetsItemResponse {
+  return {
+    exerciseLogId: "",
+    exerciseId,
+    rest: 0,
+    trainingName: "",
+    createdTime: "",
+    sets: [],
+    notionUrl: "",
+  };
+}
+
+export function mapExerciseLogsWithSets({
+  exerciseLogs,
+  exerciseId,
+}: {
+  exerciseLogs: NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties>;
+  exerciseId: string;
+}): ExerciseLogWithSetsItemResponse[] {
+  return exerciseLogs.results.map((exerciseLog) =>
+    mapExerciseLogWithSetsItem(exerciseLog, exerciseId),
+  );
+}
+
 export async function fetchExerciseLogWithSets({
   exercises,
 }: Props): Promise<FetchExerciseLogWithSetsRes[]> {
-  const extractExerciseProperties = [
-    "rest",
-    "trainingNameFormula",
-    "setsJsonFormula",
-  ] as const satisfies (keyof NotionExerciseLogProperties)[];
-  type ExtractedExerciseLogProperties =
-    (typeof extractExerciseProperties)[number];
-
   /* exercisesからlatestExerciseLogIdとmaxWeightExerciseLogIdを抜き取り、重複を除外する */
-  const exerciseLogIds = () =>
-    [
-      ...new Set(
-        exercises.results.flatMap((exercise) => [
+  const exerciseLogIdToExerciseIdMap = new Map<string, string>();
+  const exerciseLogIds = [
+    ...new Set(
+      exercises.results.flatMap((exercise) => {
+        const ids = [
           getFormula(exercise.properties.latestExerciseLogId, "string"),
           getFormula(exercise.properties.maxWeightExerciseLogId, "string"),
-        ]),
-      ),
-    ].filter((id): id is string => typeof id === "string" && id.length > 0);
-  console.log("log count", exerciseLogIds().length);
+        ].filter((id): id is string => typeof id === "string" && id.length > 0);
+
+        ids.forEach((id) => {
+          exerciseLogIdToExerciseIdMap.set(id, exercise.id);
+        });
+
+        return ids;
+      }),
+    ),
+  ];
+  console.log("log count", exerciseLogIds.length);
 
   console.time("exerciseLogs");
   const exerciseLogs = await Promise.all(
-    exerciseLogIds().map(async (exerciseLogId) => {
+    exerciseLogIds.map(async (exerciseLogId) => {
+      const exerciseId = exerciseLogIdToExerciseIdMap.get(exerciseLogId);
+      if (!exerciseId) {
+        throw new Error(`Exercise ID not found for log: ${exerciseLogId}`);
+      }
+
       const exerciseLog = (await notionLimit(() =>
         notionClient.pages.retrieve({
           page_id: exerciseLogId,
-          filter_properties: extractExerciseProperties,
+          filter_properties: exerciseLogWithSetsProperties,
         }),
-      )) as unknown as NotionExerciseLogPage<ExtractedExerciseLogProperties>;
+      )) as unknown as NotionExerciseLogPage<ExerciseLogWithSetsProperties>;
 
       return {
         exerciseLogId,
-        exerciseLog: {
-          exerciseId: exerciseLog.id,
-          rest: exerciseLog.properties.rest.number || 0,
-          trainingName:
-            getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
-            "",
-          createdTime: exerciseLog.created_time,
-          sets: parseExerciseSetsText(
-            getFormula(exerciseLog.properties.setsJsonFormula, "string"),
-            exerciseLog.id,
-          ),
-          notionUrl: exerciseLog.url,
-        },
+        exerciseLog: mapExerciseLogWithSetsItem(exerciseLog, exerciseId),
       };
     }),
   );
@@ -114,22 +160,8 @@ export async function fetchExerciseLogWithSets({
     exerciseIdToLogsMap,
   ).map(([exerciseId, { maxWeightLog, latestLog }]) => ({
     exerciseId,
-    maxWeightSets: maxWeightLog || {
-      exerciseId,
-      rest: 0,
-      trainingName: "",
-      createdTime: "",
-      sets: [],
-      notionUrl: "",
-    },
-    latestSets: latestLog || {
-      exerciseId,
-      rest: 0,
-      trainingName: "",
-      createdTime: "",
-      sets: [],
-      notionUrl: "",
-    },
+    maxWeightSets: maxWeightLog || emptyExerciseLogWithSets(exerciseId),
+    latestSets: latestLog || emptyExerciseLogWithSets(exerciseId),
   }));
   return responseData;
 }

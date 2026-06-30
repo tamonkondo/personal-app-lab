@@ -27,7 +27,6 @@ const ExerciseSummaryList = ({ enabled }: { enabled: boolean }) => {
   };
   if (isLoading) return <Spinner />;
   if (error) {
-    Sentry.captureException(error);
     return (
       <AlertCard
         title="データの取得に失敗しました"

@@ -2,7 +2,6 @@ import {
   getFormula,
   getRollup,
   getRollupArrayValue,
-  isFormula,
 } from "@/integrations/notion/notion.mapper";
 import notionClient from "@/integrations/notion/notion.client";
 import type {
@@ -12,12 +11,23 @@ import type {
 } from "./exercise.types";
 import type {
   ExerciseDetail,
+  ExerciseLogWithSetsResponse,
   ExerciseSummaryResponse,
 } from "@repo/types/notion-training-app";
-import { fetchExerciseLogWithSets } from "../exerciseLog/exerciseLog.notion";
+import {
+  exerciseLogWithSetsProperties,
+  fetchExerciseLogWithSets,
+  mapExerciseLogsWithSets,
+} from "../exerciseLog/exerciseLog.notion";
+import type { ExerciseLogWithSetsProperties } from "../exerciseLog/exerciseLog.notion";
+import type { NotionExerciseLogQueryResult } from "../exerciseLog/exerciseLog.types";
 
 type FetchExerciseSummaryLogsResult = Pick<
   ExerciseSummaryResponse,
+  "data" | "meta"
+>;
+type FetchExerciseLogsResult = Pick<
+  ExerciseLogWithSetsResponse,
   "data" | "meta"
 >;
 
@@ -117,66 +127,31 @@ export async function fetchExerciseLogs(
   exerciseId: string,
   limit: number = 7,
   cursor?: string,
-): Promise<ExerciseSummaryResponse> {
+): Promise<FetchExerciseLogsResult> {
   console.time("fetchExerciseLogs");
-  const exercisesFilterProperties = [
-    "name",
-    "musclesTypes",
-    "maxGoalWeightRollup",
-    "maxWeightExerciseLogId",
-    "latestExerciseLogId",
-    "currentMaxWeightRollup",
-  ] as const satisfies (keyof NotionExerciseProperties)[];
-  const exercises: NotionExerciseQueryResult =
+
+  const exerciseLogs: NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties> =
     (await notionClient.dataSources.query({
-      data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
+      data_source_id: process.env.NOTION_EXERCISE_LOGS_DATABASE_ID!,
       filter: {
-        property: "id",
-        rich_text: {
-          equals: exerciseId,
+        property: "trainingExerciseRelation",
+        relation: {
+          contains: exerciseId,
         },
       },
-      filter_properties: exercisesFilterProperties,
+      filter_properties: exerciseLogWithSetsProperties,
       page_size: limit,
       start_cursor: cursor,
-    })) as unknown as NotionExerciseQueryResult;
+    })) as unknown as NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties>;
 
-  const exerciseLogWithSets = await fetchExerciseLogWithSets({
-    exercises,
-  });
-
-  const exerciseLogWithSetsMap = new Map(
-    exerciseLogWithSets.map((log) => [log.exerciseId, log]),
-  );
-
-  const responseData: ExerciseSummaryResponse = {
-    data: exercises.results.map((log) => {
-      const logWithSets = exerciseLogWithSetsMap.get(log.id);
-      if (!logWithSets) {
-        throw new Error(`Exercise log summary not found: ${log.id}`);
-      }
-      const maxGoalWeight =
-        getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") || 0;
-      const currentMaxWeight =
-        Number(getRollup(log.properties.currentMaxWeightRollup, "number")) || 0;
-      return {
-        id: log.id,
-        musclesTypes:
-          log.properties.musclesTypes.multi_select?.map(
-            (muscle) => muscle.name,
-          ) || [],
-        trainingName: log.properties.name.title?.[0]?.plain_text || "",
-        maxGoalWeight,
-        currentMaxWeight,
-        isPr: currentMaxWeight > maxGoalWeight,
-        exerciseUrl: log.url,
-        maxWeightSets: logWithSets.maxWeightSets,
-        latestSets: logWithSets.latestSets,
-      };
+  const responseData: FetchExerciseLogsResult = {
+    data: mapExerciseLogsWithSets({
+      exerciseLogs,
+      exerciseId,
     }),
     meta: {
-      next_cursor: exercises.next_cursor || undefined,
-      has_more: exercises.has_more,
+      next_cursor: exerciseLogs.next_cursor || undefined,
+      has_more: exerciseLogs.has_more,
     },
   };
   console.timeEnd("fetchExerciseLogs");
