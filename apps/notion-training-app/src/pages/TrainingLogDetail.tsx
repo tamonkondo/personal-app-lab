@@ -48,15 +48,13 @@ const TrainingLogDetail = () => {
       trainingLogDetail?.exercises.filter((exercise) => exercise.isPr) ?? [],
     [trainingLogDetail],
   );
-  const bodyPartsNames = (): string[] | undefined => {
-    if (!trainingLogDetail) return undefined;
-
-    return trainingLogDetail.bodyParts
+  const bodyPartsNames = (): string[] | undefined =>
+    trainingLogDetail?.bodyParts
       .map(
         (part) => BODY_PARTS.find((bodyPart) => bodyPart.value === part)?.label,
       )
-      .filter((label): label is string => Boolean(label));
-  };
+      .filter((label): label is string => !!label);
+
   const highestVolumeExercise = useMemo(() => {
     if (!trainingLogDetail?.exercises.length) return null;
 
