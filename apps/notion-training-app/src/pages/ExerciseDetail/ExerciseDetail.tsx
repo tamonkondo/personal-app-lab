@@ -13,7 +13,6 @@ import {
 } from "@repo/ui";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { EXERCISE_TREND_PERIOD_OPTIONS } from "../../features/exercise/constants/constants";
-import { ExerciseLogHistoryList } from "../../features/exerciseLog/components/ExerciseLogHistoryList";
 import { useExerciseTrendsParams } from "../../features/exercise/hooks/useExerciseTrendsParams";
 import { useMemo } from "react";
 import { ExerciseTrendPeriod } from "@repo/types/notion-training-app/exercise";
