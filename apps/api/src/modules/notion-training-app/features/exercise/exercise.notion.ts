@@ -155,6 +155,7 @@ export async function fetchExerciseLogs(
     },
   };
   console.timeEnd("fetchExerciseLogs");
+  console.log(responseData)
   return responseData;
 }
 

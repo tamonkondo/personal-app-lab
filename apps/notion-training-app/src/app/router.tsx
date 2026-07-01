@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import ExerciseDetail from "../pages/ExerciseDetail";
+import ExerciseDetail from "../pages/ExerciseDetail/ExerciseDetail";
 import ExerciseList from "../pages/ExerciseList";
 import TrainingLogDetail from "../pages/TrainingLogDetail";
 import TrainingLogList from "../pages/TrainingLogList";

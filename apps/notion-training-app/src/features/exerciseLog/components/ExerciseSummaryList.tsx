@@ -2,7 +2,6 @@ import { ExerciseSummaryCard } from "../../exercise/components/ExerciseSummaryCa
 import { Button, Spinner } from "@repo/ui";
 import AlertCard from "../../../components/AlertCard";
 import { Link } from "react-router-dom";
-import * as Sentry from "@sentry/react";
 import { useExerciseSummaryParams } from "../hooks/useExerciseSummaryParams";
 import { useExerciseSummaryInfinite } from "../hooks/useExerciseSummaryInfinite";
 
