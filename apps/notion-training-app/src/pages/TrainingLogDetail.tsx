@@ -1,5 +1,4 @@
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -14,9 +13,7 @@ import AlertCard from "../components/AlertCard";
 import { getExerciseVolume } from "../features/trainingLog/components/TrainingLogExerciseCard";
 import { TrainingLogExerciseList } from "../features/trainingLog/components/TrainingLogExerciseList";
 import { useTrainingLogDetail } from "../features/trainingLog/hooks/useTrainingLogDetail";
-
-const status = "完了";
-const statusClassName = "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
+import BODY_PARTS from "../constants/parts";
 
 const TrainingLogDetail = () => {
   const { trainingId } = useParams();
@@ -47,9 +44,19 @@ const TrainingLogDetail = () => {
     [trainingLogDetail],
   );
   const prExercises = useMemo(
-    () => trainingLogDetail?.exercises.filter((exercise) => exercise.isPr) ?? [],
+    () =>
+      trainingLogDetail?.exercises.filter((exercise) => exercise.isPr) ?? [],
     [trainingLogDetail],
   );
+  const bodyPartsNames = (): string[] | undefined => {
+    if (!trainingLogDetail) return undefined;
+
+    return trainingLogDetail.bodyParts
+      .map(
+        (part) => BODY_PARTS.find((bodyPart) => bodyPart.value === part)?.label,
+      )
+      .filter((label): label is string => Boolean(label));
+  };
   const highestVolumeExercise = useMemo(() => {
     if (!trainingLogDetail?.exercises.length) return null;
 
@@ -91,27 +98,16 @@ const TrainingLogDetail = () => {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-white/10 text-white hover:bg-white/10">
-                  Training Log Detail
-                </Badge>
-                <Badge className={statusClassName}>{status}</Badge>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-zinc-300">
-                  {formatDate(trainingLogDetail.createdTime, "slash")}
-                </p>
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  {trainingLogDetail.bodyParts.length > 0
-                    ? trainingLogDetail.bodyParts.join("・")
-                    : "トレーニングログ"}
-                </h1>
-                <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
-                  {trainingLogDetail.memo || "メモはありません。"}
-                </p>
-              </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-zinc-300">
+                {formatDate(trainingLogDetail.createdTime, "slash")}
+              </p>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {bodyPartsNames()?.join("・") || "トレーニングログ"}
+              </h1>
+              <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
+                {trainingLogDetail.memo || "メモはありません。"}
+              </p>
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -155,7 +151,9 @@ const TrainingLogDetail = () => {
               </Button>
             </CardHeader>
             <CardContent>
-              <TrainingLogExerciseList exercises={trainingLogDetail.exercises} />
+              <TrainingLogExerciseList
+                exercises={trainingLogDetail.exercises}
+              />
             </CardContent>
           </Card>
 
