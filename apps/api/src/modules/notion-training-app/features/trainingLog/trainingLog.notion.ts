@@ -88,13 +88,6 @@ export async function fetchTrainingLogs(
       data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
       page_size: limit,
       start_cursor: cursor,
-      filter_properties: [
-        "trainingExercisesRelation",
-        "createdTime",
-        "bodyWeight",
-        "memo",
-        "musleTypesFormulaWrapper",
-      ],
       filter: filters,
       sorts: sort
         ? [
@@ -109,6 +102,7 @@ export async function fetchTrainingLogs(
     (trainingLog) =>
       getRelationIds(trainingLog.properties.trainingExercisesRelation) || [],
   );
+  console.log(exercisesRelationIds);
   const extractExerciseProperties = [
     "exerciseSetsRelation",
     "todayMaxWeightRollup",
@@ -175,12 +169,14 @@ export async function fetchTrainingLogDetail(
     }),
   )) as unknown as NotionTrainingLogPage;
   const trainingLogProperties = trainingLog.properties;
-  console.log(trainingLog);
   if (!trainingLog) {
     return null;
   }
-  const totalExerciseCount =
-    trainingLogProperties.trainingExercisesRelation.relation?.length || 0;
+  console.log("確認", trainingLog);
+  const totalExerciseCount = trainingLogProperties.trainingExercisesRelation
+    .relation
+    ? trainingLogProperties.trainingExercisesRelation.relation.length
+    : 0;
 
   const exercisesRelationIds =
     getRelationIds(trainingLog.properties.trainingExercisesRelation) || [];
@@ -193,7 +189,7 @@ export async function fetchTrainingLogDetail(
     "memo",
     "rest",
     "goalWeightRollup",
-    "trainingExerciseRelation",
+    "exerciseRelation",
   ] as const satisfies (keyof NotionExerciseLogProperties)[];
   // 種目ごとの記録データを取得
   const exerciseLogs = (await Promise.all(
@@ -201,7 +197,6 @@ export async function fetchTrainingLogDetail(
       notionLimit(() =>
         notionClient.pages.retrieve({
           page_id: id,
-          filter_properties: [...extractExerciseProperties],
         }),
       ),
     ),
@@ -230,10 +225,9 @@ export async function fetchTrainingLogDetail(
         exerciseSets: {
           exerciseLogId: exerciseLog.id,
           exerciseId:
-            getRelationIds(exerciseLog.properties.trainingExerciseRelation)[0] ||
-            "",
+            getRelationIds(exerciseLog.properties.exerciseRelation)[0] || "",
           createdTime: exerciseLog.created_time,
-          rest: exerciseLog.properties.rest.number || 0,
+          rest: exerciseLog.properties.rest.number || 0, // この部分はそもそも返ってきている値がぜんぜん違うから、トレーニング種目のデータを渡している可能性がある。つまり型定義がちゃんと機能していない。最優先で直す箇所だ。
           trainingName:
             getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
             "",
@@ -346,3 +340,5 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
   };
   return responseData;
 }
+
+//

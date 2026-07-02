@@ -9,8 +9,14 @@ import { useTrainingLogInfinite } from "../hooks/useTrainingLogsInfinite";
 
 const TrainingLogCardList = ({ enabled }: { enabled: boolean }) => {
   if (!enabled) return null;
-  const { tlPage, tlSort, tlStartDate, tlEndDate, tlParts, setSearchParamsWithReset } =
-    useTrainingLogParams();
+  const {
+    tlPage,
+    tlSort,
+    tlStartDate,
+    tlEndDate,
+    tlParts,
+    setSearchParamsWithReset,
+  } = useTrainingLogParams();
   const { data, error, isLoading, mutate, size, setSize, isValidating } =
     useTrainingLogInfinite({
       params: { tlPage, tlSort, tlStartDate, tlEndDate, tlParts },

@@ -9,7 +9,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Spinner,
 } from "@repo/ui";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { EXERCISE_TREND_PERIOD_OPTIONS } from "../../features/exercise/constants/constants";
@@ -20,6 +19,7 @@ import ExerciseDetailHeader from "./widgets/ExerciseDetailHeader";
 import { useExerciseDetail } from "../../features/exercise/hooks/useExerciseDetail";
 import AlertCard from "../../components/AlertCard";
 import ExerciseDetailMain from "./widgets/ExerciseDetailMain";
+import ExerciseDetailSkeleton from "./ExerciseDetailSkeleton";
 
 const ExerciseLogDetail = () => {
   const { trendPeriod, setSearchParamsWithReset } = useExerciseTrendsParams();
@@ -56,7 +56,7 @@ const ExerciseLogDetail = () => {
     [trendPeriod],
   );
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <ExerciseDetailSkeleton />;
   if (exerciseDetailError) {
     return (
       <AlertCard

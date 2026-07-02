@@ -30,7 +30,7 @@ export interface NotionExerciseLogProperties {
     "relation"
   >;
   theGoalWeightRelation: NotionProp<"theGoalWeightRelation", "relation">;
-  trainingExerciseRelation: NotionProp<"trainingExerciseRelation", "relation">;
+  exerciseRelation: NotionProp<"exerciseRelation", "relation">;
   trainingRecordRelation: NotionProp<"trainingRecordRelation", "relation">;
   muslesTypesRollup: NotionProp<"muslesTypesRollup", "rollup">;
 }

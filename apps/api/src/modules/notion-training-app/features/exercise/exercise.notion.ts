@@ -134,7 +134,7 @@ export async function fetchExerciseLogs(
     (await notionClient.dataSources.query({
       data_source_id: process.env.NOTION_EXERCISE_LOGS_DATABASE_ID!,
       filter: {
-        property: "trainingExerciseRelation",
+        property: "exerciseRelation",
         relation: {
           contains: exerciseId,
         },
