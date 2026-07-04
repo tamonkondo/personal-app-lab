@@ -117,7 +117,9 @@ const TrainingLogDetail = () => {
                   一覧へ戻る
                 </Button>
               </Link>
-              <Button className="w-full sm:w-auto">編集する</Button>
+              <Link to={`/training-logs/${trainingId}/edit`}>
+                <Button className="w-full sm:w-auto">編集する</Button>
+              </Link>
             </div>
           </div>
         </section>
@@ -144,9 +146,15 @@ const TrainingLogDetail = () => {
                   各種目ごとの重量、回数、メモを確認できます。
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                編集
-              </Button>
+              <Link to={`/training-logs/${trainingId}/edit`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                >
+                  編集
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
               <TrainingLogExerciseList
@@ -197,9 +205,11 @@ const TrainingLogDetail = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button className="w-full">同じ内容で記録作成</Button>
-                <Button variant="outline" className="w-full">
-                  メモを編集
-                </Button>
+                <Link to={`/training-logs/${trainingId}/edit`}>
+                  <Button variant="outline" className="w-full">
+                    メモを編集
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   className="w-full text-red-600 hover:text-red-700"

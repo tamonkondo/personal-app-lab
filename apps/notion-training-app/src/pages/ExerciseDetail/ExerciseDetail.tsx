@@ -159,9 +159,11 @@ const ExerciseLogDetail = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button className="w-full">この種目で記録作成</Button>
-                <Button variant="outline" className="w-full">
-                  目標重量を更新
-                </Button>
+                <Link to={`/exercises/${exerciseId}/edit`}>
+                  <Button variant="outline" className="w-full">
+                    目標重量を更新
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   className="w-full text-red-600 hover:text-red-700"
