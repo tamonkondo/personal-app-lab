@@ -17,7 +17,10 @@ export function TrainingLogExerciseCard({ data }: Props) {
   const exerciseId = data.exerciseSets.exerciseId;
 
   return (
-    <article key={data.id} className="rounded-2xl border bg-white p-5 shadow-sm">
+    <article
+      key={data.id}
+      className="rounded-2xl border bg-white p-5 shadow-sm"
+    >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -34,16 +37,14 @@ export function TrainingLogExerciseCard({ data }: Props) {
             ) : null}
           </div>
           <p className="text-sm text-zinc-500">
-            最大重量 {data.currentMaxWeight}kg / 目標重量{" "}
-            {data.maxGoalWeight}kg / 総重量 {exerciseVolume.toLocaleString()}kg
+            最大重量 {data.currentMaxWeight}kg / 目標重量 {data.maxGoalWeight}kg
+            / 総重量 {exerciseVolume.toLocaleString()}kg
           </p>
         </div>
         {exerciseId ? (
-          <Link to={`/exercises/${exerciseId}`}>
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
-              種目詳細
-            </Button>
-          </Link>
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            種目詳細
+          </Button>
         ) : null}
       </div>
 

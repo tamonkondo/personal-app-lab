@@ -19,7 +19,7 @@ import ExerciseDetailHeader from "./widgets/ExerciseDetailHeader";
 import { useExerciseDetail } from "../../features/exercise/hooks/useExerciseDetail";
 import AlertCard from "../../components/AlertCard";
 import ExerciseDetailMain from "./widgets/ExerciseDetailMain";
-import ExerciseDetailSkeleton from "./ExerciseDetailSkeleton";
+import DetailSkeleton from "../../components/DetailPageSkeleton";
 
 const ExerciseLogDetail = () => {
   const { trendPeriod, setSearchParamsWithReset } = useExerciseTrendsParams();
@@ -56,7 +56,7 @@ const ExerciseLogDetail = () => {
     [trendPeriod],
   );
 
-  if (isLoading) return <ExerciseDetailSkeleton />;
+  if (isLoading) return <DetailSkeleton />;
   if (exerciseDetailError) {
     return (
       <AlertCard

@@ -14,6 +14,7 @@ import { getExerciseVolume } from "../features/trainingLog/components/TrainingLo
 import { TrainingLogExerciseList } from "../features/trainingLog/components/TrainingLogExerciseList";
 import { useTrainingLogDetail } from "../features/trainingLog/hooks/useTrainingLogDetail";
 import BODY_PARTS from "../constants/parts";
+import DetailSkeleton from "../components/DetailPageSkeleton";
 
 const TrainingLogDetail = () => {
   const { trainingId } = useParams();
@@ -65,7 +66,7 @@ const TrainingLogDetail = () => {
     );
   }, [trainingLogDetail]);
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <DetailSkeleton />;
 
   if (error) {
     return (

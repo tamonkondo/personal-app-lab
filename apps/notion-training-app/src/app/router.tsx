@@ -5,10 +5,13 @@ import ExerciseList from "../pages/ExerciseList";
 import TrainingLogDetail from "../pages/TrainingLogDetail";
 import TrainingLogList from "../pages/TrainingLogList";
 import HomePage from "../pages/home/HomePage";
+import ScrollToTop from "../components/ScrollToTop";
 
 export function RootRouter() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <ScrollToTop />
+
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/training-logs" element={<TrainingLogList />} />
