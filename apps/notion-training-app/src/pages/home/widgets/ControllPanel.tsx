@@ -10,7 +10,7 @@ const ControllPanel = () => {
         <Link to="/training-logs/new" viewTransition>
           <Button className="w-full">New Training Record</Button>
         </Link>
-        <Link to="/training-exercises/new" viewTransition>
+        <Link to="/exercises/new" viewTransition>
           <Button variant="outline" className="w-full">
             New Training Exercise
           </Button>

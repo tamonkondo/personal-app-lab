@@ -132,7 +132,9 @@ const TrainingLogList = () => {
                   ホームへ戻る
                 </Button>
               </Link>
-              <Button className="w-full sm:w-auto">新規作成</Button>
+              <Link to="/training-logs/new">
+                <Button className="w-full sm:w-auto">新規作成</Button>
+              </Link>
             </div>
           </div>
         </section>

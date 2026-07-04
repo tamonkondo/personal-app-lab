@@ -1,6 +1,5 @@
 import type { TrainingLogDetail } from "@repo/types/notion-training-app";
 import { Badge, Button } from "@repo/ui";
-import { Link } from "react-router-dom";
 import ExerciseSetTable from "../../exercise/components/ExerciseSetTable";
 
 type TrainingLogExercise = TrainingLogDetail["exercises"][number];
