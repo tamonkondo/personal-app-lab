@@ -9,6 +9,7 @@ export type NotionExerciseProperties = {
   currentMaxWeightRollup: NotionProp<"currentMaxWeightRollup", "rollup">;
   maxGoalStatusFormula: NotionProp<"maxGoalStatusFormula", "formula">;
   musclesTypes: NotionProp<"musclesTypes", "multi_select">;
+  rmTypes: NotionProp<"rmTypes", "select">;
   rest: NotionProp<"rest", "number">;
   maxGoalWeightRollup: NotionProp<"maxGoalWeightRollup", "rollup">;
   maxWeightDateFormula: NotionProp<"maxWeightDateFormula", "formula">;

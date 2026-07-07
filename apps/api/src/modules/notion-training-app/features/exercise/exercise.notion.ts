@@ -14,6 +14,7 @@ import type {
   ExerciseLogWithSetsResponse,
   ExerciseSummaryResponse,
 } from "@repo/types/notion-training-app";
+
 import {
   exerciseLogWithSetsProperties,
   fetchExerciseLogWithSets,
@@ -25,6 +26,7 @@ import {
   notionDefineProperties,
   type NotionKeysOfProperties,
 } from "@/libs/notion/propertyExtract";
+import { exerciseRmTypesSchema } from "./exercise.schema";
 
 type FetchExerciseSummaryLogsResult = Pick<
   ExerciseSummaryResponse,
@@ -35,9 +37,8 @@ type FetchExerciseLogsResult = Pick<
   "data" | "meta"
 >;
 
-const exerciseNameProperties = notionDefineProperties<NotionExerciseProperties>()([
-  "name",
-]);
+const exerciseNameProperties =
+  notionDefineProperties<NotionExerciseProperties>()(["name"]);
 
 const exerciseSummaryProperties =
   notionDefineProperties<NotionExerciseProperties>()([
@@ -59,6 +60,7 @@ const exerciseDetailProperties =
     "totalSetsCountFormula",
     "totalTrainingDaysFormula",
     "totalTrainingVolumeWeightFormula",
+    "rmTypes",
   ]);
 
 export async function fetchExerciseNames() {
@@ -189,7 +191,6 @@ export async function fetchExerciseLogs(
     },
   };
   console.timeEnd("fetchExerciseLogs");
-  console.log(responseData);
   return responseData;
 }
 export async function fetchExerciseDetail(
@@ -223,28 +224,26 @@ export async function fetchExerciseDetail(
       getFormula(properties.totalTrainingDaysFormula, "number") || 0,
     totalTrainingVolumeWeight:
       getFormula(properties.totalTrainingVolumeWeightFormula, "number") || 0,
+    rmTypes: exerciseRmTypesSchema.parse(properties.rmTypes.select?.name),
   };
   return responseData;
 }
-
 export async function fetchExerciseTrends(exerciseId: string) {
-  console.time("fetchExerciseTrend");
   const exercises: NotionExerciseQueryResult<
     NotionKeysOfProperties<typeof exerciseSummaryProperties>
-  > =
-    (await notionClient.dataSources.query({
-      data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
-      filter: {
-        property: "id",
-        rich_text: {
-          equals: exerciseId,
-        },
+  > = (await notionClient.dataSources.query({
+    data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
+    filter: {
+      property: "id",
+      rich_text: {
+        equals: exerciseId,
       },
-      filter_properties: [...exerciseSummaryProperties],
-      page_size: 1,
-    })) as unknown as NotionExerciseQueryResult<
-      NotionKeysOfProperties<typeof exerciseSummaryProperties>
-    >;
+    },
+    filter_properties: [...exerciseSummaryProperties],
+    page_size: 1,
+  })) as unknown as NotionExerciseQueryResult<
+    NotionKeysOfProperties<typeof exerciseSummaryProperties>
+  >;
 
   if (exercises.results.length === 0) {
     throw new Error(`Exercise not found: ${exerciseId}`);

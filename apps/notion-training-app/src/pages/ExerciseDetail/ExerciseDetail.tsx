@@ -12,9 +12,13 @@ import {
 } from "@repo/ui";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { EXERCISE_TREND_PERIOD_OPTIONS } from "../../features/exercise/constants/constants";
-import { useExerciseTrendsParams } from "../../features/exercise/hooks/useExerciseTrendsParams";
+import { useExerciseDetailParams } from "../../features/exercise/hooks/useExerciseDetailParams";
 import { useMemo } from "react";
-import { ExerciseTrendPeriod } from "@repo/types/notion-training-app/exercise";
+import {
+  EXERCISE_GUIDE_LINE_REPS,
+  type ExerciseGuideLineRep,
+  type ExerciseTrendPeriod,
+} from "@repo/types/notion-training-app/exercise";
 import ExerciseDetailHeader from "./widgets/ExerciseDetailHeader";
 import { useExerciseDetail } from "../../features/exercise/hooks/useExerciseDetail";
 import AlertCard from "../../components/AlertCard";
@@ -22,7 +26,8 @@ import ExerciseDetailMain from "./widgets/ExerciseDetailMain";
 import DetailSkeleton from "../../components/DetailPageSkeleton";
 
 const ExerciseLogDetail = () => {
-  const { trendPeriod, setSearchParamsWithReset } = useExerciseTrendsParams();
+  const { trendPeriod, exerciseGuideLineRep, setSearchParamsWithReset } =
+    useExerciseDetailParams();
   const { exerciseId } = useParams();
   if (!exerciseId) return <Navigate replace to="/" />;
 
@@ -51,10 +56,36 @@ const ExerciseLogDetail = () => {
         tone: "text-emerald-700",
       },
       { label: "平均セット数", value: "4.0 set", tone: "text-zinc-950" },
-      { label: "次回目安", value: "90kg x 5", tone: "text-zinc-950" },
     ],
     [trendPeriod],
   );
+  const rmTypes = exerciseDetailData?.rmTypes;
+  const currentMaxWeight = exerciseDetailData?.currentMaxWeight;
+  const guideLineSet = useMemo(() => {
+    const rep = exerciseGuideLineRep ? exerciseGuideLineRep : "5";
+    let multiplier: number =
+      rmTypes === "upperBody" ? 40 : rmTypes === "lowerBody" ? 33.3 : 40;
+    const calcRes = (rep: string, percent: number) =>
+      Math.floor(
+        (Math.floor(
+          (currentMaxWeight! + 5) * (1 + Number(rep) / multiplier) * 100,
+        ) /
+          100) *
+          percent,
+      );
+    switch (rep) {
+      case "5":
+        return `${calcRes("5", 0.8)}kg✕5rep`;
+      case "10":
+        return `${calcRes("10", 0.7)}kg✕10rep`;
+      case "15":
+        return `${calcRes("15", 0.6)}kg✕15rep`;
+      case "20":
+        return `${calcRes("20", 0.5)}kg✕20rep`;
+      default:
+        return `${calcRes("5", 0.8)}kg✕5rep`;
+    }
+  }, [exerciseGuideLineRep, rmTypes, currentMaxWeight]);
 
   if (isLoading) return <DetailSkeleton />;
   if (exerciseDetailError) {
@@ -91,6 +122,7 @@ const ExerciseLogDetail = () => {
             <Card>
               <CardHeader>
                 <CardTitle>目標進捗</CardTitle>
+
                 <p className="mt-1 text-sm text-zinc-500">
                   目標重量まであと{" "}
                   {Math.max(
@@ -111,6 +143,33 @@ const ExerciseLogDetail = () => {
                 <div className="mt-3 flex items-center justify-between text-sm">
                   <span className="text-zinc-500">Progress</span>
                   <span className="font-semibold">{goalProgress}%</span>
+                </div>
+                <span className="text-sm inline-block mt-3">
+                  次回セット目安
+                </span>
+                <div className="grid grid-cols-[2fr_1fr] gap-3">
+                  <div className="grid gap-2 rounded-md h-9 border bg-zinc-50 p-2  ">
+                    <span className="text-sm">{guideLineSet}</span>
+                  </div>
+                  <Select
+                    value={exerciseGuideLineRep || "5"}
+                    onValueChange={(value) => {
+                      setSearchParamsWithReset({
+                        exerciseGuideLineRep: value as ExerciseGuideLineRep,
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXERCISE_GUIDE_LINE_REPS.map((rep) => (
+                        <SelectItem value={rep} key={rep}>
+                          {rep}rep
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>

@@ -1,7 +1,6 @@
 import type { ExerciseLogWithSetsItemResponse } from "@repo/types/notion-training-app";
 import { Badge, Button } from "@repo/ui";
 import { formatDate } from "@repo/utils";
-import { Link } from "react-router-dom";
 import ExerciseSetTable from "../../exercise/components/ExerciseSetTable";
 
 type Props = {
@@ -23,9 +22,6 @@ export function ExerciseLogHistoryCard({ data }: Props) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-bold">
-              {data.trainingName || "トレーニングログ"}
-            </h2>
             {data.createdTime ? (
               <Badge variant="secondary">
                 {formatDate(data.createdTime, "slash")}
@@ -46,11 +42,9 @@ export function ExerciseLogHistoryCard({ data }: Props) {
             {data.rest ? `${data.rest}分` : "未設定"}
           </p>
         </div>
-        <Link to={`/training-logs/${data.exerciseLogId}`}>
-          <Button variant="outline" size="sm" className="w-full sm:w-auto">
-            トレーニング詳細
-          </Button>
-        </Link>
+        <Button variant="outline" size="sm" className="w-full sm:w-auto">
+          編集
+        </Button>
       </div>
 
       <div className="mt-5">

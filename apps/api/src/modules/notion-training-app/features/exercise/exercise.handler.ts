@@ -13,7 +13,7 @@ type GetExerciseSummaryLogsRequest = {
   };
 };
 
-export const getExerciseNames = asyncHandler(async (req, res) => {
+export const getExerciseNames = asyncHandler(async (_, res) => {
   const nameData = await fetches.fetchExerciseNames();
   const response = {
     message: "getExerciseNames",

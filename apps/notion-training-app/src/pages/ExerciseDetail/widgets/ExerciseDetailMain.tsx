@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@repo/ui";
+import { Card, CardContent } from "@repo/ui";
 import { ExerciseLogHistoryList } from "../../../features/exerciseLog/components/ExerciseLogHistoryList";
 import { useExerciseLogsParams } from "../../../features/exerciseLog/hooks/useExerciseLogsParams";
 
@@ -12,18 +12,7 @@ const ExerciseDetailMain = ({ id }: Props) => {
   } = useExerciseLogsParams();
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <CardTitle>種目別ログ</CardTitle>
-          <p className="mt-1 text-sm text-zinc-500">
-            ベストセット、セット履歴、PR履歴を確認できます。
-          </p>
-        </div>
-        <Button variant="outline" size="sm" className="w-full sm:w-auto">
-          セットを追加
-        </Button>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <ExerciseLogHistoryList
           exerciseId={id}
           exerciseLogsPage={exerciseLogsPage}
