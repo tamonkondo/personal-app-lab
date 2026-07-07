@@ -21,6 +21,10 @@ import {
 } from "../exerciseLog/exerciseLog.notion";
 import type { ExerciseLogWithSetsProperties } from "../exerciseLog/exerciseLog.notion";
 import type { NotionExerciseLogQueryResult } from "../exerciseLog/exerciseLog.types";
+import {
+  notionDefineProperties,
+  type NotionKeysOfProperties,
+} from "@/libs/notion/propertyExtract";
 
 type FetchExerciseSummaryLogsResult = Pick<
   ExerciseSummaryResponse,
@@ -31,55 +35,85 @@ type FetchExerciseLogsResult = Pick<
   "data" | "meta"
 >;
 
-export async function fetchExerciseSummaryLogs(
-  limit: number = 7,
-  cursor?: string,
-): Promise<FetchExerciseSummaryLogsResult> {
-  // ゴール重量がある種目のみを取得
-  console.time("fetchExerciseSummaryLogs");
-  const exercisesFilterProperties = [
+const exerciseNameProperties = notionDefineProperties<NotionExerciseProperties>()([
+  "name",
+]);
+
+const exerciseSummaryProperties =
+  notionDefineProperties<NotionExerciseProperties>()([
     "name",
     "musclesTypes",
     "maxGoalWeightRollup",
     "maxWeightExerciseLogId",
     "latestExerciseLogId",
     "currentMaxWeightRollup",
-  ] as const satisfies (keyof NotionExerciseProperties)[];
-  const exercises: NotionExerciseQueryResult =
-    (await notionClient.dataSources.query({
-      data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
-      filter: {
-        and: [
-          {
-            property: "theGoalsWeightRelation",
-            relation: {
-              is_not_empty: true,
-            },
+  ]);
+
+const exerciseDetailProperties =
+  notionDefineProperties<NotionExerciseProperties>()([
+    "name",
+    "latestTrainingDateFormula",
+    "musclesTypes",
+    "maxGoalWeightRollup",
+    "currentMaxWeightRollup",
+    "totalSetsCountFormula",
+    "totalTrainingDaysFormula",
+    "totalTrainingVolumeWeightFormula",
+  ]);
+
+export async function fetchExerciseNames() {
+  return (await notionClient.dataSources.query({
+    data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
+    filter_properties: [...exerciseNameProperties],
+  })) as unknown as NotionExerciseQueryResult<
+    NotionKeysOfProperties<typeof exerciseNameProperties>
+  >;
+}
+
+export async function fetchExerciseSummaryLogs(
+  limit: number = 7,
+  cursor?: string,
+): Promise<FetchExerciseSummaryLogsResult> {
+  // ゴール重量がある種目のみを取得
+  console.time("fetchExerciseSummaryLogs");
+  const exercises: NotionExerciseQueryResult<
+    NotionKeysOfProperties<typeof exerciseSummaryProperties>
+  > = (await notionClient.dataSources.query({
+    data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
+    filter: {
+      and: [
+        {
+          property: "theGoalsWeightRelation",
+          relation: {
+            is_not_empty: true,
           },
-          {
-            property: "maxGoalWeightRollup",
-            rollup: {
-              any: {
-                number: {
-                  is_not_empty: true,
-                },
-              },
-            },
-          },
-          {
-            property: "maxWeightExerciseLogId",
-            formula: {
-              string: {
+        },
+        {
+          property: "maxGoalWeightRollup",
+          rollup: {
+            any: {
+              number: {
                 is_not_empty: true,
               },
             },
           },
-        ],
-      },
-      filter_properties: exercisesFilterProperties,
-      page_size: limit,
-      start_cursor: cursor,
-    })) as unknown as NotionExerciseQueryResult;
+        },
+        {
+          property: "maxWeightExerciseLogId",
+          formula: {
+            string: {
+              is_not_empty: true,
+            },
+          },
+        },
+      ],
+    },
+    filter_properties: [...exerciseSummaryProperties],
+    page_size: limit,
+    start_cursor: cursor,
+  })) as unknown as NotionExerciseQueryResult<
+    NotionKeysOfProperties<typeof exerciseSummaryProperties>
+  >;
   console.log(exercises);
   const exerciseLogWithSets = await fetchExerciseLogWithSets({
     exercises,
@@ -139,7 +173,7 @@ export async function fetchExerciseLogs(
           contains: exerciseId,
         },
       },
-      filter_properties: exerciseLogWithSetsProperties,
+      filter_properties: [...exerciseLogWithSetsProperties],
       page_size: limit,
       start_cursor: cursor,
     })) as unknown as NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties>;
@@ -155,17 +189,21 @@ export async function fetchExerciseLogs(
     },
   };
   console.timeEnd("fetchExerciseLogs");
-  console.log(responseData)
+  console.log(responseData);
   return responseData;
 }
-
 export async function fetchExerciseDetail(
   exerciseId: string,
 ): Promise<ExerciseDetail> {
   console.log("fetchExerciseDetail:", exerciseId);
-  const exercise: NotionExercisePage = (await notionClient.pages.retrieve({
+  const exercise: NotionExercisePage<
+    NotionKeysOfProperties<typeof exerciseDetailProperties>
+  > = (await notionClient.pages.retrieve({
     page_id: exerciseId,
-  })) as unknown as NotionExercisePage;
+    filter_properties: [...exerciseDetailProperties],
+  })) as unknown as NotionExercisePage<
+    NotionKeysOfProperties<typeof exerciseDetailProperties>
+  >;
   const properties = exercise.properties;
 
   const responseData: ExerciseDetail = {
@@ -191,15 +229,9 @@ export async function fetchExerciseDetail(
 
 export async function fetchExerciseTrends(exerciseId: string) {
   console.time("fetchExerciseTrend");
-  const exercisesFilterProperties = [
-    "name",
-    "musclesTypes",
-    "maxGoalWeightRollup",
-    "maxWeightExerciseLogId",
-    "latestExerciseLogId",
-    "currentMaxWeightRollup",
-  ] as const satisfies (keyof NotionExerciseProperties)[];
-  const exercises: NotionExerciseQueryResult =
+  const exercises: NotionExerciseQueryResult<
+    NotionKeysOfProperties<typeof exerciseSummaryProperties>
+  > =
     (await notionClient.dataSources.query({
       data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
       filter: {
@@ -208,9 +240,11 @@ export async function fetchExerciseTrends(exerciseId: string) {
           equals: exerciseId,
         },
       },
-      filter_properties: exercisesFilterProperties,
+      filter_properties: [...exerciseSummaryProperties],
       page_size: 1,
-    })) as unknown as NotionExerciseQueryResult;
+    })) as unknown as NotionExerciseQueryResult<
+      NotionKeysOfProperties<typeof exerciseSummaryProperties>
+    >;
 
   if (exercises.results.length === 0) {
     throw new Error(`Exercise not found: ${exerciseId}`);
@@ -219,10 +253,6 @@ export async function fetchExerciseTrends(exerciseId: string) {
   const exercise = exercises.results[0];
   const maxGoalWeight =
     getRollupArrayValue(exercise.properties.maxGoalWeightRollup, "number") || 0;
-  const currentMaxWeight =
-    Number(getRollup(exercise.properties.currentMaxWeightRollup, "number")) ||
-    0;
-
   return {
     maxGoalWeight,
   };

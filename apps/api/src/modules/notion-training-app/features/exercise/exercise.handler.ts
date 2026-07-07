@@ -13,6 +13,15 @@ type GetExerciseSummaryLogsRequest = {
   };
 };
 
+export const getExerciseNames = asyncHandler(async (req, res) => {
+  const nameData = await fetches.fetchExerciseNames();
+  const response = {
+    message: "getExerciseNames",
+    nameData,
+  };
+  res.status(200).json(response);
+});
+
 export const getExerciseSummaryLogs = asyncHandler(
   async (req: GetExerciseSummaryLogsRequest, res) => {
     const { limit, cursor, bodyParts } = req.query as Partial<

@@ -20,6 +20,10 @@ notionTrainingAppRouter.get(
 );
 // 最新のトレーニングログの取得
 notionTrainingAppRouter.get(
+  "/exercise/names",
+  exerciseHandlers.getExerciseNames,
+);
+notionTrainingAppRouter.get(
   "/exercise/summary",
   exerciseHandlers.getExerciseSummaryLogs,
 );

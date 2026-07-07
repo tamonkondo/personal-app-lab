@@ -22,11 +22,37 @@ import type {
 } from "@repo/types/notion-training-app/index";
 import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
 import { SortOrder } from "@repo/types";
+import {
+  notionDefineProperties,
+  type NotionKeysOfProperties,
+} from "@/libs/notion/propertyExtract";
 
 type FetchTrainingLogsResult = Pick<
   TrainingLogSummaryResponse,
   "data" | "meta"
 >;
+
+const trainingLogSummaryExerciseLogProperties =
+  notionDefineProperties<NotionExerciseLogProperties>()([
+    "exerciseSetsRelation",
+    "todayMaxWeightRollup",
+    "trainingNameFormula",
+    "memo",
+    "rest",
+  ]);
+
+const trainingLogDetailExerciseLogProperties =
+  notionDefineProperties<NotionExerciseLogProperties>()([
+    "exerciseSetsRelation",
+    "todayMaxWeightRollup",
+    "trainingNameFormula",
+    "setsJsonFormula",
+    "muslesTypesRollup",
+    "memo",
+    "rest",
+    "goalWeightRollup",
+    "exerciseRelation",
+  ]);
 
 // トレーニングログ一覧の取得
 // /api/notion-training-app/training-logs/?cursor=xxx&limit=20
@@ -103,26 +129,19 @@ export async function fetchTrainingLogs(
       getRelationIds(trainingLog.properties.trainingExercisesRelation) || [],
   );
   console.log(exercisesRelationIds);
-  const extractExerciseProperties = [
-    "exerciseSetsRelation",
-    "todayMaxWeightRollup",
-    "trainingNameFormula",
-    "memo",
-    "rest",
-  ] as const satisfies (keyof NotionExerciseLogProperties)[];
   const exerciseLogs: NotionExerciseLogPage<
-    (typeof extractExerciseProperties)[number]
+    NotionKeysOfProperties<typeof trainingLogSummaryExerciseLogProperties>
   >[] = (await Promise.all(
     exercisesRelationIds.map((id) =>
       notionLimit(() =>
         notionClient.pages.retrieve({
           page_id: id,
-          filter_properties: [...extractExerciseProperties],
+          filter_properties: [...trainingLogSummaryExerciseLogProperties],
         }),
       ),
     ),
   )) as unknown as NotionExerciseLogPage<
-    (typeof extractExerciseProperties)[number]
+    NotionKeysOfProperties<typeof trainingLogSummaryExerciseLogProperties>
   >[];
   const responseData: FetchTrainingLogsResult = {
     data: trainingLogs.results.map((trainingLog) => ({
@@ -180,28 +199,18 @@ export async function fetchTrainingLogDetail(
 
   const exercisesRelationIds =
     getRelationIds(trainingLog.properties.trainingExercisesRelation) || [];
-  const extractExerciseProperties = [
-    "exerciseSetsRelation",
-    "todayMaxWeightRollup",
-    "trainingNameFormula",
-    "setsJsonFormula",
-    "muslesTypesRollup",
-    "memo",
-    "rest",
-    "goalWeightRollup",
-    "exerciseRelation",
-  ] as const satisfies (keyof NotionExerciseLogProperties)[];
   // 種目ごとの記録データを取得
   const exerciseLogs = (await Promise.all(
     exercisesRelationIds.map((id) =>
       notionLimit(() =>
         notionClient.pages.retrieve({
           page_id: id,
+          filter_properties: [...trainingLogDetailExerciseLogProperties],
         }),
       ),
     ),
   )) as unknown as NotionExerciseLogPage<
-    (typeof extractExerciseProperties)[number]
+    NotionKeysOfProperties<typeof trainingLogDetailExerciseLogProperties>
   >[];
 
   const exercises: TrainingLogDetail["exercises"] = exerciseLogs.map(

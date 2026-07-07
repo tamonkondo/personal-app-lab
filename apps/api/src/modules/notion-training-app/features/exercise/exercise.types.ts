@@ -24,8 +24,13 @@ export type NotionExerciseProperties = {
   >;
   latestTrainingDateFormula: NotionProp<"latestTrainingDateFormula", "formula">;
 };
-export type NotionExercisePage = BasePageMeta & {
-  properties: NotionExerciseProperties;
-};
 
-export type NotionExerciseQueryResult = NotionResults<NotionExercisePage>;
+export type NotionExercisePage<T extends keyof NotionExerciseProperties> =
+  BasePageMeta & {
+    properties: Pick<NotionExerciseProperties, T>;
+  };
+
+export type NotionExerciseQueryResult<
+  T extends keyof NotionExerciseProperties = keyof NotionExerciseProperties,
+> = NotionResults<NotionExercisePage<T>>;
+

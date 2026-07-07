@@ -10,9 +10,17 @@ import type { ExerciseLogWithSetsItemResponse } from "@repo/types/notion-trainin
 import type { NotionExerciseQueryResult } from "../exercise/exercise.types";
 import notionLimit from "@/libs/notion/notionLimit";
 import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
+import {
+  notionDefineProperties,
+  type NotionKeysOfProperties,
+} from "@/libs/notion/propertyExtract";
+
+type ExerciseLogLookupProperties =
+  | "latestExerciseLogId"
+  | "maxWeightExerciseLogId";
 
 interface Props {
-  exercises: NotionExerciseQueryResult;
+  exercises: NotionExerciseQueryResult<ExerciseLogLookupProperties>;
 }
 
 interface FetchExerciseLogWithSetsRes {
@@ -21,14 +29,15 @@ interface FetchExerciseLogWithSetsRes {
   latestSets: ExerciseLogWithSetsItemResponse;
 }
 
-export const exerciseLogWithSetsProperties = [
-  "rest",
-  "trainingNameFormula",
-  "setsJsonFormula",
-] as const satisfies (keyof NotionExerciseLogProperties)[];
+export const exerciseLogWithSetsProperties =
+  notionDefineProperties<NotionExerciseLogProperties>()([
+    "rest",
+    "trainingNameFormula",
+    "setsJsonFormula",
+  ]);
 
 export type ExerciseLogWithSetsProperties =
-  (typeof exerciseLogWithSetsProperties)[number];
+  NotionKeysOfProperties<typeof exerciseLogWithSetsProperties>;
 
 function mapExerciseLogWithSetsItem(
   exerciseLog: NotionExerciseLogPage<ExerciseLogWithSetsProperties>,
@@ -109,7 +118,7 @@ export async function fetchExerciseLogWithSets({
       const exerciseLog = (await notionLimit(() =>
         notionClient.pages.retrieve({
           page_id: exerciseLogId,
-          filter_properties: exerciseLogWithSetsProperties,
+          filter_properties: [...exerciseLogWithSetsProperties],
         }),
       )) as unknown as NotionExerciseLogPage<ExerciseLogWithSetsProperties>;
 
