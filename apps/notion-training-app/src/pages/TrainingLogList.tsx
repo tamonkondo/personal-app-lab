@@ -157,13 +157,7 @@ const TrainingLogList = () => {
             <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle>ログ</CardTitle>
-                <p className="mt-1 text-sm text-zinc-500">
-                  詳細ボタンから各日のセット記録へ移動できます。
-                </p>
               </div>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                CSV出力
-              </Button>
             </CardHeader>
             <CardContent className="space-y-5">
               {trainingLogs.map((log) => (
