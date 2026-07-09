@@ -10,9 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@notionhq/client": "^5.22.0",
-    "@sentry/node": "^10.63.0",
-    "@sentry/profiling-node": "^10.63.0",
+    "@notionhq/client": "^5.23.0",
+    "@sentry/node": "^10.64.0",
+    "@sentry/profiling-node": "^10.64.0",
     "bcrypt": "latest",
     "cookie-parser": "latest",
     "cors": "latest",

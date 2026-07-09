@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sentry/react": "^10.63.0",
+    "@sentry/react": "^10.64.0",
     "@sentry/tracing": "^7.120.4",
     "@vitejs/plugin-react": "catalog:",
     "react": "catalog:",
