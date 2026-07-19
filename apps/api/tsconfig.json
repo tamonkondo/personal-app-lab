@@ -6,10 +6,17 @@
     "lib": ["ES2022"],
     "types": ["node"],
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@repo/*": ["../../packages/*"]
+      "@/*": ["./src/*"],
+      "@repo/ui": ["../../packages/ui/index.ts"],
+      "@repo/ui/*": ["../../packages/ui/*"],
+      "@repo/icons": ["../../packages/ui/icons/index.ts"],
+      "@repo/types": ["../../packages/types/index.ts"],
+      "@repo/types/*": ["../../packages/types/*"],
+      "@repo/schemas": ["../../packages/schemas/index.ts"],
+      "@repo/schemas/*": ["../../packages/schemas/*"],
+      "@repo/utils": ["../../packages/utils/index.ts"],
+      "@repo/utils/*": ["../../packages/utils/*"]
     }
   },
   "include": ["src", "tsup.config.ts"]

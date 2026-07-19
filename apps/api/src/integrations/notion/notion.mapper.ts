@@ -174,3 +174,88 @@ export function getRelationIds(property: unknown): string[] {
   }
   return [];
 }
+
+/** 内部ヘルパー: type が一致するプロパティの値部分を取り出す */
+function getPropValue<T extends string>(property: unknown, type: T): unknown {
+  if (
+    typeof property === "object" &&
+    property !== null &&
+    "type" in property &&
+    (property as { type: unknown }).type === type &&
+    type in property
+  ) {
+    return (property as Record<string, unknown>)[type];
+  }
+  return null;
+}
+
+/** rich_text プロパティを plain_text 連結で取得 */
+export function getRichText(property: unknown): string {
+  const value = getPropValue(property, "rich_text");
+  if (!Array.isArray(value)) return "";
+  return value
+    .map((item) =>
+      typeof item === "object" && item !== null && "plain_text" in item
+        ? String((item as { plain_text: unknown }).plain_text ?? "")
+        : "",
+    )
+    .join("");
+}
+
+/** select プロパティの name を取得（未設定は null） */
+export function getSelectName(property: unknown): string | null {
+  const value = getPropValue(property, "select");
+  if (typeof value === "object" && value !== null && "name" in value) {
+    return String((value as { name: unknown }).name ?? "") || null;
+  }
+  return null;
+}
+
+/** status プロパティの name を取得（未設定は null） */
+export function getStatusName(property: unknown): string | null {
+  const value = getPropValue(property, "status");
+  if (typeof value === "object" && value !== null && "name" in value) {
+    return String((value as { name: unknown }).name ?? "") || null;
+  }
+  return null;
+}
+
+/** multi_select プロパティの name 配列を取得 */
+export function getMultiSelectNames(property: unknown): string[] {
+  const value = getPropValue(property, "multi_select");
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) =>
+      typeof item === "object" && item !== null && "name" in item
+        ? String((item as { name: unknown }).name ?? "")
+        : "",
+    )
+    .filter((name) => name.length > 0);
+}
+
+/** date プロパティの { start, end } を取得（未設定は null） */
+export function getDate(
+  property: unknown,
+): { start: string | null; end: string | null } | null {
+  const value = getPropValue(property, "date");
+  if (typeof value === "object" && value !== null && "start" in value) {
+    const v = value as { start: unknown; end?: unknown };
+    return {
+      start: v.start != null ? String(v.start) : null,
+      end: v.end != null ? String(v.end) : null,
+    };
+  }
+  return null;
+}
+
+/** checkbox プロパティの真偽値を取得 */
+export function getCheckbox(property: unknown): boolean {
+  const value = getPropValue(property, "checkbox");
+  return typeof value === "boolean" ? value : false;
+}
+
+/** created_time プロパティの ISO 文字列を取得 */
+export function getCreatedTime(property: unknown): string | null {
+  const value = getPropValue(property, "created_time");
+  return typeof value === "string" ? value : null;
+}

@@ -7,6 +7,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { healthRouter } from "./routes/health.routes";
 
 import { notionTrainingAppRouter } from "./routes/notion-training-app.routes";
+import { notionTodoPomodoroAppRouter } from "./routes/notion-todo-pomodoro-app.routes";
 import * as Sentry from "@sentry/node";
 
 export const app = express();
@@ -46,5 +47,7 @@ app.use("/api/health", healthRouter);
 // Notion関連のエンドポイント
 
 app.use("/api/notion-training-app", notionTrainingAppRouter);
+
+app.use("/api/notion-todo-pomodoro-app", notionTodoPomodoroAppRouter);
 
 app.use(errorHandler);

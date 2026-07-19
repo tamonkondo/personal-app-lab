@@ -1,11 +1,17 @@
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import { App } from "../App";
+import HomePage from "../pages/home/HomePage";
+import TaskListPage from "../pages/tasks/TaskListPage";
+import ProjectsPage from "../pages/projects/ProjectsPage";
 
 export function RootRouter() {
   return (
     <BrowserRouter basename="/notion-todo-pomodoro-app">
-      <App />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/tasks" element={<TaskListPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+      </Routes>
     </BrowserRouter>
   );
 }

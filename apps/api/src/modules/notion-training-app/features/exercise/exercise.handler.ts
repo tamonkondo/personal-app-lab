@@ -24,15 +24,9 @@ export const getExerciseNames = asyncHandler(async (_, res) => {
 
 export const getExerciseSummaryLogs = asyncHandler(
   async (req: GetExerciseSummaryLogsRequest, res) => {
-    const { limit, cursor, bodyParts } = req.query as Partial<
+    const { limit, cursor } = req.query as Partial<
       GetExerciseSummaryLogsRequest["query"]
     >; // 取得件数の上限
-    const arrayParts = bodyParts
-      ? bodyParts
-          .split(",")
-          .map((part) => part.trim())
-          .filter((part) => part.length > 0)
-      : undefined;
 
     const exerciseSummaryLogs = await fetches.fetchExerciseSummaryLogs(
       limit ? Number(limit) : undefined,
