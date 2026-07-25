@@ -26,7 +26,7 @@ import {
   Textarea,
 } from "@repo/ui";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import PageHero, { HeroLinkButton } from "../components/PageHero";
 
 type ExerciseSetDraft = {
   id: string;
@@ -151,41 +151,24 @@ const TrainingLogNew = () => {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge className="bg-white/10 text-white hover:bg-white/10">
-                New Training Log
-              </Badge>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  トレーニング記録を作成
-                </h1>
-                <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
-                  日付、体重、部位を入力し、種目ごとのセット内容を追加します。
-                </p>
-              </div>
-            </div>
+    <>
+      <PageHero
+        badge="New Training Log"
+        title="トレーニング記録を作成"
+        description="日付、体重、部位を入力し、種目ごとのセット内容を追加します。"
+        actions={
+          <>
+            <HeroLinkButton to="/training-logs" variant="outline">
+              一覧へ戻る
+            </HeroLinkButton>
+            <Button className="w-full sm:w-auto" disabled>
+              登録する
+            </Button>
+          </>
+        }
+      />
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Link to="/training-logs">
-                <Button
-                  variant="outline"
-                  className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
-                >
-                  一覧へ戻る
-                </Button>
-              </Link>
-              <Button className="w-full sm:w-auto" disabled>
-                登録する
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardContent className="p-5">
               <p className="text-sm text-zinc-500">種目数</p>
@@ -353,7 +336,6 @@ const TrainingLogNew = () => {
             </Card>
           </div>
         </section>
-      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
@@ -504,7 +486,7 @@ const TrainingLogNew = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </>
   );
 };
 

@@ -28,6 +28,7 @@ import {
 import type { TrainingLogDetail } from "@repo/types/notion-training-app";
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import PageHero, { HeroLinkButton } from "../components/PageHero";
 import AlertCard from "../components/AlertCard";
 import DetailSkeleton from "../components/DetailPageSkeleton";
 import { useTrainingLogDetail } from "../features/trainingLog/hooks/useTrainingLogDetail";
@@ -229,41 +230,27 @@ const TrainingLogEdit = () => {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge className="bg-white/10 text-white hover:bg-white/10">
-                Edit Training Log
-              </Badge>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  トレーニング記録を編集
-                </h1>
-                <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
-                  取得済みの記録をもとに、基本情報と種目ごとのセット内容を編集します。
-                </p>
-              </div>
-            </div>
+    <>
+      <PageHero
+        badge="Edit Training Log"
+        title="トレーニング記録を編集"
+        description="取得済みの記録をもとに、基本情報と種目ごとのセット内容を編集します。"
+        actions={
+          <>
+            <HeroLinkButton
+              to={`/training-logs/${trainingId}`}
+              variant="outline"
+            >
+              詳細へ戻る
+            </HeroLinkButton>
+            <Button className="w-full sm:w-auto" disabled>
+              変更を保存
+            </Button>
+          </>
+        }
+      />
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Link to={`/training-logs/${trainingId}`}>
-                <Button
-                  variant="outline"
-                  className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
-                >
-                  詳細へ戻る
-                </Button>
-              </Link>
-              <Button className="w-full sm:w-auto" disabled>
-                変更を保存
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardContent className="p-5">
               <p className="text-sm text-zinc-500">種目数</p>
@@ -452,7 +439,6 @@ const TrainingLogEdit = () => {
             </Card>
           </div>
         </section>
-      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
@@ -603,7 +589,7 @@ const TrainingLogEdit = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </>
   );
 };
 

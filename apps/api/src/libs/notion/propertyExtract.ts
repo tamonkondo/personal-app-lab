@@ -19,3 +19,13 @@ export const notionDefineProperties =
     keys;
 
 export type NotionKeysOfProperties<T extends readonly unknown[]> = T[number];
+
+/**
+ * filter 等でプロパティ名を文字列参照するときの typo 防止ヘルパー。
+ * const exerciseProp = notionPropOf<NotionExerciseProperties>();
+ * filter: { property: exerciseProp("maxGoalWeightRollup"), ... }
+ */
+export const notionPropOf =
+  <Properties>() =>
+  <K extends keyof Properties & string>(key: K): K =>
+    key;

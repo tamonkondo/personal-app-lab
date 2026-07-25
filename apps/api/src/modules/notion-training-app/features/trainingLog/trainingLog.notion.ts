@@ -1,59 +1,36 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
 import notionLimit from "@/libs/notion/notionLimit";
-import {
-  getFormula,
-  getRelationIds,
-  getRollup,
-  getTitle,
-} from "@/integrations/notion/notion.mapper";
+import { getRelationIds } from "@/integrations/notion/notion.mapper";
 import type {
   NotionTrainingLogPage,
   NotionTrainingLogQueryResult,
 } from "./trainingLog.types";
 import type { NotionExerciseSetWeightPage } from "../exerciseSet/exerciseSet.types";
-import type {
-  NotionExerciseLogPage,
-  NotionExerciseLogProperties,
-} from "../exerciseLog/exerciseLog.types";
+import type { NotionExerciseLogPage } from "../exerciseLog/exerciseLog.types";
 import type {
   NewestTrainingLogItemResponse,
   TrainingLogDetail,
   TrainingLogSummaryResponse,
-} from "@repo/types/notion-training-app/index";
-import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
+} from "@repo/types/notion-training-app";
 import { SortOrder } from "@repo/types";
 import {
-  notionDefineProperties,
-  type NotionKeysOfProperties,
-} from "@/libs/notion/propertyExtract";
+  trainingLogProp,
+  trainingLogSummaryExerciseLogProperties,
+  trainingLogDetailExerciseLogProperties,
+  newestLogExerciseLogProperties,
+  exerciseSetWeightProperties,
+  mapTrainingLogSummaryItem,
+  mapTrainingLogDetail,
+  mapNewestTrainingLog,
+  type TrainingLogSummaryExerciseLogPage,
+  type TrainingLogDetailExerciseLogPage,
+} from "./trainingLog.db";
 
 type FetchTrainingLogsResult = Pick<
   TrainingLogSummaryResponse,
   "data" | "meta"
 >;
-
-const trainingLogSummaryExerciseLogProperties =
-  notionDefineProperties<NotionExerciseLogProperties>()([
-    "exerciseSetsRelation",
-    "todayMaxWeightRollup",
-    "trainingNameFormula",
-    "memo",
-    "rest",
-  ]);
-
-const trainingLogDetailExerciseLogProperties =
-  notionDefineProperties<NotionExerciseLogProperties>()([
-    "exerciseSetsRelation",
-    "todayMaxWeightRollup",
-    "trainingNameFormula",
-    "setsJsonFormula",
-    "muslesTypesRollup",
-    "memo",
-    "rest",
-    "goalWeightRollup",
-    "exerciseRelation",
-  ]);
 
 // トレーニングログ一覧の取得
 // /api/notion-training-app/training-logs/?cursor=xxx&limit=20
@@ -68,7 +45,7 @@ export async function fetchTrainingLogs(
 ): Promise<FetchTrainingLogsResult> {
   const partsFilters = parts?.length
     ? parts.map((part) => ({
-        property: "musleTypesFormulaWrapper",
+        property: trainingLogProp("musleTypesFormulaWrapper"),
         formula: {
           string: {
             contains: part,
@@ -80,7 +57,7 @@ export async function fetchTrainingLogs(
   const dateFilters = [
     startDate
       ? {
-          property: "createdTime",
+          property: trainingLogProp("createdTime"),
           date: {
             on_or_after: startDate,
           },
@@ -88,7 +65,7 @@ export async function fetchTrainingLogs(
       : undefined,
     endDate
       ? {
-          property: "createdTime",
+          property: trainingLogProp("createdTime"),
           date: {
             on_or_before: endDate,
           },
@@ -119,7 +96,7 @@ export async function fetchTrainingLogs(
       sorts: sort
         ? [
             {
-              property: "createdTime",
+              property: trainingLogProp("createdTime"),
               direction: sort === "asc" ? "ascending" : "descending",
             },
           ]
@@ -129,9 +106,7 @@ export async function fetchTrainingLogs(
     (trainingLog) =>
       getRelationIds(trainingLog.properties.trainingExercisesRelation) || [],
   );
-  const exerciseLogs: NotionExerciseLogPage<
-    NotionKeysOfProperties<typeof trainingLogSummaryExerciseLogProperties>
-  >[] = (await Promise.all(
+  const exerciseLogs: TrainingLogSummaryExerciseLogPage[] = (await Promise.all(
     exercisesRelationIds.map((id) =>
       notionLimit(() =>
         notionClient.pages.retrieve({
@@ -140,43 +115,19 @@ export async function fetchTrainingLogs(
         }),
       ),
     ),
-  )) as unknown as NotionExerciseLogPage<
-    NotionKeysOfProperties<typeof trainingLogSummaryExerciseLogProperties>
-  >[];
-  const responseData: FetchTrainingLogsResult = {
-    data: trainingLogs.results.map((trainingLog) => ({
-      id: trainingLog.id,
-      createdTime: trainingLog.properties.createdTime.created_time,
-      bodyWeight: trainingLog.properties.bodyWeight.number || 0,
-      memo: trainingLog.properties.memo.rich_text[0]?.plain_text || "",
-      exercises: exerciseLogs
-        .filter((exerciseLog) =>
-          trainingLog.properties.trainingExercisesRelation.relation?.some(
-            (relation) => relation.id === exerciseLog.id,
-          ),
-        )
-        .map((exerciseLog) => ({
-          name:
-            getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
-            "",
-          todayMaxWeight:
-            Number(
-              getRollup(exerciseLog.properties.todayMaxWeightRollup, "number"),
-            ) || 0,
-          rest: exerciseLog.properties.rest.number || 0,
-          memo: getTitle(exerciseLog.properties.memo),
-          sets:
-            getRelationIds(exerciseLog.properties.exerciseSetsRelation)
-              ?.length || 0,
-        })),
-    })),
+  )) as unknown as TrainingLogSummaryExerciseLogPage[];
+
+  return {
+    data: trainingLogs.results.map((trainingLog) =>
+      mapTrainingLogSummaryItem(trainingLog, exerciseLogs),
+    ),
     meta: {
       next_cursor: trainingLogs.next_cursor || undefined,
       has_more: trainingLogs.has_more,
     },
   };
-  return responseData;
 }
+
 // トレーニング詳細の取得
 // /api/notion-training-app/training-logs/:id
 export async function fetchTrainingLogDetail(
@@ -187,96 +138,27 @@ export async function fetchTrainingLogDetail(
       page_id: id,
     }),
   )) as unknown as NotionTrainingLogPage;
-  const trainingLogProperties = trainingLog.properties;
   if (!trainingLog) {
     return null;
   }
-  const totalExerciseCount = trainingLogProperties.trainingExercisesRelation
-    .relation
-    ? trainingLogProperties.trainingExercisesRelation.relation.length
-    : 0;
 
   const exercisesRelationIds =
     getRelationIds(trainingLog.properties.trainingExercisesRelation) || [];
   // 種目ごとの記録データを取得
-  const exerciseLogs = (await Promise.all(
-    exercisesRelationIds.map((id) =>
+  const exerciseLogs: TrainingLogDetailExerciseLogPage[] = (await Promise.all(
+    exercisesRelationIds.map((exerciseLogId) =>
       notionLimit(() =>
         notionClient.pages.retrieve({
-          page_id: id,
+          page_id: exerciseLogId,
           filter_properties: [...trainingLogDetailExerciseLogProperties],
         }),
       ),
     ),
-  )) as unknown as NotionExerciseLogPage<
-    NotionKeysOfProperties<typeof trainingLogDetailExerciseLogProperties>
-  >[];
+  )) as unknown as TrainingLogDetailExerciseLogPage[];
 
-  const exercises: TrainingLogDetail["exercises"] = exerciseLogs.map(
-    (exerciseLog) => {
-      return {
-        id: exerciseLog.id,
-        trainingName:
-          getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
-          "",
-        maxGoalWeight:
-          getRollup(exerciseLog.properties.goalWeightRollup, "number") || 0,
-        currentMaxWeight:
-          getRollup(exerciseLog.properties.todayMaxWeightRollup, "number") || 0,
-        isPr:
-          getRollup(exerciseLog.properties.todayMaxWeightRollup, "number") ===
-          getRollup(exerciseLog.properties.goalWeightRollup, "number"),
-        musclesTypes:
-          getFormula(exerciseLog.properties.muslesTypesRollup, "string")
-            ?.split(",")
-            .map((part) => part.trim()) || [],
-        exerciseSets: {
-          exerciseLogId: exerciseLog.id,
-          exerciseId:
-            getRelationIds(exerciseLog.properties.exerciseRelation)[0] || "",
-          createdTime: exerciseLog.created_time,
-          rest: exerciseLog.properties.rest.number || 0, // この部分はそもそも返ってきている値がぜんぜん違うから、トレーニング種目のデータを渡している可能性がある。つまり型定義がちゃんと機能していない。最優先で直す箇所だ。
-          trainingName:
-            getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
-            "",
-          sets: parseExerciseSetsText(
-            getFormula(exerciseLog.properties.setsJsonFormula, "string"),
-            exerciseLog.id,
-          ),
-          notionUrl: exerciseLog.url,
-        },
-      };
-    },
-  );
-  const totalSetsCount = exercises.reduce(
-    (acc, exercise) => acc + exercise.exerciseSets.sets.length,
-    0,
-  );
-  const totalTrainingVolumeWeight = exercises.reduce(
-    (acc, exercise) =>
-      acc +
-      exercise.exerciseSets.sets.reduce(
-        (setAcc, set) => setAcc + set.kg * set.rep,
-        0,
-      ),
-    0,
-  );
-  const responseData: TrainingLogDetail = {
-    id: trainingLog.id,
-    createdTime: trainingLogProperties.createdTime.created_time,
-    bodyParts:
-      getFormula(trainingLogProperties.musleTypesFormula, "string")
-        ?.split(",")
-        .map((part) => part.trim()) || [],
-    memo: trainingLogProperties.memo.rich_text[0]?.plain_text || "",
-    bodyWeight: trainingLogProperties.bodyWeight.number || 0,
-    totalExerciseCount,
-    totalSetsCount,
-    totalTrainingVolumeWeight,
-    exercises,
-  };
-  return responseData;
+  return mapTrainingLogDetail(trainingLog, exerciseLogs);
 }
+
 // 最新のトレーニングログを1件取得するクエリ
 export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemResponse | null> {
   /**
@@ -288,7 +170,7 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
     page_size: 1,
     sorts: [
       {
-        property: "createdTime",
+        property: trainingLogProp("createdTime"),
         direction: "descending",
       },
     ],
@@ -309,7 +191,7 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
         notionLimit(() =>
           notionClient.pages.retrieve({
             page_id: id,
-            filter_properties: ["exerciseSetsRelation"],
+            filter_properties: [...newestLogExerciseLogProperties],
           }),
         ),
       ) || [],
@@ -325,7 +207,7 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
       notionLimit(() =>
         notionClient.pages.retrieve({
           page_id: id,
-          filter_properties: ["kg", "rep"],
+          filter_properties: [...exerciseSetWeightProperties],
         }),
       ),
     ),
@@ -338,15 +220,8 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
     totalWeight += kg * rep;
   });
 
-  const responseData: NewestTrainingLogItemResponse = {
-    id: log.id,
-    createdTime: log.properties.createdTime.created_time,
-    bodyWeight: log.properties.bodyWeight.number || 0,
-    memo: log.properties.memo.rich_text[0]?.plain_text || "",
+  return mapNewestTrainingLog(log, {
     exerciseCount: relationIds?.length || 0,
     totalWeight,
-  };
-  return responseData;
+  });
 }
-
-//

@@ -5,25 +5,23 @@
  * -
  * */
 
-import DailyLogsHeader from "./widgets/DailyLogsHeader";
-import TabPanel from "./widgets/TabPanel";
-import SidePanel from "./widgets/SidePanel";
-import ControllPanel from "./widgets/ControllPanel";
+import DailyLogsHeader from "../../features/trainingLog/components/DailyLogsHeader";
+import TabPanel from "./TabPanel";
+import SidePanel from "./SidePanel";
+import ControllPanel from "./ControllPanel";
 
-const TrainingLogDetail = () => {
+const HomePage = () => {
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <DailyLogsHeader />
-        <section className="grid gap-6 xl:grid-cols-[1fr_320px]">
-          <TabPanel />
-          <SidePanel>
-            <ControllPanel />
-          </SidePanel>
-        </section>
-      </div>
-    </main>
+    <>
+      <DailyLogsHeader />
+      <section className="grid gap-6 xl:grid-cols-[1fr_320px]">
+        <TabPanel />
+        <SidePanel>
+          <ControllPanel />
+        </SidePanel>
+      </section>
+    </>
   );
 };
 
-export default TrainingLogDetail;
+export default HomePage;

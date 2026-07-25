@@ -10,6 +10,7 @@ import TrainingLogList from "../pages/TrainingLogList";
 import TrainingLogNew from "../pages/TrainingLogNew";
 import HomePage from "../pages/home/HomePage";
 import ScrollToTop from "../components/ScrollToTop";
+import { AppLayout } from "./AppLayout";
 
 export function RootRouter() {
   return (
@@ -17,21 +18,26 @@ export function RootRouter() {
       <ScrollToTop />
 
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/training-logs" element={<TrainingLogList />} />
-        <Route path="/training-logs/new" element={<TrainingLogNew />} />
-        <Route
-          path="/training-logs/:trainingId"
-          element={<TrainingLogDetail />}
-        />
-        <Route
-          path="/training-logs/:trainingId/edit"
-          element={<TrainingLogEdit />}
-        />
-        <Route path="/exercises" element={<ExerciseList />} />
-        <Route path="/exercises/new" element={<ExerciseNew />} />
-        <Route path="/exercises/:exerciseId" element={<ExerciseDetail />} />
-        <Route path="/exercises/:exerciseId/edit" element={<ExerciseEdit />} />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/training-logs" element={<TrainingLogList />} />
+          <Route path="/training-logs/new" element={<TrainingLogNew />} />
+          <Route
+            path="/training-logs/:trainingId"
+            element={<TrainingLogDetail />}
+          />
+          <Route
+            path="/training-logs/:trainingId/edit"
+            element={<TrainingLogEdit />}
+          />
+          <Route path="/exercises" element={<ExerciseList />} />
+          <Route path="/exercises/new" element={<ExerciseNew />} />
+          <Route path="/exercises/:exerciseId" element={<ExerciseDetail />} />
+          <Route
+            path="/exercises/:exerciseId/edit"
+            element={<ExerciseEdit />}
+          />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

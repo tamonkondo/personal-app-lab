@@ -52,8 +52,7 @@ const CardSkeleton = ({ id }: { id: string }) => {
 
 const DetailSkeleton = () => {
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl animate-pulse flex-col gap-6">
+    <div className="flex w-full animate-pulse flex-col gap-6">
         <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
@@ -143,8 +142,7 @@ const DetailSkeleton = () => {
             </Card>
           </div>
         </section>
-      </div>
-    </main>
+    </div>
   );
 };
 

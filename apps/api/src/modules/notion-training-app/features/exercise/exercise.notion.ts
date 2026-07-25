@@ -1,14 +1,8 @@
-import {
-  getFormula,
-  getRollup,
-  getRollupArrayValue,
-} from "@/integrations/notion/notion.mapper";
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
 import { NotFoundError } from "@/libs/errors";
 import type {
   NotionExercisePage,
-  NotionExerciseProperties,
   NotionExerciseQueryResult,
 } from "./exercise.types";
 import type {
@@ -17,18 +11,26 @@ import type {
   ExerciseSummaryResponse,
 } from "@repo/types/notion-training-app";
 
+import { fetchExerciseLogWithSets } from "../exerciseLog/exerciseLog.notion";
 import {
+  exerciseLogProp,
   exerciseLogWithSetsProperties,
-  fetchExerciseLogWithSets,
   mapExerciseLogsWithSets,
-} from "../exerciseLog/exerciseLog.notion";
-import type { ExerciseLogWithSetsProperties } from "../exerciseLog/exerciseLog.notion";
+  type ExerciseLogWithSetsProperties,
+} from "../exerciseLog/exerciseLog.db";
 import type { NotionExerciseLogQueryResult } from "../exerciseLog/exerciseLog.types";
+import { type NotionKeysOfProperties } from "@/libs/notion/propertyExtract";
 import {
-  notionDefineProperties,
-  type NotionKeysOfProperties,
-} from "@/libs/notion/propertyExtract";
-import { exerciseRmTypesSchema } from "./exercise.schema";
+  exerciseNameProperties,
+  exerciseSummaryProperties,
+  exerciseDetailProperties,
+  exerciseProp,
+  mapExerciseSummaryItem,
+  mapExerciseDetail,
+  mapExerciseTrends,
+  type ExerciseSummaryPage,
+  type ExerciseDetailPage,
+} from "./exercise.db";
 
 type FetchExerciseSummaryLogsResult = Pick<
   ExerciseSummaryResponse,
@@ -38,32 +40,6 @@ type FetchExerciseLogsResult = Pick<
   ExerciseLogWithSetsResponse,
   "data" | "meta"
 >;
-
-const exerciseNameProperties =
-  notionDefineProperties<NotionExerciseProperties>()(["name"]);
-
-const exerciseSummaryProperties =
-  notionDefineProperties<NotionExerciseProperties>()([
-    "name",
-    "musclesTypes",
-    "maxGoalWeightRollup",
-    "maxWeightExerciseLogId",
-    "latestExerciseLogId",
-    "currentMaxWeightRollup",
-  ]);
-
-const exerciseDetailProperties =
-  notionDefineProperties<NotionExerciseProperties>()([
-    "name",
-    "latestTrainingDateFormula",
-    "musclesTypes",
-    "maxGoalWeightRollup",
-    "currentMaxWeightRollup",
-    "totalSetsCountFormula",
-    "totalTrainingDaysFormula",
-    "totalTrainingVolumeWeightFormula",
-    "rmTypes",
-  ]);
 
 export async function fetchExerciseNames() {
   return (await notionClient.dataSources.query({
@@ -79,20 +55,18 @@ export async function fetchExerciseSummaryLogs(
   cursor?: string,
 ): Promise<FetchExerciseSummaryLogsResult> {
   // ゴール重量がある種目のみを取得
-  const exercises: NotionExerciseQueryResult<
-    NotionKeysOfProperties<typeof exerciseSummaryProperties>
-  > = (await notionClient.dataSources.query({
+  const exercises = (await notionClient.dataSources.query({
     data_source_id: config.NOTION_EXERCISES_DATABASE_ID,
     filter: {
       and: [
         {
-          property: "theGoalsWeightRelation",
+          property: exerciseProp("theGoalsWeightRelation"),
           relation: {
             is_not_empty: true,
           },
         },
         {
-          property: "maxGoalWeightRollup",
+          property: exerciseProp("maxGoalWeightRollup"),
           rollup: {
             any: {
               number: {
@@ -102,7 +76,7 @@ export async function fetchExerciseSummaryLogs(
           },
         },
         {
-          property: "maxWeightExerciseLogId",
+          property: exerciseProp("maxWeightExerciseLogId"),
           formula: {
             string: {
               is_not_empty: true,
@@ -126,29 +100,12 @@ export async function fetchExerciseSummaryLogs(
   );
 
   const responseData: FetchExerciseSummaryLogsResult = {
-    data: exercises.results.map((log) => {
-      const logWithSets = exerciseLogWithSetsMap.get(log.id);
+    data: exercises.results.map((exercise: ExerciseSummaryPage) => {
+      const logWithSets = exerciseLogWithSetsMap.get(exercise.id);
       if (!logWithSets) {
-        throw new Error(`Exercise log summary not found: ${log.id}`);
+        throw new Error(`Exercise log summary not found: ${exercise.id}`);
       }
-      const maxGoalWeight =
-        getRollupArrayValue(log.properties.maxGoalWeightRollup, "number") || 0;
-      const currentMaxWeight =
-        Number(getRollup(log.properties.currentMaxWeightRollup, "number")) || 0;
-      return {
-        id: log.id,
-        musclesTypes:
-          log.properties.musclesTypes.multi_select?.map(
-            (muscle) => muscle.name,
-          ) || [],
-        trainingName: log.properties.name.title?.[0]?.plain_text || "",
-        maxGoalWeight,
-        currentMaxWeight,
-        isPr: currentMaxWeight > maxGoalWeight,
-        exerciseUrl: log.url,
-        maxWeightSets: logWithSets.maxWeightSets,
-        latestSets: logWithSets.latestSets,
-      };
+      return mapExerciseSummaryItem(exercise, logWithSets);
     }),
     meta: {
       next_cursor: exercises.next_cursor || undefined,
@@ -167,7 +124,7 @@ export async function fetchExerciseLogs(
     (await notionClient.dataSources.query({
       data_source_id: config.NOTION_EXERCISE_LOGS_DATABASE_ID,
       filter: {
-        property: "exerciseRelation",
+        property: exerciseLogProp("exerciseRelation"),
         relation: {
           contains: exerciseId,
         },
@@ -189,40 +146,18 @@ export async function fetchExerciseLogs(
   };
   return responseData;
 }
+
 export async function fetchExerciseDetail(
   exerciseId: string,
 ): Promise<ExerciseDetail> {
-  const exercise: NotionExercisePage<
-    NotionKeysOfProperties<typeof exerciseDetailProperties>
-  > = (await notionClient.pages.retrieve({
+  const exercise: ExerciseDetailPage = (await notionClient.pages.retrieve({
     page_id: exerciseId,
     filter_properties: [...exerciseDetailProperties],
-  })) as unknown as NotionExercisePage<
-    NotionKeysOfProperties<typeof exerciseDetailProperties>
-  >;
-  const properties = exercise.properties;
+  })) as unknown as ExerciseDetailPage;
 
-  const responseData: ExerciseDetail = {
-    id: exercise.id,
-    exerciseName: properties.name.title?.[0]?.plain_text || "",
-    latestTrainingDate:
-      getFormula(properties.latestTrainingDateFormula, "date")?.start || "",
-    musclesTypes:
-      properties.musclesTypes.multi_select?.map((muscle) => muscle.name) || [],
-    trainingName: properties.name.title?.[0]?.plain_text || "",
-    maxGoalWeight:
-      getRollupArrayValue(properties.maxGoalWeightRollup, "number") || 0,
-    currentMaxWeight:
-      Number(getRollup(properties.currentMaxWeightRollup, "number")) || 0,
-    totalSetsCount: getFormula(properties.totalSetsCountFormula, "number") || 0,
-    totalTrainingDays:
-      getFormula(properties.totalTrainingDaysFormula, "number") || 0,
-    totalTrainingVolumeWeight:
-      getFormula(properties.totalTrainingVolumeWeightFormula, "number") || 0,
-    rmTypes: exerciseRmTypesSchema.parse(properties.rmTypes.select?.name),
-  };
-  return responseData;
+  return mapExerciseDetail(exercise);
 }
+
 export async function fetchExerciseTrends(exerciseId: string) {
   // 従来はデータソースに存在しない "id" プロパティで query しており常に 500 だったため、
   // ページ ID で直接 retrieve する方式に修正
@@ -230,15 +165,11 @@ export async function fetchExerciseTrends(exerciseId: string) {
     (await notionClient.pages
       .retrieve({
         page_id: exerciseId,
-        filter_properties: ["maxGoalWeightRollup"],
+        filter_properties: [exerciseProp("maxGoalWeightRollup")],
       })
       .catch(() => {
         throw new NotFoundError(`Exercise not found: ${exerciseId}`);
       })) as unknown as NotionExercisePage<"maxGoalWeightRollup">;
 
-  const maxGoalWeight =
-    getRollupArrayValue(exercise.properties.maxGoalWeightRollup, "number") || 0;
-  return {
-    maxGoalWeight,
-  };
+  return mapExerciseTrends(exercise);
 }

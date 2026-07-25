@@ -1,11 +1,11 @@
-import { Badge, Button, Card, CardContent } from "@repo/ui";
+import { Card, CardContent } from "@repo/ui";
 import * as Sentry from "@sentry/react";
 import useSWR from "swr";
 import { API_BASE, fetcher } from "../../../lib/fetch";
 import DailyLogsHeaderSkeleton from "./DailyLogsHeaderSkeleton";
 import { formatDate } from "@repo/utils";
-import { Link } from "react-router-dom";
 import type { NewestTrainingLogResponse } from "@repo/types/notion-training-app";
+import PageHero, { HeroLinkButton } from "../../../components/PageHero";
 
 const DailyLogsHeader = () => {
   const {
@@ -50,32 +50,16 @@ const DailyLogsHeader = () => {
 
   return (
     <header className="grid gap-6">
-      <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-white/10 text-white hover:bg-white/10">
-                Latest Log
-              </Badge>
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                {formatDate(newestLog.createdTime)}
-              </h1>
-              <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
-                {newestLog.memo}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Link to={`/training-logs/${newestLog.id}`}>
-              <Button className="w-full sm:w-auto">詳細</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        badge="Latest Log"
+        title={formatDate(newestLog.createdTime)}
+        description={newestLog.memo}
+        actions={
+          <HeroLinkButton to={`/training-logs/${newestLog.id}`}>
+            詳細
+          </HeroLinkButton>
+        }
+      />
       <section className="grid gap-4 grid-cols-3">
         {summaryItems.map((item) => (
           <Card key={item.label}>

@@ -1,71 +1,24 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
-import {
-  getTitle,
-  getStatusName,
-  getSelectName,
-  getRichText,
-  getDate,
-  getFormula,
-  getRelationIds,
-  getCreatedTime,
-} from "@/integrations/notion/notion.mapper";
 import type { NotionTaskPage, NotionTaskQueryResult } from "./task.types";
 import type {
   TaskItem,
   TaskStatus,
   TaskCategory,
-  WorkingHours,
 } from "@repo/types/notion-todo-pomodoro-app";
-import { WORKING_TIME_OPTIONS } from "@repo/types/notion-todo-pomodoro-app";
 import type {
   CreateTaskInput,
   UpdateTaskInput,
   TaskScope,
 } from "@repo/schemas/notion-todo-pomodoro-app";
+import {
+  TASK_PROPS,
+  mapTaskPage,
+  buildCreateTaskProperties,
+  buildUpdateTaskProperties,
+} from "./task.db";
 
 const TODOS_DB = config.NOTION_TODOS_DB;
-
-/** Working Time ラベル → 見積ポモドーロ数 */
-function workingTimeLabelToPomodoros(label: string | null): number | null {
-  if (!label) return null;
-  const found = WORKING_TIME_OPTIONS.find((o) => o.label === label);
-  return found ? found.pomodoros : null;
-}
-
-/** 見積ポモドーロ数 → Working Time ラベル */
-function pomodorosToWorkingTimeLabel(pomodoros: number): string | null {
-  const found = WORKING_TIME_OPTIONS.find((o) => o.pomodoros === pomodoros);
-  return found ? found.label : null;
-}
-
-/** Notion ページ → フロント表示モデル */
-export function mapTaskPage(page: NotionTaskPage): TaskItem {
-  const p = page.properties;
-  const schedule = getDate(p["Schedule"]);
-  const startTime = getDate(p["start time"]);
-  const endTime = getDate(p["end time"]);
-
-  return {
-    id: page.id,
-    name: getTitle(p.name),
-    status: getStatusName(p.Status) as TaskStatus | null,
-    category: getSelectName(p.category) as TaskCategory | null,
-    estimatedPomodoros: workingTimeLabelToPomodoros(
-      getSelectName(p["Working Time"]),
-    ),
-    workingHours: getSelectName(p[" Working hours"]) as WorkingHours | null,
-    scheduledStart: schedule?.start ?? null,
-    scheduledEnd: schedule?.end ?? null,
-    startTime: startTime?.start ?? null,
-    endTime: endTime?.start ?? null,
-    actualWorkMinutes: getFormula(p["Actual work time"], "number"),
-    memo: getRichText(p.memo),
-    projectId: getRelationIds(p.Project)[0] ?? null,
-    createdTime: getCreatedTime(p["作成日時"]),
-    url: page.url,
-  };
-}
 
 type TaskFilter =
   | { property: string; [key: string]: unknown }
@@ -98,35 +51,35 @@ function buildFilter(params: {
   if (params.scope === "today") {
     const { start, end } = todayBounds();
     filters.push({
-      property: "Schedule",
+      property: TASK_PROPS.schedule,
       date: { on_or_after: start },
     });
     filters.push({
-      property: "Schedule",
+      property: TASK_PROPS.schedule,
       date: { before: end },
     });
   } else if (params.scope === "active") {
     filters.push({
-      property: "Status",
+      property: TASK_PROPS.status,
       status: { does_not_equal: "Complete" },
     });
   }
 
   if (params.status) {
     filters.push({
-      property: "Status",
+      property: TASK_PROPS.status,
       status: { equals: params.status },
     });
   }
   if (params.category) {
     filters.push({
-      property: "category",
+      property: TASK_PROPS.category,
       select: { equals: params.category },
     });
   }
   if (params.projectId) {
     filters.push({
-      property: "Project",
+      property: TASK_PROPS.project,
       relation: { contains: params.projectId },
     });
   }
@@ -153,7 +106,7 @@ export async function fetchTasks(params: FetchTasksParams): Promise<{
   const res = (await notionClient.dataSources.query({
     data_source_id: TODOS_DB,
     ...(filter ? { filter: filter as never } : {}),
-    sorts: [{ property: "Schedule", direction: "ascending" }],
+    sorts: [{ property: TASK_PROPS.schedule, direction: "ascending" }],
     page_size: params.limit ?? 20,
     start_cursor: params.cursor,
   })) as unknown as NotionTaskQueryResult;
@@ -175,37 +128,9 @@ export async function fetchTaskById(id: string): Promise<TaskItem> {
 }
 
 export async function createTask(input: CreateTaskInput): Promise<TaskItem> {
-  const properties: Record<string, unknown> = {
-    name: { title: [{ text: { content: input.name } }] },
-  };
-
-  if (input.status) properties.Status = { status: { name: input.status } };
-  if (input.category) properties.category = { select: { name: input.category } };
-  if (input.estimatedPomodoros) {
-    const label = pomodorosToWorkingTimeLabel(input.estimatedPomodoros);
-    if (label) properties["Working Time"] = { select: { name: label } };
-  }
-  if (input.workingHours) {
-    properties[" Working hours"] = { select: { name: input.workingHours } };
-  }
-  if (input.scheduledStart) {
-    properties.Schedule = {
-      date: {
-        start: input.scheduledStart,
-        end: input.scheduledEnd ?? null,
-      },
-    };
-  }
-  if (input.projectId) {
-    properties.Project = { relation: [{ id: input.projectId }] };
-  }
-  if (input.memo) {
-    properties.memo = { rich_text: [{ text: { content: input.memo } }] };
-  }
-
   const page = (await notionClient.pages.create({
     parent: { data_source_id: TODOS_DB },
-    properties: properties as never,
+    properties: buildCreateTaskProperties(input) as never,
   })) as unknown as NotionTaskPage;
   return mapTaskPage(page);
 }
@@ -214,23 +139,9 @@ export async function updateTask(
   id: string,
   input: UpdateTaskInput,
 ): Promise<TaskItem> {
-  const properties: Record<string, unknown> = {};
-
-  if (input.status) properties.Status = { status: { name: input.status } };
-  if (input.startTime !== undefined) {
-    properties["start time"] = {
-      date: input.startTime ? { start: input.startTime } : null,
-    };
-  }
-  if (input.endTime !== undefined) {
-    properties["end time"] = {
-      date: input.endTime ? { start: input.endTime } : null,
-    };
-  }
-
   const page = (await notionClient.pages.update({
     page_id: id,
-    properties: properties as never,
+    properties: buildUpdateTaskProperties(input) as never,
   })) as unknown as NotionTaskPage;
   return mapTaskPage(page);
 }

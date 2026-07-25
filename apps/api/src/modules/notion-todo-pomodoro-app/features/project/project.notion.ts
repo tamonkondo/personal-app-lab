@@ -1,43 +1,10 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
-import {
-  getTitle,
-  getStatusName,
-  getSelectName,
-  getRichText,
-  getMultiSelectNames,
-  getDate,
-  getRelationIds,
-} from "@/integrations/notion/notion.mapper";
-import type {
-  NotionProjectPage,
-  NotionProjectQueryResult,
-} from "./project.types";
-import type {
-  ProjectItem,
-  ProjectStatus,
-  ProjectCategory,
-} from "@repo/types/notion-todo-pomodoro-app";
+import type { NotionProjectQueryResult } from "./project.types";
+import type { ProjectItem } from "@repo/types/notion-todo-pomodoro-app";
+import { mapProjectPage } from "./project.db";
 
 const PROJECTS_DB = config.NOTION_PROJECTS_DB;
-
-export function mapProjectPage(page: NotionProjectPage): ProjectItem {
-  const p = page.properties;
-  const schedule = getDate(p.Schedule);
-  return {
-    id: page.id,
-    name: getTitle(p.Name),
-    goal: getRichText(p.Goal),
-    status: getStatusName(p.status) as ProjectStatus | null,
-    category: getSelectName(p.Category) as ProjectCategory | null,
-    kinds: getMultiSelectNames(p.kinds),
-    scheduledStart: schedule?.start ?? null,
-    scheduledEnd: schedule?.end ?? null,
-    memo: getRichText(p.memo),
-    taskIds: getRelationIds(p.Tasks),
-    url: page.url,
-  };
-}
 
 export async function fetchProjects(params: {
   limit?: number;

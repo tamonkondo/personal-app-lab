@@ -1,19 +1,17 @@
 import notionClient from "@/integrations/notion/notion.client";
 import type {
-  NotionExerciseLogQueryResult,
   NotionExerciseLogPage,
-  NotionExerciseLogProperties,
 } from "./exerciseLog.types";
-import { getFormula } from "@/integrations/notion/notion.mapper";
-
 import type { ExerciseLogWithSetsItemResponse } from "@repo/types/notion-training-app";
 import type { NotionExerciseQueryResult } from "../exercise/exercise.types";
 import notionLimit from "@/libs/notion/notionLimit";
-import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
+import { readExerciseLogRefs } from "../exercise/exercise.db";
 import {
-  notionDefineProperties,
-  type NotionKeysOfProperties,
-} from "@/libs/notion/propertyExtract";
+  exerciseLogWithSetsProperties,
+  mapExerciseLogWithSetsItem,
+  emptyExerciseLogWithSets,
+  type ExerciseLogWithSetsProperties,
+} from "./exerciseLog.db";
 
 type ExerciseLogLookupProperties =
   | "latestExerciseLogId"
@@ -29,61 +27,6 @@ interface FetchExerciseLogWithSetsRes {
   latestSets: ExerciseLogWithSetsItemResponse;
 }
 
-export const exerciseLogWithSetsProperties =
-  notionDefineProperties<NotionExerciseLogProperties>()([
-    "rest",
-    "trainingNameFormula",
-    "setsJsonFormula",
-  ]);
-
-export type ExerciseLogWithSetsProperties =
-  NotionKeysOfProperties<typeof exerciseLogWithSetsProperties>;
-
-function mapExerciseLogWithSetsItem(
-  exerciseLog: NotionExerciseLogPage<ExerciseLogWithSetsProperties>,
-  exerciseId: string,
-): ExerciseLogWithSetsItemResponse {
-  return {
-    exerciseLogId: exerciseLog.id,
-    exerciseId,
-    rest: exerciseLog.properties.rest.number || 0,
-    trainingName:
-      getFormula(exerciseLog.properties.trainingNameFormula, "string") || "",
-    createdTime: exerciseLog.created_time,
-    sets: parseExerciseSetsText(
-      getFormula(exerciseLog.properties.setsJsonFormula, "string"),
-      exerciseLog.id,
-    ),
-    notionUrl: exerciseLog.url,
-  };
-}
-
-function emptyExerciseLogWithSets(
-  exerciseId: string,
-): ExerciseLogWithSetsItemResponse {
-  return {
-    exerciseLogId: "",
-    exerciseId,
-    rest: 0,
-    trainingName: "",
-    createdTime: "",
-    sets: [],
-    notionUrl: "",
-  };
-}
-
-export function mapExerciseLogsWithSets({
-  exerciseLogs,
-  exerciseId,
-}: {
-  exerciseLogs: NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties>;
-  exerciseId: string;
-}): ExerciseLogWithSetsItemResponse[] {
-  return exerciseLogs.results.map((exerciseLog) =>
-    mapExerciseLogWithSetsItem(exerciseLog, exerciseId),
-  );
-}
-
 export async function fetchExerciseLogWithSets({
   exercises,
 }: Props): Promise<FetchExerciseLogWithSetsRes[]> {
@@ -92,9 +35,10 @@ export async function fetchExerciseLogWithSets({
   const exerciseLogIds = [
     ...new Set(
       exercises.results.flatMap((exercise) => {
+        const refs = readExerciseLogRefs(exercise);
         const ids = [
-          getFormula(exercise.properties.latestExerciseLogId, "string"),
-          getFormula(exercise.properties.maxWeightExerciseLogId, "string"),
+          refs.latestExerciseLogId,
+          refs.maxWeightExerciseLogId,
         ].filter((id): id is string => typeof id === "string" && id.length > 0);
 
         ids.forEach((id) => {
@@ -105,6 +49,7 @@ export async function fetchExerciseLogWithSets({
       }),
     ),
   ];
+
   const exerciseLogs = await Promise.all(
     exerciseLogIds.map(async (exerciseLogId) => {
       const exerciseId = exerciseLogIdToExerciseIdMap.get(exerciseLogId);
@@ -143,16 +88,9 @@ export async function fetchExerciseLogWithSets({
     }
   > = {};
   exercises.results.forEach((exercise) => {
-    const exerciseId = exercise.id;
-    const latestExerciseLogId = getFormula(
-      exercise.properties.latestExerciseLogId,
-      "string",
-    );
-    const maxWeightExerciseLogId = getFormula(
-      exercise.properties.maxWeightExerciseLogId,
-      "string",
-    );
-    exerciseIdToLogsMap[exerciseId] = {
+    const { latestExerciseLogId, maxWeightExerciseLogId } =
+      readExerciseLogRefs(exercise);
+    exerciseIdToLogsMap[exercise.id] = {
       maxWeightLog: maxWeightExerciseLogId
         ? exerciseLogIdToLogMap.get(maxWeightExerciseLogId) || null
         : null,

@@ -18,6 +18,7 @@ import {
   TabsTrigger,
 } from "@repo/ui";
 import { Link } from "react-router-dom";
+import PageHero, { HeroLinkButton } from "../components/PageHero";
 
 const exerciseLogs = [
   {
@@ -182,41 +183,22 @@ const ExerciseCard = ({ exercise }: { exercise: (typeof exerciseLogs)[number] })
 
 const ExerciseLogList = () => {
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge className="bg-white/10 text-white hover:bg-white/10">
-                Exercise Logs
-              </Badge>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  種目ログ一覧
-                </h1>
-                <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
-                  種目ごとのMAX重量、目標進捗、直近セットをまとめて確認できます。
-                </p>
-              </div>
-            </div>
+    <>
+      <PageHero
+        badge="Exercise Logs"
+        title="種目ログ一覧"
+        description="種目ごとのMAX重量、目標進捗、直近セットをまとめて確認できます。"
+        actions={
+          <>
+            <HeroLinkButton to="/" variant="outline">
+              ホームへ戻る
+            </HeroLinkButton>
+            <HeroLinkButton to="/exercises/new">種目を追加</HeroLinkButton>
+          </>
+        }
+      />
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Link to="/">
-                <Button
-                  variant="outline"
-                  className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
-                >
-                  ホームへ戻る
-                </Button>
-              </Link>
-              <Link to="/exercises/new">
-                <Button className="w-full sm:w-auto">種目を追加</Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {summaryItems.map((item) => (
             <Card key={item.label}>
               <CardContent className="p-5">
@@ -317,9 +299,8 @@ const ExerciseLogList = () => {
               </CardContent>
             </Card>
           </div>
-        </section>
-      </div>
-    </main>
+      </section>
+    </>
   );
 };
 

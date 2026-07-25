@@ -1,9 +1,9 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui";
-import TrainingLogCardList from "../../../features/trainingLog/components/TrainingLogCardList";
-import ExerciseSummaryList from "../../../features/exerciseLog/components/ExerciseSummaryList";
+import TrainingLogCardList from "../../features/trainingLog/components/TrainingLogCardList";
+import ExerciseSummaryList from "../../features/exerciseLog/components/ExerciseSummaryList";
 import TabPanelCard from "./TabPanelCard";
 import { useState } from "react";
-import TrainingLogFilterArea from "../../../features/trainingLog/components/TrainingLogFilterArea";
+import TrainingLogFilterArea from "../../features/trainingLog/components/TrainingLogFilterArea";
 const TabPanel = () => {
   const [tab, setTab] = useState("trainingLogs");
   return (

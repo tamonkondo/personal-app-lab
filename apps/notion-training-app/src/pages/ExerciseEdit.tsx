@@ -1,5 +1,4 @@
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -13,6 +12,7 @@ import {
 import type { ExerciseDetail } from "@repo/types/notion-training-app";
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import PageHero, { HeroLinkButton } from "../components/PageHero";
 import AlertCard from "../components/AlertCard";
 import DetailSkeleton from "../components/DetailPageSkeleton";
 import BODY_PARTS from "../constants/parts";
@@ -106,41 +106,24 @@ const ExerciseEdit = () => {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge className="bg-white/10 text-white hover:bg-white/10">
-                Edit Exercise
-              </Badge>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  エクササイズ種目を編集
-                </h1>
-                <p className="max-w-3xl text-sm leading-6 text-zinc-300 sm:text-base">
-                  取得済みの種目情報をもとに、種目名、対象部位、目標重量を編集します。
-                </p>
-              </div>
-            </div>
+    <>
+      <PageHero
+        badge="Edit Exercise"
+        title="エクササイズ種目を編集"
+        description="取得済みの種目情報をもとに、種目名、対象部位、目標重量を編集します。"
+        actions={
+          <>
+            <HeroLinkButton to={`/exercises/${exerciseId}`} variant="outline">
+              詳細へ戻る
+            </HeroLinkButton>
+            <Button className="w-full sm:w-auto" disabled>
+              変更を保存
+            </Button>
+          </>
+        }
+      />
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Link to={`/exercises/${exerciseId}`}>
-                <Button
-                  variant="outline"
-                  className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
-                >
-                  詳細へ戻る
-                </Button>
-              </Link>
-              <Button className="w-full sm:w-auto" disabled>
-                変更を保存
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-3">
           {summaryItems.map((item) => (
             <Card key={item.label}>
               <CardContent className="p-5">
@@ -233,9 +216,8 @@ const ExerciseEdit = () => {
               </CardContent>
             </Card>
           </div>
-        </section>
-      </div>
-    </main>
+      </section>
+    </>
   );
 };
 

@@ -19,10 +19,10 @@ import {
   type ExerciseGuideLineRep,
   type ExerciseTrendPeriod,
 } from "@repo/types/notion-training-app/exercise";
-import ExerciseDetailHeader from "./widgets/ExerciseDetailHeader";
+import ExerciseDetailHeader from "../../features/exercise/components/ExerciseDetailHeader";
 import { useExerciseDetail } from "../../features/exercise/hooks/useExerciseDetail";
 import AlertCard from "../../components/AlertCard";
-import ExerciseDetailMain from "./widgets/ExerciseDetailMain";
+import ExerciseDetailMain from "../../features/exercise/components/ExerciseDetailMain";
 import DetailSkeleton from "../../components/DetailPageSkeleton";
 
 const ExerciseLogDetail = () => {
@@ -105,7 +105,7 @@ const ExerciseLogDetail = () => {
         title="データが一件も存在しません"
         message="トレーニング種目のデータが存在しません。新しい記録を追加してください。"
         action={
-          <Link to="/exercise/new">
+          <Link to="/exercises/new">
             <Button>新しい記録を追加</Button>
           </Link>
         }
@@ -113,9 +113,8 @@ const ExerciseLogDetail = () => {
     );
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <ExerciseDetailHeader data={exerciseDetailData} />
+    <>
+      <ExerciseDetailHeader data={exerciseDetailData} />
         <section className="grid gap-6 xl:grid-cols-[1fr_320px]">
           <ExerciseDetailMain id={exerciseId} />
           <div className="flex flex-col gap-6">
@@ -232,9 +231,8 @@ const ExerciseLogDetail = () => {
               </CardContent>
             </Card>
           </div>
-        </section>
-      </div>
-    </main>
+      </section>
+    </>
   );
 };
 

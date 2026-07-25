@@ -1,8 +1,8 @@
-import { Button, Card, CardContent } from "@repo/ui";
+import { Card, CardContent } from "@repo/ui";
 import { formatDate } from "@repo/utils";
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
 import { ExerciseDetail } from "@repo/types/notion-training-app";
+import PageHero, { HeroLinkButton } from "../../../components/PageHero";
 
 interface Props {
   data: ExerciseDetail;
@@ -31,29 +31,15 @@ const ExerciseDetailHeader = ({ data }: Props) => {
   );
   return (
     <>
-      <section className="rounded-3xl bg-zinc-950 p-6 text-white shadow-sm lg:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-zinc-300">
-              Latest {formatDate(data.latestTrainingDate, "slash")}
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              {data.exerciseName}
-            </h1>
-          </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Link to="/exercise-logs">
-              <Button
-                variant="outline"
-                className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20 sm:w-auto"
-              >
-                一覧へ戻る
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow={`Latest ${formatDate(data.latestTrainingDate, "slash")}`}
+        title={data.exerciseName}
+        actions={
+          <HeroLinkButton to="/exercises" variant="outline">
+            一覧へ戻る
+          </HeroLinkButton>
+        }
+      />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {summaryItems.map((item) => (
