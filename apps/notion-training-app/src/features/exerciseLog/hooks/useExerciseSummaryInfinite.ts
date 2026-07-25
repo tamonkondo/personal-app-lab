@@ -2,7 +2,7 @@ import { ExerciseSummaryResponse } from "@repo/types/notion-training-app";
 import { useCallback, useEffect } from "react";
 import { ExerciseSummaryParams } from "./useExerciseSummaryParams";
 import { formatDate } from "@repo/utils";
-import fetcher from "../../../lib/fetch";
+import { API_BASE, buildQuery, fetcher } from "../../../lib/fetch";
 import useSWRInfinite from "swr/infinite";
 
 interface UseExerciseSummaryInfinite {
@@ -17,13 +17,21 @@ export function useExerciseSummaryInfinite({
   const getKey = useCallback(
     (pageIndex: number, previousPageData: ExerciseSummaryResponse | null) => {
       if (previousPageData && !previousPageData.data.length) return null;
-      // Body parts are joined as CSV in the query string
-      const bodyPartsQuery =
-        elBodyParts.length > 0 ? elBodyParts.join(",") : "";
-      if (pageIndex === 0)
-        return `${import.meta.env.VITE_API_URL}/exercise/summary/?limit=5&startDate=${elStartDate ? formatDate(new Date(elStartDate), "hyphen") : ""}&endDate=${elEndDate ? formatDate(new Date(elEndDate), "hyphen") : ""}&sort=${elSort || ""}&parts=${bodyPartsQuery}`; // first page
-      if (!previousPageData?.meta.next_cursor) return null;
-      return `${import.meta.env.VITE_API_URL}/exercise/summary/?cursor=${previousPageData?.meta.next_cursor}&limit=5&startDate=${elStartDate ? formatDate(new Date(elStartDate), "hyphen") : ""}&endDate=${elEndDate ? formatDate(new Date(elEndDate), "hyphen") : ""}&sort=${elSort || ""}&parts=${bodyPartsQuery}`; // SWR key
+      if (pageIndex > 0 && !previousPageData?.meta.next_cursor) return null;
+      const query = buildQuery({
+        cursor: pageIndex > 0 ? previousPageData?.meta.next_cursor : undefined,
+        limit: 5,
+        startDate: elStartDate
+          ? formatDate(new Date(elStartDate), "hyphen")
+          : undefined,
+        endDate: elEndDate
+          ? formatDate(new Date(elEndDate), "hyphen")
+          : undefined,
+        sort: elSort,
+        // Body parts are joined as CSV in the query string
+        parts: elBodyParts.length > 0 ? elBodyParts.join(",") : undefined,
+      });
+      return `${API_BASE}/exercise/summary/${query}`;
     },
     [elStartDate, elEndDate, elSort, elBodyParts],
   );

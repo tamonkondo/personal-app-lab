@@ -4,6 +4,8 @@ import {
   getRollupArrayValue,
 } from "@/integrations/notion/notion.mapper";
 import notionClient from "@/integrations/notion/notion.client";
+import { config } from "@/libs/config";
+import { NotFoundError } from "@/libs/errors";
 import type {
   NotionExercisePage,
   NotionExerciseProperties,
@@ -65,7 +67,7 @@ const exerciseDetailProperties =
 
 export async function fetchExerciseNames() {
   return (await notionClient.dataSources.query({
-    data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
+    data_source_id: config.NOTION_EXERCISES_DATABASE_ID,
     filter_properties: [...exerciseNameProperties],
   })) as unknown as NotionExerciseQueryResult<
     NotionKeysOfProperties<typeof exerciseNameProperties>
@@ -77,11 +79,10 @@ export async function fetchExerciseSummaryLogs(
   cursor?: string,
 ): Promise<FetchExerciseSummaryLogsResult> {
   // ゴール重量がある種目のみを取得
-  console.time("fetchExerciseSummaryLogs");
   const exercises: NotionExerciseQueryResult<
     NotionKeysOfProperties<typeof exerciseSummaryProperties>
   > = (await notionClient.dataSources.query({
-    data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
+    data_source_id: config.NOTION_EXERCISES_DATABASE_ID,
     filter: {
       and: [
         {
@@ -116,7 +117,6 @@ export async function fetchExerciseSummaryLogs(
   })) as unknown as NotionExerciseQueryResult<
     NotionKeysOfProperties<typeof exerciseSummaryProperties>
   >;
-  console.log(exercises);
   const exerciseLogWithSets = await fetchExerciseLogWithSets({
     exercises,
   });
@@ -155,7 +155,6 @@ export async function fetchExerciseSummaryLogs(
       has_more: exercises.has_more,
     },
   };
-  console.timeEnd("fetchExerciseSummaryLogs");
   return responseData;
 }
 
@@ -164,11 +163,9 @@ export async function fetchExerciseLogs(
   limit: number = 7,
   cursor?: string,
 ): Promise<FetchExerciseLogsResult> {
-  console.time("fetchExerciseLogs");
-
   const exerciseLogs: NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties> =
     (await notionClient.dataSources.query({
-      data_source_id: process.env.NOTION_EXERCISE_LOGS_DATABASE_ID!,
+      data_source_id: config.NOTION_EXERCISE_LOGS_DATABASE_ID,
       filter: {
         property: "exerciseRelation",
         relation: {
@@ -190,13 +187,11 @@ export async function fetchExerciseLogs(
       has_more: exerciseLogs.has_more,
     },
   };
-  console.timeEnd("fetchExerciseLogs");
   return responseData;
 }
 export async function fetchExerciseDetail(
   exerciseId: string,
 ): Promise<ExerciseDetail> {
-  console.log("fetchExerciseDetail:", exerciseId);
   const exercise: NotionExercisePage<
     NotionKeysOfProperties<typeof exerciseDetailProperties>
   > = (await notionClient.pages.retrieve({
@@ -229,27 +224,18 @@ export async function fetchExerciseDetail(
   return responseData;
 }
 export async function fetchExerciseTrends(exerciseId: string) {
-  const exercises: NotionExerciseQueryResult<
-    NotionKeysOfProperties<typeof exerciseSummaryProperties>
-  > = (await notionClient.dataSources.query({
-    data_source_id: process.env.NOTION_EXERCISES_DATABASE_ID!,
-    filter: {
-      property: "id",
-      rich_text: {
-        equals: exerciseId,
-      },
-    },
-    filter_properties: [...exerciseSummaryProperties],
-    page_size: 1,
-  })) as unknown as NotionExerciseQueryResult<
-    NotionKeysOfProperties<typeof exerciseSummaryProperties>
-  >;
+  // 従来はデータソースに存在しない "id" プロパティで query しており常に 500 だったため、
+  // ページ ID で直接 retrieve する方式に修正
+  const exercise: NotionExercisePage<"maxGoalWeightRollup"> =
+    (await notionClient.pages
+      .retrieve({
+        page_id: exerciseId,
+        filter_properties: ["maxGoalWeightRollup"],
+      })
+      .catch(() => {
+        throw new NotFoundError(`Exercise not found: ${exerciseId}`);
+      })) as unknown as NotionExercisePage<"maxGoalWeightRollup">;
 
-  if (exercises.results.length === 0) {
-    throw new Error(`Exercise not found: ${exerciseId}`);
-  }
-
-  const exercise = exercises.results[0];
   const maxGoalWeight =
     getRollupArrayValue(exercise.properties.maxGoalWeightRollup, "number") || 0;
   return {

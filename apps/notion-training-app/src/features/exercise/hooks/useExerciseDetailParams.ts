@@ -3,6 +3,7 @@ import {
   exerciseDetailParamsSchema,
   type ExerciseDetailParams,
 } from "@repo/schemas/notion-training-app";
+import { createSetSearchParamsWithReset } from "../../../lib/searchParams";
 
 export interface UseExerciseDetailParams extends ExerciseDetailParams {
   setSearchParams: (params: URLSearchParams) => void;
@@ -19,19 +20,10 @@ export function useExerciseDetailParams(): UseExerciseDetailParams {
       exerciseGuideLineRep: searchParams.get("exerciseGuideLineRep"),
     });
 
-  function setSearchParamsWithReset(newParams: Partial<ExerciseDetailParams>) {
-    setSearchParams((prevParams) => {
-      const updatedParams = new URLSearchParams(prevParams);
-      Object.entries(newParams).forEach(([key, value]) => {
-        if (value === null) {
-          updatedParams.delete(key);
-        } else {
-          updatedParams.set(key, String(value));
-        }
-      });
-      return updatedParams;
-    });
-  }
+  // 共有ヘルパーを利用 (以前は同等ロジックをここで再実装していた)
+  const setSearchParamsWithReset =
+    createSetSearchParamsWithReset(setSearchParams);
+
   return {
     trendPeriod,
     exerciseGuideLineRep,

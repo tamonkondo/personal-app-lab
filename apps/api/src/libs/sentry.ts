@@ -1,12 +1,12 @@
-// Import with `import * as Sentry from "@sentry/node"` if you are using ESM
 import * as Sentry from "@sentry/node";
+import { config } from "./config";
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: config.SENTRY_DSN,
   integrations: [
-    // send console.log, console.warn, and console.error calls as logs to Sentry
-    Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+    // console.warn / console.error のみ Sentry ログへ送信する。
+    // (log まで送るとデバッグ出力が全て送信され、ノイズ・コストになるため)
+    Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
   ],
-  // Enable logs to be sent to Sentry
   enableLogs: true,
 });

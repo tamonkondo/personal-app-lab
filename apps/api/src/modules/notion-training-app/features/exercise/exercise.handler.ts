@@ -3,15 +3,8 @@ import type {
   ExerciseLogWithSetsResponse,
   ExerciseSummaryResponse,
 } from "@repo/types/notion-training-app";
+import { paginationQuerySchema } from "@repo/schemas";
 import * as fetches from "./exercise.notion";
-
-type GetExerciseSummaryLogsRequest = {
-  query: {
-    limit: number;
-    cursor: string;
-    bodyParts: string;
-  };
-};
 
 export const getExerciseNames = asyncHandler(async (_, res) => {
   const nameData = await fetches.fetchExerciseNames();
@@ -22,42 +15,28 @@ export const getExerciseNames = asyncHandler(async (_, res) => {
   res.status(200).json(response);
 });
 
-export const getExerciseSummaryLogs = asyncHandler(
-  async (req: GetExerciseSummaryLogsRequest, res) => {
-    const { limit, cursor } = req.query as Partial<
-      GetExerciseSummaryLogsRequest["query"]
-    >; // 取得件数の上限
+export const getExerciseSummaryLogs = asyncHandler(async (req, res) => {
+  const { limit, cursor } = paginationQuerySchema.parse(req.query);
 
-    const exerciseSummaryLogs = await fetches.fetchExerciseSummaryLogs(
-      limit ? Number(limit) : undefined,
-      cursor,
-    );
-    console.log(exerciseSummaryLogs);
-    const response: ExerciseSummaryResponse = {
-      message: "getExerciseSummaryLogs",
-      ...exerciseSummaryLogs,
-    };
-    res.status(200).json(response);
-  },
-);
+  const exerciseSummaryLogs = await fetches.fetchExerciseSummaryLogs(
+    limit,
+    cursor,
+  );
+  const response: ExerciseSummaryResponse = {
+    message: "getExerciseSummaryLogs",
+    ...exerciseSummaryLogs,
+  };
+  res.status(200).json(response);
+});
 
 export const getExerciseLogs = asyncHandler(
-  async (
-    req: {
-      params: { exerciseId: string };
-      query: { limit?: string; cursor?: string };
-    },
-    res,
-  ) => {
+  async (req: { params: { exerciseId: string }; query: unknown }, res) => {
     const { exerciseId } = req.params;
-    const { limit, cursor } = req.query as Partial<{
-      limit: string;
-      cursor: string;
-    }>;
+    const { limit, cursor } = paginationQuerySchema.parse(req.query);
 
     const exerciseLogs = await fetches.fetchExerciseLogs(
       exerciseId,
-      limit ? Number(limit) : undefined,
+      limit,
       cursor,
     );
 

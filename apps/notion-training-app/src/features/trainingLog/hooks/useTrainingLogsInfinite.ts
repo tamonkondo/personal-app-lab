@@ -2,7 +2,7 @@ import { TrainingLogSummaryResponse } from "@repo/types/notion-training-app";
 import { useCallback, useEffect } from "react";
 import { TrainingLogParams } from "./useTrainingLogParams";
 import { formatDate } from "@repo/utils";
-import fetcher from "../../../lib/fetch";
+import { API_BASE, buildQuery, fetcher } from "../../../lib/fetch";
 import useSWRInfinite from "swr/infinite";
 interface UseTrainingLogInfinite {
   params: TrainingLogParams;
@@ -16,10 +16,20 @@ export function useTrainingLogInfinite({ params }: UseTrainingLogInfinite) {
       previousPageData: TrainingLogSummaryResponse | null,
     ) => {
       if (previousPageData && !previousPageData.data.length) return null;
-      if (pageIndex === 0)
-        return `${import.meta.env.VITE_API_URL}/training-logs/?limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}&parts=${tlParts || ""}`; // first page
-      if (!previousPageData?.meta.next_cursor) return null;
-      return `${import.meta.env.VITE_API_URL}/training-logs/?cursor=${previousPageData?.meta.next_cursor}&limit=5&startDate=${tlStartDate ? formatDate(new Date(tlStartDate), "hyphen") : ""}&endDate=${tlEndDate ? formatDate(new Date(tlEndDate), "hyphen") : ""}&sort=${tlSort || ""}&parts=${tlParts || ""}`; // SWR key
+      if (pageIndex > 0 && !previousPageData?.meta.next_cursor) return null;
+      const query = buildQuery({
+        cursor: pageIndex > 0 ? previousPageData?.meta.next_cursor : undefined,
+        limit: 5,
+        startDate: tlStartDate
+          ? formatDate(new Date(tlStartDate), "hyphen")
+          : undefined,
+        endDate: tlEndDate
+          ? formatDate(new Date(tlEndDate), "hyphen")
+          : undefined,
+        sort: tlSort,
+        parts: tlParts,
+      });
+      return `${API_BASE}/training-logs/${query}`;
     },
     [tlStartDate, tlEndDate, tlSort, tlParts],
   );

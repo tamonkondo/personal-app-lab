@@ -1,7 +1,7 @@
 import { Badge, Button, Card, CardContent } from "@repo/ui";
 import * as Sentry from "@sentry/react";
 import useSWR from "swr";
-import fetcher from "../../../lib/fetch";
+import { API_BASE, fetcher } from "../../../lib/fetch";
 import DailyLogsHeaderSkeleton from "./DailyLogsHeaderSkeleton";
 import { formatDate } from "@repo/utils";
 import { Link } from "react-router-dom";
@@ -13,7 +13,7 @@ const DailyLogsHeader = () => {
     error,
     isLoading,
   } = useSWR<NewestTrainingLogResponse>(
-    `${import.meta.env.VITE_API_URL}/training-logs/newest`,
+    `${API_BASE}/training-logs/newest`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -70,7 +70,7 @@ const DailyLogsHeader = () => {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Link to={`/training-log/${newestLog.id}`}>
+            <Link to={`/training-logs/${newestLog.id}`}>
               <Button className="w-full sm:w-auto">詳細</Button>
             </Link>
           </div>

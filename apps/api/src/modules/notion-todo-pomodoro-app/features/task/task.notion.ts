@@ -1,4 +1,5 @@
 import notionClient from "@/integrations/notion/notion.client";
+import { config } from "@/libs/config";
 import {
   getTitle,
   getStatusName,
@@ -23,7 +24,7 @@ import type {
   TaskScope,
 } from "@repo/schemas/notion-todo-pomodoro-app";
 
-const TODOS_DB = process.env.NOTION_TODOS_DB!;
+const TODOS_DB = config.NOTION_TODOS_DB;
 
 /** Working Time ラベル → 見積ポモドーロ数 */
 function workingTimeLabelToPomodoros(label: string | null): number | null {

@@ -27,7 +27,7 @@
 
 - Node.js + Express
 - ビルド: tsup
-- DBアクセス: Prisma
+- データソース: Notion API (@notionhq/client)
 - エラートラッキング: Sentry (設定ファイルあり)
 
 ### 共有パッケージ

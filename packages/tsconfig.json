@@ -6,12 +6,22 @@
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@repo/api-client": ["./api-client/index.ts"],
+      "@repo/ui": ["./ui/index.ts"],
+      "@repo/ui/*": ["./ui/*"],
+      "@repo/icons": ["./ui/icons/index.ts"],
+      "@repo/types": ["./types/index.ts"],
+      "@repo/types/*": ["./types/*"],
+      "@repo/schemas": ["./schemas/index.ts"],
+      "@repo/schemas/*": ["./schemas/*"],
+      "@repo/utils": ["./utils/index.ts"],
+      "@repo/utils/*": ["./utils/*"]
     }
   },
   "include": [
+    "api-client/index.ts",
     "ui/index.ts",
     "ui/components",
     "ui/lib",

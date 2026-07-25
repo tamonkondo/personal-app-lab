@@ -10,6 +10,7 @@ export * from "./components/ui/tabs";
 export * from "./components/ui/table";
 export * from "./components/ui/spinner";
 export * from "./components/ui/alert";
+export * from "./components/ui/error-boundary";
 
 export * from "./components/ui/calendar";
 export * from "./components/ui/popover";

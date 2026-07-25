@@ -1,19 +1,12 @@
 import type { ExerciseDetail } from "@repo/types/notion-training-app";
-import fetcher from "../../../lib/fetch";
+import type { ApiResponse } from "@repo/types";
+import { API_BASE, fetcher } from "../../../lib/fetch";
 import useSWR from "swr";
 
-type ExerciseDetailResponse = {
-  message: string;
-  data: ExerciseDetail | null;
-};
-
 export function useExerciseDetail(exerciseId?: string) {
-  const { data, error, isLoading, mutate } = useSWR<ExerciseDetailResponse>(
-    exerciseId
-      ? `${import.meta.env.VITE_API_URL}/exercise/${exerciseId}`
-      : null,
-    fetcher,
-  );
+  const { data, error, isLoading, mutate } = useSWR<
+    ApiResponse<ExerciseDetail | null>
+  >(exerciseId ? `${API_BASE}/exercise/${exerciseId}` : null, fetcher);
 
   return {
     exerciseDetail: data?.data ?? null,

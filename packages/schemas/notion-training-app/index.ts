@@ -3,6 +3,7 @@ import {
   EXERCISE_GUIDE_LINE_REPS,
   EXERCISE_TREND_PERIODS,
 } from "@repo/types/notion-training-app";
+import { paginationQuerySchema } from "../index";
 
 const exercisesSets = z.object({
   kg: z.string(),
@@ -31,3 +32,16 @@ export const exerciseDetailParamsSchema = z.object({
 });
 
 export type ExerciseDetailParams = z.infer<typeof exerciseDetailParamsSchema>;
+
+/**
+ * トレーニングログ一覧のクエリ (API 側の req.query 検証用)
+ */
+export const trainingLogListQuerySchema = paginationQuerySchema.extend({
+  startDate: z.string().optional().catch(undefined),
+  endDate: z.string().optional().catch(undefined),
+  sort: z.enum(["asc", "desc"]).optional().catch(undefined),
+  /** カンマ区切りの部位リスト */
+  parts: z.string().optional().catch(undefined),
+});
+
+export type TrainingLogListQuery = z.infer<typeof trainingLogListQuerySchema>;

@@ -1,4 +1,5 @@
 import notionClient from "@/integrations/notion/notion.client";
+import { config } from "@/libs/config";
 import {
   getTitle,
   getStatusName,
@@ -18,7 +19,7 @@ import type {
   ProjectCategory,
 } from "@repo/types/notion-todo-pomodoro-app";
 
-const PROJECTS_DB = process.env.NOTION_PROJECTS_DB!;
+const PROJECTS_DB = config.NOTION_PROJECTS_DB;
 
 export function mapProjectPage(page: NotionProjectPage): ProjectItem {
   const p = page.properties;

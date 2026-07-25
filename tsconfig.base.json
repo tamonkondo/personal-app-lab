@@ -17,6 +17,7 @@
       "@repo/ui": ["./packages/ui/index.ts"],
       "@repo/icons": ["./packages/ui/icons/index.ts"],
       "@repo/ui/*": ["./packages/ui/*"],
+      "@repo/api-client": ["./packages/api-client/index.ts"],
       "@repo/types": ["./packages/types/index.ts"],
       "@repo/types/*": ["./packages/types/*"],
       "@repo/schemas": ["./packages/schemas/index.ts"],

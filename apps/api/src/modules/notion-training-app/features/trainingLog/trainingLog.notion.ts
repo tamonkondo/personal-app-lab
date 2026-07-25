@@ -1,4 +1,5 @@
 import notionClient from "@/integrations/notion/notion.client";
+import { config } from "@/libs/config";
 import notionLimit from "@/libs/notion/notionLimit";
 import {
   getFormula,
@@ -111,7 +112,7 @@ export async function fetchTrainingLogs(
 
   const trainingLogs: NotionTrainingLogQueryResult =
     (await notionClient.dataSources.query({
-      data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
+      data_source_id: config.NOTION_TRAINING_LOGS_DATABASE_ID,
       page_size: limit,
       start_cursor: cursor,
       filter: filters,
@@ -128,7 +129,6 @@ export async function fetchTrainingLogs(
     (trainingLog) =>
       getRelationIds(trainingLog.properties.trainingExercisesRelation) || [],
   );
-  console.log(exercisesRelationIds);
   const exerciseLogs: NotionExerciseLogPage<
     NotionKeysOfProperties<typeof trainingLogSummaryExerciseLogProperties>
   >[] = (await Promise.all(
@@ -191,7 +191,6 @@ export async function fetchTrainingLogDetail(
   if (!trainingLog) {
     return null;
   }
-  console.log("確認", trainingLog);
   const totalExerciseCount = trainingLogProperties.trainingExercisesRelation
     .relation
     ? trainingLogProperties.trainingExercisesRelation.relation.length
@@ -285,7 +284,7 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
    * ・日付、メモ、種目数、セット数、総重量数
    */
   const newestLog = await notionClient.dataSources.query({
-    data_source_id: process.env.NOTION_TRAINING_LOGS_DATABASE_ID!,
+    data_source_id: config.NOTION_TRAINING_LOGS_DATABASE_ID,
     page_size: 1,
     sorts: [
       {

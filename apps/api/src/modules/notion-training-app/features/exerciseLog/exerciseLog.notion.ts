@@ -105,9 +105,6 @@ export async function fetchExerciseLogWithSets({
       }),
     ),
   ];
-  console.log("log count", exerciseLogIds.length);
-
-  console.time("exerciseLogs");
   const exerciseLogs = await Promise.all(
     exerciseLogIds.map(async (exerciseLogId) => {
       const exerciseId = exerciseLogIdToExerciseIdMap.get(exerciseLogId);
@@ -128,7 +125,6 @@ export async function fetchExerciseLogWithSets({
       };
     }),
   );
-  console.timeEnd("exerciseLogs");
   const exerciseLogIdToLogMap = new Map<
     string,
     ExerciseLogWithSetsItemResponse

@@ -1,35 +1,14 @@
-export const API_BASE = import.meta.env.VITE_API_URL as string;
+// API アクセスの実装は @repo/api-client に集約 (アプリ間のコピペ実装を解消)
+export { fetcher, mutateJson, buildQuery, ApiError } from "@repo/api-client";
+export type { QueryParams } from "@repo/api-client";
+import { fetcher } from "@repo/api-client";
 
-export type FetchError = Error & { status?: number };
-
-/** SWR 用の GET fetcher */
-export const fetcher = async <T>(url: string): Promise<T> => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const error: FetchError = new Error("データ取得に失敗しました");
-    error.status = res.status;
-    throw error;
-  }
-  return res.json();
-};
-
-/** JSON ボディ付きの書き込み系リクエスト */
-export async function mutateJson<T>(
-  url: string,
-  method: "POST" | "PATCH" | "PUT" | "DELETE",
-  body?: unknown,
-): Promise<T> {
-  const res = await fetch(url, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!res.ok) {
-    const error: FetchError = new Error("更新に失敗しました");
-    error.status = res.status;
-    throw error;
-  }
-  return res.json();
+const apiUrl = import.meta.env.VITE_API_URL;
+if (!apiUrl) {
+  throw new Error("VITE_API_URL が設定されていません (.env を確認してください)");
 }
+
+/** API のベース URL。各フックで import.meta.env を直接参照しない */
+export const API_BASE: string = apiUrl;
 
 export default fetcher;
