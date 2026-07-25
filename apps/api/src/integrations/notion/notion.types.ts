@@ -32,25 +32,10 @@ export type FormulaValueMap = {
   array: unknown[] | null;
   relation: unknown[] | null;
 };
-export type RollupValueMap = {
-  string: string | null;
-  number: number | null;
-  date: DateResponse | null;
-  title: null;
-  array: unknown[] | null;
-  relation: unknown[] | null;
-};
 export type NotionFormula<T extends NotionPropertyType> = {
   id: string;
   type: "formula";
   formula: { type: T } & Partial<Record<NotionPropertyType, unknown>> & {
       [K in T]: FormulaValueMap[K];
-    };
-};
-
-export type NotionRollup<T extends NotionPropertyType> = {
-  type: "rollup";
-  rollup: { type: T } & Partial<Record<NotionPropertyType, unknown>> & {
-      [K in T]: RollupValueMap[K];
     };
 };
