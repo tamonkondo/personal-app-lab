@@ -1,9 +1,10 @@
-import {
-  BasePageMeta,
-  NotionProp,
-  NotionResults,
-} from "@/integrations/notion/notion.types";
+import { NotionProp } from "@/integrations/notion/notion.types";
 
+/**
+ * EXERCISES DB のプロパティ定義 (プロパティ名と型のカタログ)。
+ * filter_properties リストや filter のプロパティ名参照 (exerciseProp) の型付けに使う。
+ * ページの実際の読み取りは exercise.db.ts の zod スキーマが行う。
+ */
 export type NotionExerciseProperties = {
   name: NotionProp<"name", "title">;
   currentMaxWeightRollup: NotionProp<"currentMaxWeightRollup", "rollup">;
@@ -25,13 +26,3 @@ export type NotionExerciseProperties = {
   >;
   latestTrainingDateFormula: NotionProp<"latestTrainingDateFormula", "formula">;
 };
-
-export type NotionExercisePage<T extends keyof NotionExerciseProperties> =
-  BasePageMeta & {
-    properties: Pick<NotionExerciseProperties, T>;
-  };
-
-export type NotionExerciseQueryResult<
-  T extends keyof NotionExerciseProperties = keyof NotionExerciseProperties,
-> = NotionResults<NotionExercisePage<T>>;
-

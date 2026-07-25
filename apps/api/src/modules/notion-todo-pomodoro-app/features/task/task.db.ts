@@ -1,19 +1,21 @@
 /**
  * TODOS DB の定義ファイル。
  * Notion の生プロパティ名と「ページ ⇔ ドメイン型」の変換を知る唯一の場所。
+ * ページの読み取りは zod でランタイム検証する (as unknown as キャスト禁止)。
  * (設計方針: docs/design-policy-2026-07-25.md Part 1)
  */
+import { z } from "zod";
 import {
-  getTitle,
-  getStatusName,
-  getSelectName,
-  getRichText,
-  getDate,
-  getFormula,
-  getRelationIds,
-  getCreatedTime,
-} from "@/integrations/notion/notion.mapper";
-import type { NotionTaskPage } from "./task.types";
+  notionTitle,
+  notionStatus,
+  notionSelect,
+  notionRichText,
+  notionDate,
+  notionRelation,
+  notionCreatedTime,
+  notionFormulaNumber,
+  notionPage,
+} from "@/integrations/notion/notion.schema";
 import type {
   TaskItem,
   TaskStatus,
@@ -42,6 +44,24 @@ export const TASK_PROPS = {
   createdTime: "作成日時",
 } as const;
 
+/** タスクページのスキーマ (パースと同時にドメイン値へ変換) */
+const taskPageSchema = notionPage({
+  [TASK_PROPS.name]: notionTitle(),
+  [TASK_PROPS.status]: notionStatus(),
+  [TASK_PROPS.category]: notionSelect(),
+  [TASK_PROPS.workingTime]: notionSelect(),
+  [TASK_PROPS.workingHours]: notionSelect(),
+  [TASK_PROPS.schedule]: notionDate(),
+  [TASK_PROPS.startTime]: notionDate(),
+  [TASK_PROPS.endTime]: notionDate(),
+  [TASK_PROPS.actualWorkTime]: notionFormulaNumber(),
+  [TASK_PROPS.memo]: notionRichText(),
+  [TASK_PROPS.project]: notionRelation(),
+  [TASK_PROPS.createdTime]: notionCreatedTime(),
+});
+
+export type TaskPage = z.infer<typeof taskPageSchema>;
+
 /** Working Time ラベル → 見積ポモドーロ数 */
 function workingTimeLabelToPomodoros(label: string | null): number | null {
   if (!label) return null;
@@ -55,32 +75,29 @@ function pomodorosToWorkingTimeLabel(pomodoros: number): string | null {
   return found ? found.label : null;
 }
 
-/** Notion ページ → フロント表示モデル */
-export function mapTaskPage(page: NotionTaskPage): TaskItem {
+/** 生の Notion ページ (unknown) → フロント表示モデル */
+export function mapTaskPage(raw: unknown): TaskItem {
+  const page = taskPageSchema.parse(raw);
   const p = page.properties;
-  const schedule = getDate(p[TASK_PROPS.schedule]);
-  const startTime = getDate(p[TASK_PROPS.startTime]);
-  const endTime = getDate(p[TASK_PROPS.endTime]);
+  const schedule = p[TASK_PROPS.schedule];
+  const startTime = p[TASK_PROPS.startTime];
+  const endTime = p[TASK_PROPS.endTime];
 
   return {
     id: page.id,
-    name: getTitle(p[TASK_PROPS.name]),
-    status: getStatusName(p[TASK_PROPS.status]) as TaskStatus | null,
-    category: getSelectName(p[TASK_PROPS.category]) as TaskCategory | null,
-    estimatedPomodoros: workingTimeLabelToPomodoros(
-      getSelectName(p[TASK_PROPS.workingTime]),
-    ),
-    workingHours: getSelectName(
-      p[TASK_PROPS.workingHours],
-    ) as WorkingHours | null,
+    name: p[TASK_PROPS.name],
+    status: p[TASK_PROPS.status] as TaskStatus | null,
+    category: p[TASK_PROPS.category] as TaskCategory | null,
+    estimatedPomodoros: workingTimeLabelToPomodoros(p[TASK_PROPS.workingTime]),
+    workingHours: p[TASK_PROPS.workingHours] as WorkingHours | null,
     scheduledStart: schedule?.start ?? null,
     scheduledEnd: schedule?.end ?? null,
     startTime: startTime?.start ?? null,
     endTime: endTime?.start ?? null,
-    actualWorkMinutes: getFormula(p[TASK_PROPS.actualWorkTime], "number"),
-    memo: getRichText(p[TASK_PROPS.memo]),
-    projectId: getRelationIds(p[TASK_PROPS.project])[0] ?? null,
-    createdTime: getCreatedTime(p[TASK_PROPS.createdTime]),
+    actualWorkMinutes: p[TASK_PROPS.actualWorkTime],
+    memo: p[TASK_PROPS.memo],
+    projectId: p[TASK_PROPS.project][0] ?? null,
+    createdTime: p[TASK_PROPS.createdTime],
     url: page.url,
   };
 }

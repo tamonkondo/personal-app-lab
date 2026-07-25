@@ -1,8 +1,10 @@
-import {
-  NotionPageResults,
-  NotionProp,
-} from "@/integrations/notion/notion.types";
+import { NotionProp } from "@/integrations/notion/notion.types";
 
+/**
+ * EXERCISE_SETS DB のプロパティ定義 (プロパティ名と型のカタログ)。
+ * filter_properties リストの型付けに使う。
+ * ページの実際の読み取りは trainingLog.db.ts の zod スキーマが行う。
+ */
 export type NotionExerciseSetWeightProperties = {
   kg: NotionProp<"kg", "number">;
   rep: NotionProp<"rep", "number">;
@@ -19,6 +21,3 @@ export type NotionExerciseSetWeightProperties = {
   >;
   rmTypeRollup: NotionProp<"rmTypeRollup", "rollup">;
 };
-
-export type NotionExerciseSetWeightPage =
-  NotionPageResults<NotionExerciseSetWeightProperties>;

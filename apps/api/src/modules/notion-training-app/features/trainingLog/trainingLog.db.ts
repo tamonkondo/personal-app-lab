@@ -1,28 +1,28 @@
 /**
  * TRAINING_LOGS DB の定義ファイル。
  * 取得プロパティのリストと「ページ → ドメイン型」の変換を知る唯一の場所。
+ * ページの読み取りは zod でランタイム検証する (as unknown as キャスト禁止)。
  * (設計方針: docs/design-policy-2026-07-25.md Part 1)
  */
+import { z } from "zod";
 import {
-  getFormula,
-  getRelationIds,
-  getRollup,
-  getTitle,
-} from "@/integrations/notion/notion.mapper";
+  notionFormulaString,
+  notionLenient,
+  notionNumber,
+  notionPage,
+  notionRelation,
+  notionRichText,
+  notionRollupNumber,
+  notionCreatedTime,
+} from "@/integrations/notion/notion.schema";
+import { getFormula, getTitle } from "@/integrations/notion/notion.mapper";
 import {
   notionDefineProperties,
   notionPropOf,
-  type NotionKeysOfProperties,
 } from "@/libs/notion/propertyExtract";
 import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
-import type {
-  NotionTrainingLogPage,
-  NotionTrainingLogProperties,
-} from "./trainingLog.types";
-import type {
-  NotionExerciseLogPage,
-  NotionExerciseLogProperties,
-} from "../exerciseLog/exerciseLog.types";
+import type { NotionTrainingLogProperties } from "./trainingLog.types";
+import type { NotionExerciseLogProperties } from "../exerciseLog/exerciseLog.types";
 import type { NotionExerciseSetWeightProperties } from "../exerciseSet/exerciseSet.types";
 import type {
   NewestTrainingLogItemResponse,
@@ -65,80 +65,122 @@ export const newestLogExerciseLogProperties =
 export const exerciseSetWeightProperties =
   notionDefineProperties<NotionExerciseSetWeightProperties>()(["kg", "rep"]);
 
-export type TrainingLogSummaryExerciseLogPage = NotionExerciseLogPage<
-  NotionKeysOfProperties<typeof trainingLogSummaryExerciseLogProperties>
->;
-export type TrainingLogDetailExerciseLogPage = NotionExerciseLogPage<
-  NotionKeysOfProperties<typeof trainingLogDetailExerciseLogProperties>
+/** トレーニングログページのスキーマ (一覧/詳細/最新で共用) */
+const trainingLogPageSchema = notionPage({
+  memo: notionRichText(),
+  trainingExercisesRelation: notionRelation(),
+  createdTime: notionCreatedTime(),
+  bodyWeight: notionNumber(),
+  musleTypesFormula: notionFormulaString(),
+});
+
+export type TrainingLogPage = z.infer<typeof trainingLogPageSchema>;
+
+export const parseTrainingLogPage = (raw: unknown): TrainingLogPage =>
+  trainingLogPageSchema.parse(raw);
+
+/** 一覧表示用の種目ログページのスキーマ */
+const summaryExerciseLogPageSchema = notionPage({
+  exerciseSetsRelation: notionRelation(),
+  todayMaxWeightRollup: notionRollupNumber(),
+  trainingNameFormula: notionFormulaString(),
+  // NOTE: memo は rich_text プロパティだが従来実装は getTitle で読んでおり常に "" だった。
+  // 挙動を変えないため lenient のまま維持 (memo を出すなら notionRichText() に変更する)
+  memo: notionLenient(getTitle),
+  rest: notionNumber(),
+});
+
+export type SummaryExerciseLogPage = z.infer<
+  typeof summaryExerciseLogPageSchema
 >;
 
-type TrainingLogSummaryItem =
-  TrainingLogSummaryResponse["data"][number];
+export const parseSummaryExerciseLogPage = (
+  raw: unknown,
+): SummaryExerciseLogPage => summaryExerciseLogPageSchema.parse(raw);
+
+/** 詳細表示用の種目ログページのスキーマ */
+const detailExerciseLogPageSchema = notionPage({
+  todayMaxWeightRollup: notionRollupNumber(),
+  trainingNameFormula: notionFormulaString(),
+  setsJsonFormula: notionFormulaString(),
+  // NOTE: rollup プロパティだが従来実装は getFormula("string") で読んでいた (常に null)。
+  // 挙動を変えないため lenient のまま維持
+  muslesTypesRollup: notionLenient((value) => getFormula(value, "string")),
+  rest: notionNumber(),
+  goalWeightRollup: notionRollupNumber(),
+  exerciseRelation: notionRelation(),
+});
+
+export type DetailExerciseLogPage = z.infer<typeof detailExerciseLogPageSchema>;
+
+export const parseDetailExerciseLogPage = (
+  raw: unknown,
+): DetailExerciseLogPage => detailExerciseLogPageSchema.parse(raw);
+
+/** 最新ログ集計用: 種目ログページ → セットのリレーション ID 配列 */
+const newestExerciseLogPageSchema = notionPage({
+  exerciseSetsRelation: notionRelation(),
+});
+export const parseNewestExerciseLogRelations = (raw: unknown): string[] =>
+  newestExerciseLogPageSchema.parse(raw).properties.exerciseSetsRelation;
+
+/** 最新ログ集計用: セットページ → { kg, rep } */
+const exerciseSetWeightPageSchema = notionPage({
+  kg: notionNumber(),
+  rep: notionNumber(),
+});
+export const parseExerciseSetWeight = (
+  raw: unknown,
+): { kg: number; rep: number } => {
+  const page = exerciseSetWeightPageSchema.parse(raw);
+  return { kg: page.properties.kg || 0, rep: page.properties.rep || 0 };
+};
+
+type TrainingLogSummaryItem = TrainingLogSummaryResponse["data"][number];
 
 /** トレーニングログページ + 紐づく種目ログ → 一覧アイテム */
 export function mapTrainingLogSummaryItem(
-  trainingLog: NotionTrainingLogPage,
-  exerciseLogs: TrainingLogSummaryExerciseLogPage[],
+  trainingLog: TrainingLogPage,
+  exerciseLogs: SummaryExerciseLogPage[],
 ): TrainingLogSummaryItem {
+  const relationIds = trainingLog.properties.trainingExercisesRelation;
   return {
     id: trainingLog.id,
-    createdTime: trainingLog.properties.createdTime.created_time,
-    bodyWeight: trainingLog.properties.bodyWeight.number || 0,
-    memo: trainingLog.properties.memo.rich_text[0]?.plain_text || "",
+    createdTime: trainingLog.properties.createdTime,
+    bodyWeight: trainingLog.properties.bodyWeight || 0,
+    memo: trainingLog.properties.memo,
     exercises: exerciseLogs
-      .filter((exerciseLog) =>
-        trainingLog.properties.trainingExercisesRelation.relation?.some(
-          (relation) => relation.id === exerciseLog.id,
-        ),
-      )
+      .filter((exerciseLog) => relationIds.includes(exerciseLog.id))
       .map((exerciseLog) => ({
-        name:
-          getFormula(exerciseLog.properties.trainingNameFormula, "string") ||
-          "",
-        todayMaxWeight:
-          Number(
-            getRollup(exerciseLog.properties.todayMaxWeightRollup, "number"),
-          ) || 0,
-        rest: exerciseLog.properties.rest.number || 0,
-        memo: getTitle(exerciseLog.properties.memo),
-        sets:
-          getRelationIds(exerciseLog.properties.exerciseSetsRelation)?.length ||
-          0,
+        name: exerciseLog.properties.trainingNameFormula || "",
+        todayMaxWeight: exerciseLog.properties.todayMaxWeightRollup || 0,
+        rest: exerciseLog.properties.rest || 0,
+        memo: exerciseLog.properties.memo,
+        sets: exerciseLog.properties.exerciseSetsRelation.length,
       })),
   };
 }
 
 /** 種目ログページ → 詳細表示の1種目分 */
 function mapTrainingLogDetailExercise(
-  exerciseLog: TrainingLogDetailExerciseLogPage,
+  exerciseLog: DetailExerciseLogPage,
 ): TrainingLogDetail["exercises"][number] {
+  const p = exerciseLog.properties;
   return {
     id: exerciseLog.id,
-    trainingName:
-      getFormula(exerciseLog.properties.trainingNameFormula, "string") || "",
-    maxGoalWeight:
-      getRollup(exerciseLog.properties.goalWeightRollup, "number") || 0,
-    currentMaxWeight:
-      getRollup(exerciseLog.properties.todayMaxWeightRollup, "number") || 0,
-    isPr:
-      getRollup(exerciseLog.properties.todayMaxWeightRollup, "number") ===
-      getRollup(exerciseLog.properties.goalWeightRollup, "number"),
+    trainingName: p.trainingNameFormula || "",
+    maxGoalWeight: p.goalWeightRollup || 0,
+    currentMaxWeight: p.todayMaxWeightRollup || 0,
+    isPr: p.todayMaxWeightRollup === p.goalWeightRollup,
     musclesTypes:
-      getFormula(exerciseLog.properties.muslesTypesRollup, "string")
-        ?.split(",")
-        .map((part) => part.trim()) || [],
+      p.muslesTypesRollup?.split(",").map((part) => part.trim()) || [],
     exerciseSets: {
       exerciseLogId: exerciseLog.id,
-      exerciseId:
-        getRelationIds(exerciseLog.properties.exerciseRelation)[0] || "",
+      exerciseId: p.exerciseRelation[0] || "",
       createdTime: exerciseLog.created_time,
-      rest: exerciseLog.properties.rest.number || 0,
-      trainingName:
-        getFormula(exerciseLog.properties.trainingNameFormula, "string") || "",
-      sets: parseExerciseSetsText(
-        getFormula(exerciseLog.properties.setsJsonFormula, "string"),
-        exerciseLog.id,
-      ),
+      rest: p.rest || 0,
+      trainingName: p.trainingNameFormula || "",
+      sets: parseExerciseSetsText(p.setsJsonFormula, exerciseLog.id),
       notionUrl: exerciseLog.url,
     },
   };
@@ -146,8 +188,8 @@ function mapTrainingLogDetailExercise(
 
 /** トレーニングログページ + 紐づく種目ログ → 詳細 (集計値もここで計算) */
 export function mapTrainingLogDetail(
-  trainingLog: NotionTrainingLogPage,
-  exerciseLogs: TrainingLogDetailExerciseLogPage[],
+  trainingLog: TrainingLogPage,
+  exerciseLogs: DetailExerciseLogPage[],
 ): TrainingLogDetail {
   const properties = trainingLog.properties;
   const exercises = exerciseLogs.map(mapTrainingLogDetailExercise);
@@ -168,16 +210,12 @@ export function mapTrainingLogDetail(
 
   return {
     id: trainingLog.id,
-    createdTime: properties.createdTime.created_time,
+    createdTime: properties.createdTime,
     bodyParts:
-      getFormula(properties.musleTypesFormula, "string")
-        ?.split(",")
-        .map((part) => part.trim()) || [],
-    memo: properties.memo.rich_text[0]?.plain_text || "",
-    bodyWeight: properties.bodyWeight.number || 0,
-    totalExerciseCount: properties.trainingExercisesRelation.relation
-      ? properties.trainingExercisesRelation.relation.length
-      : 0,
+      properties.musleTypesFormula?.split(",").map((part) => part.trim()) || [],
+    memo: properties.memo,
+    bodyWeight: properties.bodyWeight || 0,
+    totalExerciseCount: properties.trainingExercisesRelation.length,
     totalSetsCount,
     totalTrainingVolumeWeight,
     exercises,
@@ -186,14 +224,14 @@ export function mapTrainingLogDetail(
 
 /** 最新トレーニングログページ + 集計値 → レスポンスアイテム */
 export function mapNewestTrainingLog(
-  log: NotionTrainingLogPage,
+  log: TrainingLogPage,
   totals: { exerciseCount: number; totalWeight: number },
 ): NewestTrainingLogItemResponse {
   return {
     id: log.id,
-    createdTime: log.properties.createdTime.created_time,
-    bodyWeight: log.properties.bodyWeight.number || 0,
-    memo: log.properties.memo.rich_text[0]?.plain_text || "",
+    createdTime: log.properties.createdTime,
+    bodyWeight: log.properties.bodyWeight || 0,
+    memo: log.properties.memo,
     exerciseCount: totals.exerciseCount,
     totalWeight: totals.totalWeight,
   };

@@ -1,20 +1,20 @@
 /**
  * EXERCISE_LOGS DB の定義ファイル。
  * 取得プロパティのリストと「ページ → ドメイン型」の変換を知る唯一の場所。
+ * ページの読み取りは zod でランタイム検証する (as unknown as キャスト禁止)。
  * (設計方針: docs/design-policy-2026-07-25.md Part 1)
  */
-import { getFormula } from "@/integrations/notion/notion.mapper";
+import {
+  notionFormulaString,
+  notionNumber,
+  notionPage,
+} from "@/integrations/notion/notion.schema";
 import {
   notionDefineProperties,
   notionPropOf,
-  type NotionKeysOfProperties,
 } from "@/libs/notion/propertyExtract";
 import { parseExerciseSetsText } from "../exerciseSet/exerciseSet.lib";
-import type {
-  NotionExerciseLogPage,
-  NotionExerciseLogProperties,
-  NotionExerciseLogQueryResult,
-} from "./exerciseLog.types";
+import type { NotionExerciseLogProperties } from "./exerciseLog.types";
 import type { ExerciseLogWithSetsItemResponse } from "@repo/types/notion-training-app";
 
 /** filter 等でのプロパティ名参照 (typo 防止) */
@@ -27,25 +27,28 @@ export const exerciseLogWithSetsProperties =
     "setsJsonFormula",
   ]);
 
-export type ExerciseLogWithSetsProperties =
-  NotionKeysOfProperties<typeof exerciseLogWithSetsProperties>;
+/** セット表示に必要な種目ログページのスキーマ */
+const exerciseLogWithSetsPageSchema = notionPage({
+  rest: notionNumber(),
+  trainingNameFormula: notionFormulaString(),
+  setsJsonFormula: notionFormulaString(),
+});
 
+/** 生の Notion ページ (unknown) → セット付き種目ログ */
 export function mapExerciseLogWithSetsItem(
-  exerciseLog: NotionExerciseLogPage<ExerciseLogWithSetsProperties>,
+  raw: unknown,
   exerciseId: string,
 ): ExerciseLogWithSetsItemResponse {
+  const page = exerciseLogWithSetsPageSchema.parse(raw);
+  const p = page.properties;
   return {
-    exerciseLogId: exerciseLog.id,
+    exerciseLogId: page.id,
     exerciseId,
-    rest: exerciseLog.properties.rest.number || 0,
-    trainingName:
-      getFormula(exerciseLog.properties.trainingNameFormula, "string") || "",
-    createdTime: exerciseLog.created_time,
-    sets: parseExerciseSetsText(
-      getFormula(exerciseLog.properties.setsJsonFormula, "string"),
-      exerciseLog.id,
-    ),
-    notionUrl: exerciseLog.url,
+    rest: p.rest || 0,
+    trainingName: p.trainingNameFormula || "",
+    createdTime: page.created_time,
+    sets: parseExerciseSetsText(p.setsJsonFormula, page.id),
+    notionUrl: page.url,
   };
 }
 
@@ -64,13 +67,11 @@ export function emptyExerciseLogWithSets(
 }
 
 export function mapExerciseLogsWithSets({
-  exerciseLogs,
+  results,
   exerciseId,
 }: {
-  exerciseLogs: NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties>;
+  results: unknown[];
   exerciseId: string;
 }): ExerciseLogWithSetsItemResponse[] {
-  return exerciseLogs.results.map((exerciseLog) =>
-    mapExerciseLogWithSetsItem(exerciseLog, exerciseId),
-  );
+  return results.map((raw) => mapExerciseLogWithSetsItem(raw, exerciseId));
 }

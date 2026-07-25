@@ -1,6 +1,9 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
-import type { NotionProjectQueryResult } from "./project.types";
+import {
+  notionQueryEnvelope,
+  toPaginationMeta,
+} from "@/integrations/notion/notion.schema";
 import type { ProjectItem } from "@repo/types/notion-todo-pomodoro-app";
 import { mapProjectPage } from "./project.db";
 
@@ -13,17 +16,16 @@ export async function fetchProjects(params: {
   data: ProjectItem[];
   meta: { has_more: boolean; next_cursor?: string };
 }> {
-  const res = (await notionClient.dataSources.query({
-    data_source_id: PROJECTS_DB,
-    page_size: params.limit ?? 50,
-    start_cursor: params.cursor,
-  })) as unknown as NotionProjectQueryResult;
+  const envelope = notionQueryEnvelope.parse(
+    await notionClient.dataSources.query({
+      data_source_id: PROJECTS_DB,
+      page_size: params.limit ?? 50,
+      start_cursor: params.cursor,
+    }),
+  );
 
   return {
-    data: res.results.map(mapProjectPage),
-    meta: {
-      has_more: res.has_more,
-      next_cursor: res.next_cursor || undefined,
-    },
+    data: envelope.results.map(mapProjectPage),
+    meta: toPaginationMeta(envelope),
   };
 }

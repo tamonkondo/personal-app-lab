@@ -1,13 +1,10 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
 import notionLimit from "@/libs/notion/notionLimit";
-import { getRelationIds } from "@/integrations/notion/notion.mapper";
-import type {
-  NotionTrainingLogPage,
-  NotionTrainingLogQueryResult,
-} from "./trainingLog.types";
-import type { NotionExerciseSetWeightPage } from "../exerciseSet/exerciseSet.types";
-import type { NotionExerciseLogPage } from "../exerciseLog/exerciseLog.types";
+import {
+  notionQueryEnvelope,
+  toPaginationMeta,
+} from "@/integrations/notion/notion.schema";
 import type {
   NewestTrainingLogItemResponse,
   TrainingLogDetail,
@@ -20,11 +17,14 @@ import {
   trainingLogDetailExerciseLogProperties,
   newestLogExerciseLogProperties,
   exerciseSetWeightProperties,
+  parseTrainingLogPage,
+  parseSummaryExerciseLogPage,
+  parseDetailExerciseLogPage,
+  parseNewestExerciseLogRelations,
+  parseExerciseSetWeight,
   mapTrainingLogSummaryItem,
   mapTrainingLogDetail,
   mapNewestTrainingLog,
-  type TrainingLogSummaryExerciseLogPage,
-  type TrainingLogDetailExerciseLogPage,
 } from "./trainingLog.db";
 
 type FetchTrainingLogsResult = Pick<
@@ -87,8 +87,8 @@ export async function fetchTrainingLogs(
           and: dateFilters,
         };
 
-  const trainingLogs: NotionTrainingLogQueryResult =
-    (await notionClient.dataSources.query({
+  const envelope = notionQueryEnvelope.parse(
+    await notionClient.dataSources.query({
       data_source_id: config.NOTION_TRAINING_LOGS_DATABASE_ID,
       page_size: limit,
       start_cursor: cursor,
@@ -101,30 +101,31 @@ export async function fetchTrainingLogs(
             },
           ]
         : undefined,
-    })) as unknown as NotionTrainingLogQueryResult;
-  const exercisesRelationIds = trainingLogs.results.flatMap(
-    (trainingLog) =>
-      getRelationIds(trainingLog.properties.trainingExercisesRelation) || [],
+    }),
   );
-  const exerciseLogs: TrainingLogSummaryExerciseLogPage[] = (await Promise.all(
+  const trainingLogs = envelope.results.map(parseTrainingLogPage);
+
+  const exercisesRelationIds = trainingLogs.flatMap(
+    (trainingLog) => trainingLog.properties.trainingExercisesRelation,
+  );
+  const exerciseLogs = await Promise.all(
     exercisesRelationIds.map((id) =>
-      notionLimit(() =>
-        notionClient.pages.retrieve({
-          page_id: id,
-          filter_properties: [...trainingLogSummaryExerciseLogProperties],
-        }),
+      notionLimit(async () =>
+        parseSummaryExerciseLogPage(
+          await notionClient.pages.retrieve({
+            page_id: id,
+            filter_properties: [...trainingLogSummaryExerciseLogProperties],
+          }),
+        ),
       ),
     ),
-  )) as unknown as TrainingLogSummaryExerciseLogPage[];
+  );
 
   return {
-    data: trainingLogs.results.map((trainingLog) =>
+    data: trainingLogs.map((trainingLog) =>
       mapTrainingLogSummaryItem(trainingLog, exerciseLogs),
     ),
-    meta: {
-      next_cursor: trainingLogs.next_cursor || undefined,
-      has_more: trainingLogs.has_more,
-    },
+    meta: toPaginationMeta(envelope),
   };
 }
 
@@ -133,28 +134,29 @@ export async function fetchTrainingLogs(
 export async function fetchTrainingLogDetail(
   id: string,
 ): Promise<TrainingLogDetail | null> {
-  const trainingLog = (await notionLimit(() =>
-    notionClient.pages.retrieve({
-      page_id: id,
-    }),
-  )) as unknown as NotionTrainingLogPage;
-  if (!trainingLog) {
-    return null;
-  }
+  const trainingLog = parseTrainingLogPage(
+    await notionLimit(() =>
+      notionClient.pages.retrieve({
+        page_id: id,
+      }),
+    ),
+  );
 
   const exercisesRelationIds =
-    getRelationIds(trainingLog.properties.trainingExercisesRelation) || [];
+    trainingLog.properties.trainingExercisesRelation;
   // 種目ごとの記録データを取得
-  const exerciseLogs: TrainingLogDetailExerciseLogPage[] = (await Promise.all(
+  const exerciseLogs = await Promise.all(
     exercisesRelationIds.map((exerciseLogId) =>
-      notionLimit(() =>
-        notionClient.pages.retrieve({
-          page_id: exerciseLogId,
-          filter_properties: [...trainingLogDetailExerciseLogProperties],
-        }),
+      notionLimit(async () =>
+        parseDetailExerciseLogPage(
+          await notionClient.pages.retrieve({
+            page_id: exerciseLogId,
+            filter_properties: [...trainingLogDetailExerciseLogProperties],
+          }),
+        ),
       ),
     ),
-  )) as unknown as TrainingLogDetailExerciseLogPage[];
+  );
 
   return mapTrainingLogDetail(trainingLog, exerciseLogs);
 }
@@ -165,63 +167,63 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
    * 取得したいもの
    * ・日付、メモ、種目数、セット数、総重量数
    */
-  const newestLog = await notionClient.dataSources.query({
-    data_source_id: config.NOTION_TRAINING_LOGS_DATABASE_ID,
-    page_size: 1,
-    sorts: [
-      {
-        property: trainingLogProp("createdTime"),
-        direction: "descending",
-      },
-    ],
-  });
-  const logs = newestLog as unknown as NotionTrainingLogQueryResult;
+  const envelope = notionQueryEnvelope.parse(
+    await notionClient.dataSources.query({
+      data_source_id: config.NOTION_TRAINING_LOGS_DATABASE_ID,
+      page_size: 1,
+      sorts: [
+        {
+          property: trainingLogProp("createdTime"),
+          direction: "descending",
+        },
+      ],
+    }),
+  );
 
-  const log = logs.results[0];
-  if (!log) {
+  const rawLog = envelope.results[0];
+  if (!rawLog) {
     return null;
   }
+  const log = parseTrainingLogPage(rawLog);
 
   // リレーションですべてのトレーニング種目を取得するために、最新のトレーニングログのIDを取得
-  const relationIds = getRelationIds(log.properties.trainingExercisesRelation);
+  const relationIds = log.properties.trainingExercisesRelation;
   // 最新のトレーニングログのIDをもとに、リレーションでつながっているトレーニング種目をすべて取得
-  const exerciseLogs: NotionExerciseLogPage<"exerciseSetsRelation">[] =
-    (await Promise.all(
-      relationIds?.map((id) =>
-        notionLimit(() =>
-          notionClient.pages.retrieve({
+  const exerciseSetsRelationIds = (
+    await Promise.all(
+      relationIds.map((id) =>
+        notionLimit(async () =>
+          parseNewestExerciseLogRelations(
+            await notionClient.pages.retrieve({
+              page_id: id,
+              filter_properties: [...newestLogExerciseLogProperties],
+            }),
+          ),
+        ),
+      ),
+    )
+  ).flat();
+
+  // トレーニング種目に紐づくセットを取得し、総重量数を計算
+  const exerciseSets = await Promise.all(
+    exerciseSetsRelationIds.map((id) =>
+      notionLimit(async () =>
+        parseExerciseSetWeight(
+          await notionClient.pages.retrieve({
             page_id: id,
-            filter_properties: [...newestLogExerciseLogProperties],
+            filter_properties: [...exerciseSetWeightProperties],
           }),
         ),
-      ) || [],
-    )) as unknown as NotionExerciseLogPage<"exerciseSetsRelation">[];
-  const exerciseSetsRelationIds = exerciseLogs.flatMap(
-    (exerciseLog) =>
-      getRelationIds(exerciseLog.properties.exerciseSetsRelation) || [],
-  );
-  // トレーニング種目に紐づくセットのリレーションをすべて取得
-
-  const exerciseSets = (await Promise.all(
-    exerciseSetsRelationIds.map((id) =>
-      notionLimit(() =>
-        notionClient.pages.retrieve({
-          page_id: id,
-          filter_properties: [...exerciseSetWeightProperties],
-        }),
       ),
     ),
-  )) as unknown as NotionExerciseSetWeightPage[];
-  // 取得したkgとrepをもとに、総重量数を計算
-  let totalWeight = 0;
-  exerciseSets.forEach((exerciseSet) => {
-    const kg = exerciseSet.properties.kg.number || 0;
-    const rep = exerciseSet.properties.rep.number || 0;
-    totalWeight += kg * rep;
-  });
+  );
+  const totalWeight = exerciseSets.reduce(
+    (acc, set) => acc + set.kg * set.rep,
+    0,
+  );
 
   return mapNewestTrainingLog(log, {
-    exerciseCount: relationIds?.length || 0,
+    exerciseCount: relationIds.length,
     totalWeight,
   });
 }

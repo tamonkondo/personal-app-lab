@@ -1,9 +1,10 @@
-import {
-  BasePageMeta,
-  NotionProp,
-  NotionResults,
-} from "@/integrations/notion/notion.types";
+import { NotionProp } from "@/integrations/notion/notion.types";
 
+/**
+ * TRAINING_LOGS DB のプロパティ定義 (プロパティ名と型のカタログ)。
+ * filter のプロパティ名参照 (trainingLogProp) の型付けに使う。
+ * ページの実際の読み取りは trainingLog.db.ts の zod スキーマが行う。
+ */
 export type NotionTrainingLogProperties = {
   memo: NotionProp<"memo", "rich_text">;
   trainingExercisesRelation: NotionProp<
@@ -16,9 +17,3 @@ export type NotionTrainingLogProperties = {
   musleTypesFormula: NotionProp<"musleTypesFormula", "formula">;
   musleTypesFormulaWrapper: NotionProp<"musleTypesFormulaWrapper", "formula">;
 };
-
-export type NotionTrainingLogPage = BasePageMeta & {
-  properties: NotionTrainingLogProperties;
-};
-
-export type NotionTrainingLogQueryResult = NotionResults<NotionTrainingLogPage>;

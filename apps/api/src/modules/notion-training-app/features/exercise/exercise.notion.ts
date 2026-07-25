@@ -1,14 +1,14 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
 import { NotFoundError } from "@/libs/errors";
+import {
+  notionQueryEnvelope,
+  toPaginationMeta,
+} from "@/integrations/notion/notion.schema";
 import type {
-  NotionExercisePage,
-  NotionExerciseQueryResult,
-} from "./exercise.types";
-import type {
-  ExerciseDetail,
   ExerciseLogWithSetsResponse,
   ExerciseSummaryResponse,
+  ExerciseDetail,
 } from "@repo/types/notion-training-app";
 
 import { fetchExerciseLogWithSets } from "../exerciseLog/exerciseLog.notion";
@@ -16,20 +16,18 @@ import {
   exerciseLogProp,
   exerciseLogWithSetsProperties,
   mapExerciseLogsWithSets,
-  type ExerciseLogWithSetsProperties,
 } from "../exerciseLog/exerciseLog.db";
-import type { NotionExerciseLogQueryResult } from "../exerciseLog/exerciseLog.types";
-import { type NotionKeysOfProperties } from "@/libs/notion/propertyExtract";
 import {
   exerciseNameProperties,
   exerciseSummaryProperties,
   exerciseDetailProperties,
   exerciseProp,
+  parseExerciseSummaryPage,
+  readExerciseLogRefs,
+  mapExerciseName,
   mapExerciseSummaryItem,
   mapExerciseDetail,
   mapExerciseTrends,
-  type ExerciseSummaryPage,
-  type ExerciseDetailPage,
 } from "./exercise.db";
 
 type FetchExerciseSummaryLogsResult = Pick<
@@ -41,13 +39,16 @@ type FetchExerciseLogsResult = Pick<
   "data" | "meta"
 >;
 
-export async function fetchExerciseNames() {
-  return (await notionClient.dataSources.query({
-    data_source_id: config.NOTION_EXERCISES_DATABASE_ID,
-    filter_properties: [...exerciseNameProperties],
-  })) as unknown as NotionExerciseQueryResult<
-    NotionKeysOfProperties<typeof exerciseNameProperties>
-  >;
+export async function fetchExerciseNames(): Promise<
+  { id: string; name: string }[]
+> {
+  const envelope = notionQueryEnvelope.parse(
+    await notionClient.dataSources.query({
+      data_source_id: config.NOTION_EXERCISES_DATABASE_ID,
+      filter_properties: [...exerciseNameProperties],
+    }),
+  );
+  return envelope.results.map(mapExerciseName);
 }
 
 export async function fetchExerciseSummaryLogs(
@@ -55,64 +56,65 @@ export async function fetchExerciseSummaryLogs(
   cursor?: string,
 ): Promise<FetchExerciseSummaryLogsResult> {
   // ゴール重量がある種目のみを取得
-  const exercises = (await notionClient.dataSources.query({
-    data_source_id: config.NOTION_EXERCISES_DATABASE_ID,
-    filter: {
-      and: [
-        {
-          property: exerciseProp("theGoalsWeightRelation"),
-          relation: {
-            is_not_empty: true,
+  const envelope = notionQueryEnvelope.parse(
+    await notionClient.dataSources.query({
+      data_source_id: config.NOTION_EXERCISES_DATABASE_ID,
+      filter: {
+        and: [
+          {
+            property: exerciseProp("theGoalsWeightRelation"),
+            relation: {
+              is_not_empty: true,
+            },
           },
-        },
-        {
-          property: exerciseProp("maxGoalWeightRollup"),
-          rollup: {
-            any: {
-              number: {
+          {
+            property: exerciseProp("maxGoalWeightRollup"),
+            rollup: {
+              any: {
+                number: {
+                  is_not_empty: true,
+                },
+              },
+            },
+          },
+          {
+            property: exerciseProp("maxWeightExerciseLogId"),
+            formula: {
+              string: {
                 is_not_empty: true,
               },
             },
           },
-        },
-        {
-          property: exerciseProp("maxWeightExerciseLogId"),
-          formula: {
-            string: {
-              is_not_empty: true,
-            },
-          },
-        },
-      ],
-    },
-    filter_properties: [...exerciseSummaryProperties],
-    page_size: limit,
-    start_cursor: cursor,
-  })) as unknown as NotionExerciseQueryResult<
-    NotionKeysOfProperties<typeof exerciseSummaryProperties>
-  >;
-  const exerciseLogWithSets = await fetchExerciseLogWithSets({
-    exercises,
-  });
+        ],
+      },
+      filter_properties: [...exerciseSummaryProperties],
+      page_size: limit,
+      start_cursor: cursor,
+    }),
+  );
+  const exercises = envelope.results.map(parseExerciseSummaryPage);
+
+  const exerciseLogWithSets = await fetchExerciseLogWithSets(
+    exercises.map((exercise) => ({
+      exerciseId: exercise.id,
+      ...readExerciseLogRefs(exercise),
+    })),
+  );
 
   const exerciseLogWithSetsMap = new Map(
     exerciseLogWithSets.map((log) => [log.exerciseId, log]),
   );
 
-  const responseData: FetchExerciseSummaryLogsResult = {
-    data: exercises.results.map((exercise: ExerciseSummaryPage) => {
+  return {
+    data: exercises.map((exercise) => {
       const logWithSets = exerciseLogWithSetsMap.get(exercise.id);
       if (!logWithSets) {
         throw new Error(`Exercise log summary not found: ${exercise.id}`);
       }
       return mapExerciseSummaryItem(exercise, logWithSets);
     }),
-    meta: {
-      next_cursor: exercises.next_cursor || undefined,
-      has_more: exercises.has_more,
-    },
+    meta: toPaginationMeta(envelope),
   };
-  return responseData;
 }
 
 export async function fetchExerciseLogs(
@@ -120,8 +122,8 @@ export async function fetchExerciseLogs(
   limit: number = 7,
   cursor?: string,
 ): Promise<FetchExerciseLogsResult> {
-  const exerciseLogs: NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties> =
-    (await notionClient.dataSources.query({
+  const envelope = notionQueryEnvelope.parse(
+    await notionClient.dataSources.query({
       data_source_id: config.NOTION_EXERCISE_LOGS_DATABASE_ID,
       filter: {
         property: exerciseLogProp("exerciseRelation"),
@@ -132,44 +134,39 @@ export async function fetchExerciseLogs(
       filter_properties: [...exerciseLogWithSetsProperties],
       page_size: limit,
       start_cursor: cursor,
-    })) as unknown as NotionExerciseLogQueryResult<ExerciseLogWithSetsProperties>;
+    }),
+  );
 
-  const responseData: FetchExerciseLogsResult = {
+  return {
     data: mapExerciseLogsWithSets({
-      exerciseLogs,
+      results: envelope.results,
       exerciseId,
     }),
-    meta: {
-      next_cursor: exerciseLogs.next_cursor || undefined,
-      has_more: exerciseLogs.has_more,
-    },
+    meta: toPaginationMeta(envelope),
   };
-  return responseData;
 }
 
 export async function fetchExerciseDetail(
   exerciseId: string,
 ): Promise<ExerciseDetail> {
-  const exercise: ExerciseDetailPage = (await notionClient.pages.retrieve({
+  const raw = await notionClient.pages.retrieve({
     page_id: exerciseId,
     filter_properties: [...exerciseDetailProperties],
-  })) as unknown as ExerciseDetailPage;
-
-  return mapExerciseDetail(exercise);
+  });
+  return mapExerciseDetail(raw);
 }
 
 export async function fetchExerciseTrends(exerciseId: string) {
   // 従来はデータソースに存在しない "id" プロパティで query しており常に 500 だったため、
   // ページ ID で直接 retrieve する方式に修正
-  const exercise: NotionExercisePage<"maxGoalWeightRollup"> =
-    (await notionClient.pages
-      .retrieve({
-        page_id: exerciseId,
-        filter_properties: [exerciseProp("maxGoalWeightRollup")],
-      })
-      .catch(() => {
-        throw new NotFoundError(`Exercise not found: ${exerciseId}`);
-      })) as unknown as NotionExercisePage<"maxGoalWeightRollup">;
+  const raw = await notionClient.pages
+    .retrieve({
+      page_id: exerciseId,
+      filter_properties: [exerciseProp("maxGoalWeightRollup")],
+    })
+    .catch(() => {
+      throw new NotFoundError(`Exercise not found: ${exerciseId}`);
+    });
 
-  return mapExerciseTrends(exercise);
+  return mapExerciseTrends(raw);
 }

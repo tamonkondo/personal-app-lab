@@ -1,9 +1,10 @@
-import {
-  BasePageMeta,
-  NotionProp,
-  NotionResults,
-} from "@/integrations/notion/notion.types";
+import { NotionProp } from "@/integrations/notion/notion.types";
 
+/**
+ * EXERCISE_LOGS DB のプロパティ定義 (プロパティ名と型のカタログ)。
+ * filter_properties リストや filter のプロパティ名参照 (exerciseLogProp) の型付けに使う。
+ * ページの実際の読み取りは exerciseLog.db.ts / trainingLog.db.ts の zod スキーマが行う。
+ */
 export interface NotionExerciseLogProperties {
   todayMaxWeightRollup: NotionProp<"todayMaxWeightRollup", "rollup">;
   trainingNameFormula: NotionProp<"trainingNameFormula", "formula">;
@@ -34,12 +35,3 @@ export interface NotionExerciseLogProperties {
   trainingRecordRelation: NotionProp<"trainingRecordRelation", "relation">;
   muslesTypesRollup: NotionProp<"muslesTypesRollup", "rollup">;
 }
-
-export type NotionExerciseLogPage<T extends keyof NotionExerciseLogProperties> =
-  BasePageMeta & {
-    properties: Pick<NotionExerciseLogProperties, T>;
-  };
-
-export type NotionExerciseLogQueryResult<
-  T extends keyof NotionExerciseLogProperties = keyof NotionExerciseLogProperties,
-> = NotionResults<NotionExerciseLogPage<T>>;

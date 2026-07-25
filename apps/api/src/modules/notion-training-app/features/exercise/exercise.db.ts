@@ -1,22 +1,26 @@
 /**
  * EXERCISES DB の定義ファイル。
  * 取得プロパティのリストと「ページ → ドメイン型」の変換を知る唯一の場所。
+ * ページの読み取りは zod でランタイム検証する (as unknown as キャスト禁止)。
  * (設計方針: docs/design-policy-2026-07-25.md Part 1)
  */
+import { z } from "zod";
 import {
-  getFormula,
-  getRollup,
-  getRollupArrayValue,
-} from "@/integrations/notion/notion.mapper";
+  notionTitle,
+  notionMultiSelect,
+  notionSelect,
+  notionFormulaString,
+  notionFormulaNumber,
+  notionFormulaDate,
+  notionRollupNumber,
+  notionRollupArrayNumber,
+  notionPage,
+} from "@/integrations/notion/notion.schema";
 import {
   notionDefineProperties,
   notionPropOf,
-  type NotionKeysOfProperties,
 } from "@/libs/notion/propertyExtract";
-import type {
-  NotionExercisePage,
-  NotionExerciseProperties,
-} from "./exercise.types";
+import type { NotionExerciseProperties } from "./exercise.types";
 import type {
   ExerciseDetail,
   ExerciseSummaryItem,
@@ -53,50 +57,62 @@ export const exerciseDetailProperties =
     "rmTypes",
   ]);
 
-export type ExerciseSummaryPage = NotionExercisePage<
-  NotionKeysOfProperties<typeof exerciseSummaryProperties>
->;
-export type ExerciseDetailPage = NotionExercisePage<
-  NotionKeysOfProperties<typeof exerciseDetailProperties>
->;
+/** 種目名のみのページスキーマ */
+const exerciseNamePageSchema = notionPage({
+  name: notionTitle(),
+});
 
-/** 共通の rollup 読み取り (summary / detail / trends で共用) */
-function readMaxGoalWeight(
-  page: NotionExercisePage<"maxGoalWeightRollup">,
-): number {
-  return (
-    getRollupArrayValue(page.properties.maxGoalWeightRollup, "number") || 0
-  );
-}
+/** サマリー表示に必要な種目ページのスキーマ */
+const exerciseSummaryPageSchema = notionPage({
+  name: notionTitle(),
+  musclesTypes: notionMultiSelect(),
+  maxGoalWeightRollup: notionRollupArrayNumber(),
+  maxWeightExerciseLogId: notionFormulaString(),
+  latestExerciseLogId: notionFormulaString(),
+  currentMaxWeightRollup: notionRollupNumber(),
+});
 
-function readCurrentMaxWeight(
-  page: NotionExercisePage<"currentMaxWeightRollup">,
-): number {
-  return (
-    Number(getRollup(page.properties.currentMaxWeightRollup, "number")) || 0
-  );
-}
+/** 詳細表示に必要な種目ページのスキーマ */
+const exerciseDetailPageSchema = notionPage({
+  name: notionTitle(),
+  latestTrainingDateFormula: notionFormulaDate(),
+  musclesTypes: notionMultiSelect(),
+  maxGoalWeightRollup: notionRollupArrayNumber(),
+  currentMaxWeightRollup: notionRollupNumber(),
+  totalSetsCountFormula: notionFormulaNumber(),
+  totalTrainingDaysFormula: notionFormulaNumber(),
+  totalTrainingVolumeWeightFormula: notionFormulaNumber(),
+  rmTypes: notionSelect(),
+});
+
+/** トレンド表示に必要な種目ページのスキーマ */
+const exerciseTrendsPageSchema = notionPage({
+  maxGoalWeightRollup: notionRollupArrayNumber(),
+});
+
+export type ExerciseSummaryPage = z.infer<typeof exerciseSummaryPageSchema>;
+
+export const parseExerciseSummaryPage = (raw: unknown): ExerciseSummaryPage =>
+  exerciseSummaryPageSchema.parse(raw);
 
 /** 種目ページから最新/最大重量ログの参照 ID を読む */
-export function readExerciseLogRefs(
-  exercise: NotionExercisePage<"latestExerciseLogId" | "maxWeightExerciseLogId">,
-): {
+export function readExerciseLogRefs(exercise: ExerciseSummaryPage): {
   latestExerciseLogId: string | null;
   maxWeightExerciseLogId: string | null;
 } {
   return {
-    latestExerciseLogId: getFormula(
-      exercise.properties.latestExerciseLogId,
-      "string",
-    ),
-    maxWeightExerciseLogId: getFormula(
-      exercise.properties.maxWeightExerciseLogId,
-      "string",
-    ),
+    latestExerciseLogId: exercise.properties.latestExerciseLogId,
+    maxWeightExerciseLogId: exercise.properties.maxWeightExerciseLogId,
   };
 }
 
-/** Notion ページ + セット情報 → 種目サマリー */
+/** 生の Notion ページ (unknown) → {id, name} */
+export function mapExerciseName(raw: unknown): { id: string; name: string } {
+  const page = exerciseNamePageSchema.parse(raw);
+  return { id: page.id, name: page.properties.name };
+}
+
+/** パース済みページ + セット情報 → 種目サマリー */
 export function mapExerciseSummaryItem(
   exercise: ExerciseSummaryPage,
   logWithSets: {
@@ -104,15 +120,13 @@ export function mapExerciseSummaryItem(
     latestSets: ExerciseLogWithSetsItemResponse;
   },
 ): ExerciseSummaryItem {
-  const maxGoalWeight = readMaxGoalWeight(exercise);
-  const currentMaxWeight = readCurrentMaxWeight(exercise);
+  const p = exercise.properties;
+  const maxGoalWeight = p.maxGoalWeightRollup || 0;
+  const currentMaxWeight = p.currentMaxWeightRollup || 0;
   return {
     id: exercise.id,
-    musclesTypes:
-      exercise.properties.musclesTypes.multi_select?.map(
-        (muscle) => muscle.name,
-      ) || [],
-    trainingName: exercise.properties.name.title?.[0]?.plain_text || "",
+    musclesTypes: p.musclesTypes,
+    trainingName: p.name,
     maxGoalWeight,
     currentMaxWeight,
     isPr: currentMaxWeight > maxGoalWeight,
@@ -122,31 +136,27 @@ export function mapExerciseSummaryItem(
   };
 }
 
-/** Notion ページ → 種目詳細 */
-export function mapExerciseDetail(exercise: ExerciseDetailPage): ExerciseDetail {
-  const properties = exercise.properties;
+/** 生の Notion ページ (unknown) → 種目詳細 */
+export function mapExerciseDetail(raw: unknown): ExerciseDetail {
+  const page = exerciseDetailPageSchema.parse(raw);
+  const p = page.properties;
   return {
-    id: exercise.id,
-    exerciseName: properties.name.title?.[0]?.plain_text || "",
-    latestTrainingDate:
-      getFormula(properties.latestTrainingDateFormula, "date")?.start || "",
-    musclesTypes:
-      properties.musclesTypes.multi_select?.map((muscle) => muscle.name) || [],
-    trainingName: properties.name.title?.[0]?.plain_text || "",
-    maxGoalWeight: readMaxGoalWeight(exercise),
-    currentMaxWeight: readCurrentMaxWeight(exercise),
-    totalSetsCount: getFormula(properties.totalSetsCountFormula, "number") || 0,
-    totalTrainingDays:
-      getFormula(properties.totalTrainingDaysFormula, "number") || 0,
-    totalTrainingVolumeWeight:
-      getFormula(properties.totalTrainingVolumeWeightFormula, "number") || 0,
-    rmTypes: exerciseRmTypesSchema.parse(properties.rmTypes.select?.name),
+    id: page.id,
+    exerciseName: p.name,
+    latestTrainingDate: p.latestTrainingDateFormula?.start || "",
+    musclesTypes: p.musclesTypes,
+    trainingName: p.name,
+    maxGoalWeight: p.maxGoalWeightRollup || 0,
+    currentMaxWeight: p.currentMaxWeightRollup || 0,
+    totalSetsCount: p.totalSetsCountFormula || 0,
+    totalTrainingDays: p.totalTrainingDaysFormula || 0,
+    totalTrainingVolumeWeight: p.totalTrainingVolumeWeightFormula || 0,
+    rmTypes: exerciseRmTypesSchema.parse(p.rmTypes),
   };
 }
 
-/** Notion ページ → 種目トレンド */
-export function mapExerciseTrends(
-  exercise: NotionExercisePage<"maxGoalWeightRollup">,
-): { maxGoalWeight: number } {
-  return { maxGoalWeight: readMaxGoalWeight(exercise) };
+/** 生の Notion ページ (unknown) → 種目トレンド */
+export function mapExerciseTrends(raw: unknown): { maxGoalWeight: number } {
+  const page = exerciseTrendsPageSchema.parse(raw);
+  return { maxGoalWeight: page.properties.maxGoalWeightRollup || 0 };
 }

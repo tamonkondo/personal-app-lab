@@ -1,14 +1,13 @@
 // notionTypes.ts
 import type {
   DateResponse,
-  GroupFilterOperatorArray,
   PageObjectResponse,
-  PropertyFilter,
-  TimestampFilter,
 } from "@notionhq/client/build/src/api-endpoints";
 
 /**
- * どのDBでも共通で持っているページのメタ情報
+ * Notion プロパティの型カタログ用ユーティリティ。
+ * 各 feature の *.types.ts が「プロパティ名 → プロパティ型」の宣言に使う。
+ * (ページ封筒/クエリ結果の型は zod スキーマ (notion.schema.ts) から z.infer で導出するため廃止)
  */
 export type NotionPropsOf<P extends PageObjectResponse> = P["properties"];
 export type NotionPageProps = NotionPropsOf<PageObjectResponse>;
@@ -16,33 +15,6 @@ export type NotionProp<
   Name extends keyof NotionPageProps,
   Kind extends NotionPageProps[Name]["type"],
 > = Extract<NotionPageProps[Name], { type: Kind }>;
-export type NotionResults<T> = PageObjectResponse & {
-  object: string;
-  next_cursor: string | null;
-  has_more: boolean;
-  results: T[];
-};
-export type NotionPageResults<T> = PageObjectResponse & {
-  object: string;
-  properties: T;
-};
-export type BasePageMeta = Pick<
-  PageObjectResponse,
-  | "id"
-  | "object"
-  | "created_time"
-  | "last_edited_time"
-  | "created_by"
-  | "last_edited_by"
-  | "parent"
-  | "in_trash"
-  | "is_archived"
-  | "is_locked"
-  | "cover"
-  | "icon"
-  | "url"
-  | "public_url"
->;
 
 export type NotionPropertyType =
   | "string"
@@ -81,27 +53,4 @@ export type NotionRollup<T extends NotionPropertyType> = {
   rollup: { type: T } & Partial<Record<NotionPropertyType, unknown>> & {
       [K in T]: RollupValueMap[K];
     };
-};
-
-// クエリデータのパラメーター型
-export type NotionQueryDataSourceBodyParameters = {
-  filter?:
-    | {
-        or: GroupFilterOperatorArray;
-      }
-    | {
-        and: GroupFilterOperatorArray;
-      }
-    | PropertyFilter
-    | TimestampFilter;
-  sorts?: Array<
-    | {
-        property: string;
-        direction: "ascending" | "descending";
-      }
-    | {
-        timestamp: "created_time" | "last_edited_time";
-        direction: "ascending" | "descending";
-      }
-  >;
 };

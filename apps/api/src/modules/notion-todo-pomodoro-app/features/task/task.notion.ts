@@ -1,6 +1,9 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
-import type { NotionTaskPage, NotionTaskQueryResult } from "./task.types";
+import {
+  notionQueryEnvelope,
+  toPaginationMeta,
+} from "@/integrations/notion/notion.schema";
 import type {
   TaskItem,
   TaskStatus,
@@ -103,45 +106,43 @@ export async function fetchTasks(params: FetchTasksParams): Promise<{
   meta: { has_more: boolean; next_cursor?: string };
 }> {
   const filter = buildFilter(params);
-  const res = (await notionClient.dataSources.query({
-    data_source_id: TODOS_DB,
-    ...(filter ? { filter: filter as never } : {}),
-    sorts: [{ property: TASK_PROPS.schedule, direction: "ascending" }],
-    page_size: params.limit ?? 20,
-    start_cursor: params.cursor,
-  })) as unknown as NotionTaskQueryResult;
+  const envelope = notionQueryEnvelope.parse(
+    await notionClient.dataSources.query({
+      data_source_id: TODOS_DB,
+      ...(filter ? { filter: filter as never } : {}),
+      sorts: [{ property: TASK_PROPS.schedule, direction: "ascending" }],
+      page_size: params.limit ?? 20,
+      start_cursor: params.cursor,
+    }),
+  );
 
   return {
-    data: res.results.map(mapTaskPage),
-    meta: {
-      has_more: res.has_more,
-      next_cursor: res.next_cursor || undefined,
-    },
+    data: envelope.results.map(mapTaskPage),
+    meta: toPaginationMeta(envelope),
   };
 }
 
 export async function fetchTaskById(id: string): Promise<TaskItem> {
-  const page = (await notionClient.pages.retrieve({
-    page_id: id,
-  })) as unknown as NotionTaskPage;
-  return mapTaskPage(page);
+  return mapTaskPage(await notionClient.pages.retrieve({ page_id: id }));
 }
 
 export async function createTask(input: CreateTaskInput): Promise<TaskItem> {
-  const page = (await notionClient.pages.create({
-    parent: { data_source_id: TODOS_DB },
-    properties: buildCreateTaskProperties(input) as never,
-  })) as unknown as NotionTaskPage;
-  return mapTaskPage(page);
+  return mapTaskPage(
+    await notionClient.pages.create({
+      parent: { data_source_id: TODOS_DB },
+      properties: buildCreateTaskProperties(input) as never,
+    }),
+  );
 }
 
 export async function updateTask(
   id: string,
   input: UpdateTaskInput,
 ): Promise<TaskItem> {
-  const page = (await notionClient.pages.update({
-    page_id: id,
-    properties: buildUpdateTaskProperties(input) as never,
-  })) as unknown as NotionTaskPage;
-  return mapTaskPage(page);
+  return mapTaskPage(
+    await notionClient.pages.update({
+      page_id: id,
+      properties: buildUpdateTaskProperties(input) as never,
+    }),
+  );
 }
