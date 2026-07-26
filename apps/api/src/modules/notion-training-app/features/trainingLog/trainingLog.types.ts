@@ -6,6 +6,7 @@ import { NotionProp } from "@/integrations/notion/notion.types";
  * ページの実際の読み取りは trainingLog.db.ts の zod スキーマが行う。
  */
 export type NotionTrainingLogProperties = {
+  name: NotionProp<"name", "title">;
   memo: NotionProp<"memo", "rich_text">;
   trainingExercisesRelation: NotionProp<
     "trainingExercisesRelation",

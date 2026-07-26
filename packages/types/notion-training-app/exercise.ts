@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from "../index";
+import type { ApiResponse, PaginatedResponse } from "../index";
 import type { ExerciseLogWithSetsItemResponse } from "./exerciseLog";
 
 export type ExerciseDisplayBase = {
@@ -17,6 +17,10 @@ export type ExerciseSummaryItem = ExerciseDisplayBase & {
 };
 
 export type ExerciseSummaryResponse = PaginatedResponse<ExerciseSummaryItem>;
+
+/** 種目名一覧 (作成フォームの選択肢用) */
+export type ExerciseNameItem = { id: string; name: string };
+export type ExerciseNamesResponse = ApiResponse<ExerciseNameItem[]>;
 
 export type ExerciseDetail = {
   id: string;

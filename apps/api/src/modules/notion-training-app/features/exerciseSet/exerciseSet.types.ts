@@ -6,6 +6,7 @@ import { NotionProp } from "@/integrations/notion/notion.types";
  * ページの実際の読み取りは trainingLog.db.ts の zod スキーマが行う。
  */
 export type NotionExerciseSetWeightProperties = {
+  name: NotionProp<"name", "title">;
   kg: NotionProp<"kg", "number">;
   rep: NotionProp<"rep", "number">;
   memo: NotionProp<"memo", "rich_text">;

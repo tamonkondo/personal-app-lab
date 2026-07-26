@@ -180,6 +180,12 @@ export const notionPage = <T extends z.ZodRawShape>(properties: T) =>
     properties: z.object(properties),
   });
 
+/** pages.create のレスポンス (id と url だけ使う) */
+export const notionCreatedPage = z.object({
+  id: z.string(),
+  url: z.string().catch(""),
+});
+
 /** dataSources.query の封筒 (results はページ単位で個別パースする) */
 export const notionQueryEnvelope = z.object({
   results: z.array(z.unknown()),

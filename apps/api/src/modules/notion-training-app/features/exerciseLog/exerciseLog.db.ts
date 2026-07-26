@@ -66,6 +66,47 @@ export function emptyExerciseLogWithSets(
   };
 }
 
+/**
+ * 種目ログ作成入力 → Notion プロパティペイロード。
+ * name は既存規則 "record__<既存ログ数+1>__<種目名>" に合わせる。
+ */
+export function buildCreateExerciseLogProperties(input: {
+  recordNumber: number;
+  exerciseName: string;
+  rest: number | null;
+  memo: string;
+  exerciseId: string;
+  trainingLogId: string;
+}): Record<string, unknown> {
+  return {
+    [exerciseLogProp("name")]: {
+      title: [
+        {
+          text: {
+            content: `record__${input.recordNumber}__${input.exerciseName}`,
+          },
+        },
+      ],
+    },
+    ...(input.rest !== null
+      ? { [exerciseLogProp("rest")]: { number: input.rest } }
+      : {}),
+    ...(input.memo
+      ? {
+          [exerciseLogProp("memo")]: {
+            rich_text: [{ text: { content: input.memo } }],
+          },
+        }
+      : {}),
+    [exerciseLogProp("exerciseRelation")]: {
+      relation: [{ id: input.exerciseId }],
+    },
+    [exerciseLogProp("trainingRecordRelation")]: {
+      relation: [{ id: input.trainingLogId }],
+    },
+  };
+}
+
 export function mapExerciseLogsWithSets({
   results,
   exerciseId,

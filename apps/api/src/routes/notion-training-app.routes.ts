@@ -10,6 +10,11 @@ notionTrainingAppRouter.get(
   "/training-logs",
   trainingLogHandlers.getTrainingLogs,
 );
+// トレーニング記録の作成 (当日記録のみ)
+notionTrainingAppRouter.post(
+  "/training-logs",
+  trainingLogHandlers.createTrainingLog,
+);
 notionTrainingAppRouter.get(
   "/training-logs/newest",
   trainingLogHandlers.getNewestTrainingLog,

@@ -5,23 +5,27 @@ import {
 } from "@repo/types/notion-training-app";
 import { paginationQuerySchema } from "../index";
 
-const exercisesSets = z.object({
-  kg: z.string(),
-  rep: z.string(),
-  memo: z.string(),
+/**
+ * トレーニング記録 新規作成の入力。
+ * 日付は「当日記録のみ」の運用のため入力に含めない (サーバ側で当日を採用)。
+ * フォーム入力は文字列で来るため kg / rep は coerce する。
+ */
+const createTrainingLogSetSchema = z.object({
+  kg: z.coerce.number().min(0),
+  rep: z.coerce.number().int().min(0),
+  memo: z.string().optional().default(""),
 });
-const exercisesSchema = z.object({
-  exerciseId: z.string(),
-  rest: z.number(),
-  memo: z.string(),
-  sets: z.array(exercisesSets),
+const createTrainingLogExerciseSchema = z.object({
+  exerciseId: z.string().min(1),
+  rest: z.number().min(0).nullable().optional().default(null),
+  memo: z.string().optional().default(""),
+  sets: z.array(createTrainingLogSetSchema).min(1),
 });
 
 export const createTrainingLogSchema = z.object({
-  date: z.string(),
-  bodyWeight: z.number(),
-  memo: z.string(),
-  exercises: z.array(exercisesSchema),
+  bodyWeight: z.coerce.number().positive().nullable().optional().default(null),
+  memo: z.string().optional().default(""),
+  exercises: z.array(createTrainingLogExerciseSchema).min(1),
 });
 
 export type CreateTrainingLogInput = z.infer<typeof createTrainingLogSchema>;

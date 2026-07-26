@@ -3,7 +3,10 @@ import type {
   NewestTrainingLogResponse,
   TrainingLogSummaryResponse,
 } from "@repo/types/notion-training-app";
-import { trainingLogListQuerySchema } from "@repo/schemas/notion-training-app";
+import {
+  createTrainingLogSchema,
+  trainingLogListQuerySchema,
+} from "@repo/schemas/notion-training-app";
 import * as fetches from "./trainingLog.notion";
 
 // トレーニングログ一覧の取得エンドポイント
@@ -45,6 +48,20 @@ export const getTrainingLogDetail = asyncHandler(
     });
   },
 );
+
+// トレーニング記録の作成エンドポイント (当日記録のみ)
+export const createTrainingLog = asyncHandler(async (req, res) => {
+  const parsed = createTrainingLogSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      message: "Invalid training log payload",
+      issues: parsed.error.issues,
+    });
+    return;
+  }
+  const result = await fetches.createTrainingLog(parsed.data);
+  res.status(201).json({ message: "createTrainingLog", data: result });
+});
 
 // 最新のトレーニングログを取得するエンドポイント
 export const getNewestTrainingLog = asyncHandler(async (_, res) => {

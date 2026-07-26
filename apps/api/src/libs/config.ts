@@ -15,6 +15,7 @@ const envSchema = z.object({
   NOTION_TRAINING_LOGS_DATABASE_ID: z.string().min(1),
   NOTION_EXERCISES_DATABASE_ID: z.string().min(1),
   NOTION_EXERCISE_LOGS_DATABASE_ID: z.string().min(1),
+  NOTION_EXERCISE_SETS_DATABASE_ID: z.string().min(1),
   NOTION_TODOS_DB: z.string().min(1),
   NOTION_PROJECTS_DB: z.string().min(1),
 });

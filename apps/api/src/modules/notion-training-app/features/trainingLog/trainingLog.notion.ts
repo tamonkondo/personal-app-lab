@@ -1,17 +1,28 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
+import { AppError } from "@/libs/errors";
 import notionLimit from "@/libs/notion/notionLimit";
 import {
+  notionCreatedPage,
   notionQueryEnvelope,
   toPaginationMeta,
 } from "@/integrations/notion/notion.schema";
+import type { CreateTrainingLogInput } from "@repo/schemas/notion-training-app";
+import { mapExerciseName } from "../exercise/exercise.db";
+import {
+  exerciseLogProp,
+  buildCreateExerciseLogProperties,
+} from "../exerciseLog/exerciseLog.db";
+import { buildCreateExerciseSetProperties } from "../exerciseSet/exerciseSet.db";
 import type {
+  CreateTrainingLogResult,
   NewestTrainingLogItemResponse,
   TrainingLogDetail,
   TrainingLogSummaryResponse,
 } from "@repo/types/notion-training-app";
 import { SortOrder } from "@repo/types";
 import {
+  buildCreateTrainingLogProperties,
   trainingLogProp,
   trainingLogSummaryExerciseLogProperties,
   trainingLogDetailExerciseLogProperties,
@@ -226,4 +237,128 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
     exerciseCount: relationIds.length,
     totalWeight,
   });
+}
+
+/** 種目の既存ログ数を数える (name の連番採番用) */
+async function countExerciseLogs(exerciseId: string): Promise<number> {
+  let count = 0;
+  let cursor: string | undefined;
+  do {
+    const envelope = notionQueryEnvelope.parse(
+      await notionClient.dataSources.query({
+        data_source_id: config.NOTION_EXERCISE_LOGS_DATABASE_ID,
+        filter: {
+          property: exerciseLogProp("exerciseRelation"),
+          relation: { contains: exerciseId },
+        },
+        filter_properties: [exerciseLogProp("rest")],
+        page_size: 100,
+        start_cursor: cursor,
+      }),
+    );
+    count += envelope.results.length;
+    cursor = envelope.next_cursor ?? undefined;
+  } while (cursor);
+  return count;
+}
+
+/**
+ * トレーニング記録の作成 (当日記録のみ)。
+ * TRAINING_LOGS → 種目ごとの EXERCISE_LOGS → セットごとの EXERCISE_SETS の順に作成する。
+ * 途中失敗時のロールバックは行わず、作成済みページ ID をエラーに含めて返す
+ * (Notion 上で手直しできるようにするため)。
+ */
+export async function createTrainingLog(
+  input: CreateTrainingLogInput,
+): Promise<CreateTrainingLogResult> {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const dateName = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const dateKey = dateName.replaceAll("-", "");
+
+  const createdIds: string[] = [];
+  try {
+    // 1. トレーニングログ本体
+    const trainingLog = notionCreatedPage.parse(
+      await notionClient.pages.create({
+        parent: { data_source_id: config.NOTION_TRAINING_LOGS_DATABASE_ID },
+        properties: buildCreateTrainingLogProperties({
+          dateName,
+          bodyWeight: input.bodyWeight,
+          memo: input.memo,
+        }) as never,
+      }),
+    );
+    createdIds.push(trainingLog.id);
+
+    // 2. 種目ごとの記録 (連番採番があるため直列で作成)
+    const exerciseLogIds: string[] = [];
+    for (const exercise of input.exercises) {
+      const exerciseName = mapExerciseName(
+        await notionClient.pages.retrieve({
+          page_id: exercise.exerciseId,
+          filter_properties: ["name"],
+        }),
+      ).name;
+      const recordNumber = (await countExerciseLogs(exercise.exerciseId)) + 1;
+
+      const exerciseLog = notionCreatedPage.parse(
+        await notionClient.pages.create({
+          parent: { data_source_id: config.NOTION_EXERCISE_LOGS_DATABASE_ID },
+          properties: buildCreateExerciseLogProperties({
+            recordNumber,
+            exerciseName,
+            rest: exercise.rest,
+            memo: exercise.memo,
+            exerciseId: exercise.exerciseId,
+            trainingLogId: trainingLog.id,
+          }) as never,
+        }),
+      );
+      createdIds.push(exerciseLog.id);
+      exerciseLogIds.push(exerciseLog.id);
+
+      // 3. セット (並列 + レート制御)
+      const setIds = await Promise.all(
+        exercise.sets.map((set, index) =>
+          notionLimit(async () => {
+            const page = notionCreatedPage.parse(
+              await notionClient.pages.create({
+                parent: {
+                  data_source_id: config.NOTION_EXERCISE_SETS_DATABASE_ID,
+                },
+                properties: buildCreateExerciseSetProperties({
+                  setNumber: index + 1,
+                  dateKey,
+                  exerciseName,
+                  kg: set.kg,
+                  rep: set.rep,
+                  memo: set.memo,
+                  exerciseLogId: exerciseLog.id,
+                }) as never,
+              }),
+            );
+            return page.id;
+          }),
+        ),
+      );
+      createdIds.push(...setIds);
+    }
+
+    return {
+      id: trainingLog.id,
+      url: trainingLog.url,
+      exerciseLogIds,
+    };
+  } catch (error) {
+    const detail = createdIds.length
+      ? ` (作成済みページ: ${createdIds.join(", ")})`
+      : "";
+    throw new AppError(
+      `トレーニング記録の作成に失敗しました${detail}`,
+      500,
+      "TRAINING_LOG_CREATE_FAILED",
+      { cause: error },
+    );
+  }
 }

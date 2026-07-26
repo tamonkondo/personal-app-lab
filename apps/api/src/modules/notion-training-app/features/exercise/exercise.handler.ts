@@ -1,16 +1,17 @@
 import { asyncHandler } from "@/libs/asyncHandler";
 import type {
   ExerciseLogWithSetsResponse,
+  ExerciseNamesResponse,
   ExerciseSummaryResponse,
 } from "@repo/types/notion-training-app";
 import { paginationQuerySchema } from "@repo/schemas";
 import * as fetches from "./exercise.notion";
 
 export const getExerciseNames = asyncHandler(async (_, res) => {
-  const nameData = await fetches.fetchExerciseNames();
-  const response = {
+  const names = await fetches.fetchExerciseNames();
+  const response: ExerciseNamesResponse = {
     message: "getExerciseNames",
-    nameData,
+    data: names,
   };
   res.status(200).json(response);
 });

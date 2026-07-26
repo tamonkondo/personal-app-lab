@@ -48,3 +48,12 @@ export type TrainingLogDetail = {
 };
 
 export type TrainingLogDetailResponse = ApiResponse<TrainingLogDetail | null>;
+
+/** トレーニング記録 作成結果 */
+export type CreateTrainingLogResult = {
+  id: string;
+  url: string;
+  exerciseLogIds: string[];
+};
+
+export type CreateTrainingLogResponse = ApiResponse<CreateTrainingLogResult>;

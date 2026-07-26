@@ -222,6 +222,33 @@ export function mapTrainingLogDetail(
   };
 }
 
+/**
+ * トレーニングログ作成入力 → Notion プロパティペイロード。
+ * 日付は「当日記録のみ」の運用のため name に当日日付 (YYYY-MM-DD) を設定する
+ * (createdTime は Notion が自動採番)。
+ */
+export function buildCreateTrainingLogProperties(input: {
+  dateName: string; // YYYY-MM-DD
+  bodyWeight: number | null;
+  memo: string;
+}): Record<string, unknown> {
+  return {
+    [trainingLogProp("name")]: {
+      title: [{ text: { content: input.dateName } }],
+    },
+    ...(input.bodyWeight !== null
+      ? { [trainingLogProp("bodyWeight")]: { number: input.bodyWeight } }
+      : {}),
+    ...(input.memo
+      ? {
+          [trainingLogProp("memo")]: {
+            rich_text: [{ text: { content: input.memo } }],
+          },
+        }
+      : {}),
+  };
+}
+
 /** 最新トレーニングログページ + 集計値 → レスポンスアイテム */
 export function mapNewestTrainingLog(
   log: TrainingLogPage,
