@@ -43,6 +43,8 @@ export type TrainingLogDetail = {
   totalSetsCount: number;
   totalTrainingVolumeWeight: number;
   exercises: (ExerciseDisplayBase & {
+    /** 種目ログのメモ (編集フォームのプリフィル用) */
+    memo: string;
     exerciseSets: ExerciseLogWithSetsItemResponse;
   })[];
 };
@@ -57,3 +59,12 @@ export type CreateTrainingLogResult = {
 };
 
 export type CreateTrainingLogResponse = ApiResponse<CreateTrainingLogResult>;
+
+/** トレーニング記録 更新結果 */
+export type UpdateTrainingLogResult = {
+  id: string;
+  url: string;
+  exerciseLogIds: string[];
+};
+
+export type UpdateTrainingLogResponse = ApiResponse<UpdateTrainingLogResult>;

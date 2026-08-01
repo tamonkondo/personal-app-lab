@@ -46,3 +46,21 @@ export function buildCreateExerciseSetProperties(input: {
     },
   };
 }
+
+/**
+ * セット更新入力 → Notion プロパティペイロード。
+ * name とリレーションは維持し、編集可能な kg / rep / memo のみ置き換える。
+ */
+export function buildUpdateExerciseSetProperties(input: {
+  kg: number;
+  rep: number;
+  memo: string;
+}): Record<string, unknown> {
+  return {
+    [exerciseSetProp("kg")]: { number: input.kg },
+    [exerciseSetProp("rep")]: { number: input.rep },
+    [exerciseSetProp("memo")]: {
+      rich_text: input.memo ? [{ text: { content: input.memo } }] : [],
+    },
+  };
+}

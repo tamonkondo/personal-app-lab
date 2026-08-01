@@ -5,6 +5,7 @@ import type {
 } from "@repo/types/notion-training-app";
 import {
   createTrainingLogSchema,
+  updateTrainingLogSchema,
   trainingLogListQuerySchema,
 } from "@repo/schemas/notion-training-app";
 import * as fetches from "./trainingLog.notion";
@@ -62,6 +63,22 @@ export const createTrainingLog = asyncHandler(async (req, res) => {
   const result = await fetches.createTrainingLog(parsed.data);
   res.status(201).json({ message: "createTrainingLog", data: result });
 });
+
+// トレーニング記録の更新エンドポイント (ネスト全体を差分同期)
+export const updateTrainingLog = asyncHandler(
+  async (req: { params: { id: string }; body: unknown }, res) => {
+    const parsed = updateTrainingLogSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        message: "Invalid training log payload",
+        issues: parsed.error.issues,
+      });
+      return;
+    }
+    const result = await fetches.updateTrainingLog(req.params.id, parsed.data);
+    res.status(200).json({ message: "updateTrainingLog", data: result });
+  },
+);
 
 // 最新のトレーニングログを取得するエンドポイント
 export const getNewestTrainingLog = asyncHandler(async (_, res) => {

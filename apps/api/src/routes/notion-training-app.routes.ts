@@ -15,6 +15,11 @@ notionTrainingAppRouter.post(
   "/training-logs",
   trainingLogHandlers.createTrainingLog,
 );
+// トレーニング記録の更新 (ネスト全体を差分同期)
+notionTrainingAppRouter.put(
+  "/training-logs/:id",
+  trainingLogHandlers.updateTrainingLog,
+);
 notionTrainingAppRouter.get(
   "/training-logs/newest",
   trainingLogHandlers.getNewestTrainingLog,

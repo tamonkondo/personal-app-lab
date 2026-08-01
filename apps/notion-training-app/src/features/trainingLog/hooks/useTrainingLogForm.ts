@@ -1,8 +1,14 @@
 import { useMemo, useState } from "react";
-import type { CreateTrainingLogInput } from "@repo/schemas/notion-training-app";
+import type {
+  CreateTrainingLogInput,
+  UpdateTrainingLogInput,
+} from "@repo/schemas/notion-training-app";
+import type { TrainingLogDetail } from "@repo/types/notion-training-app";
 
 export type ExerciseSetDraft = {
   id: string;
+  /** 既存セットの Notion ページ ID (新規は null) */
+  setId: string | null;
   kg: string;
   rep: string;
   memo: string;
@@ -10,6 +16,8 @@ export type ExerciseSetDraft = {
 
 export type TrainingExerciseDraft = {
   id: string;
+  /** 既存の種目ログの Notion ページ ID (新規は null) */
+  logId: string | null;
   exerciseId: string;
   exerciseName: string;
   rest: string;
@@ -19,6 +27,7 @@ export type TrainingExerciseDraft = {
 
 const createSetDraft = (): ExerciseSetDraft => ({
   id: crypto.randomUUID(),
+  setId: null,
   kg: "",
   rep: "",
   memo: "",
@@ -26,6 +35,7 @@ const createSetDraft = (): ExerciseSetDraft => ({
 
 const createExerciseDraft = (): TrainingExerciseDraft => ({
   id: crypto.randomUUID(),
+  logId: null,
   exerciseId: "",
   exerciseName: "",
   rest: "90",
@@ -163,6 +173,55 @@ export function useTrainingLogForm() {
     };
   };
 
+  /** 取得済みの詳細でフォームを初期化 (編集画面用) */
+  const hydrate = (detail: TrainingLogDetail) => {
+    setBodyWeight(detail.bodyWeight ? String(detail.bodyWeight) : "");
+    setMemo(detail.memo ?? "");
+    setExercises(
+      detail.exercises.map((exercise) => ({
+        id: crypto.randomUUID(),
+        logId: exercise.exerciseSets.exerciseLogId,
+        exerciseId: exercise.exerciseSets.exerciseId,
+        exerciseName: exercise.trainingName,
+        rest: exercise.exerciseSets.rest
+          ? String(exercise.exerciseSets.rest)
+          : "",
+        memo: exercise.memo ?? "",
+        sets:
+          exercise.exerciseSets.sets.length > 0
+            ? exercise.exerciseSets.sets.map((set) => ({
+                id: crypto.randomUUID(),
+                setId: set.id || null,
+                kg: set.kg ? String(set.kg) : "",
+                rep: set.rep ? String(set.rep) : "",
+                memo: set.memo ?? "",
+              }))
+            : [createSetDraft()],
+      })),
+    );
+  };
+
+  /** 更新 API 入力へ変換。既存要素は logId / setId を付与。送信できない状態なら null */
+  const buildUpdatePayload = (): UpdateTrainingLogInput | null => {
+    if (!canSubmit) return null;
+    return {
+      bodyWeight: bodyWeight.trim() === "" ? null : Number(bodyWeight),
+      memo,
+      exercises: exercises.map((exercise) => ({
+        ...(exercise.logId ? { logId: exercise.logId } : {}),
+        exerciseId: exercise.exerciseId,
+        rest: exercise.rest.trim() === "" ? null : Number(exercise.rest),
+        memo: exercise.memo,
+        sets: toFilledSets(exercise.sets).map((set) => ({
+          ...(set.setId ? { setId: set.setId } : {}),
+          kg: Number(set.kg) || 0,
+          rep: Number(set.rep) || 0,
+          memo: set.memo,
+        })),
+      })),
+    };
+  };
+
   return {
     bodyWeight,
     setBodyWeight,
@@ -185,6 +244,8 @@ export function useTrainingLogForm() {
     removeDraftSet,
     canSubmit,
     buildPayload,
+    hydrate,
+    buildUpdatePayload,
   };
 }
 

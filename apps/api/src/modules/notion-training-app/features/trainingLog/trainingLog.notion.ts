@@ -7,22 +7,32 @@ import {
   notionQueryEnvelope,
   toPaginationMeta,
 } from "@/integrations/notion/notion.schema";
-import type { CreateTrainingLogInput } from "@repo/schemas/notion-training-app";
+import type {
+  CreateTrainingLogInput,
+  UpdateTrainingLogInput,
+  UpdateTrainingLogSetInput,
+} from "@repo/schemas/notion-training-app";
 import { mapExerciseName } from "../exercise/exercise.db";
 import {
   exerciseLogProp,
   buildCreateExerciseLogProperties,
+  buildUpdateExerciseLogProperties,
 } from "../exerciseLog/exerciseLog.db";
-import { buildCreateExerciseSetProperties } from "../exerciseSet/exerciseSet.db";
+import {
+  buildCreateExerciseSetProperties,
+  buildUpdateExerciseSetProperties,
+} from "../exerciseSet/exerciseSet.db";
 import type {
   CreateTrainingLogResult,
   NewestTrainingLogItemResponse,
   TrainingLogDetail,
   TrainingLogSummaryResponse,
+  UpdateTrainingLogResult,
 } from "@repo/types/notion-training-app";
 import { SortOrder } from "@repo/types";
 import {
   buildCreateTrainingLogProperties,
+  buildUpdateTrainingLogProperties,
   trainingLogProp,
   trainingLogSummaryExerciseLogProperties,
   trainingLogDetailExerciseLogProperties,
@@ -358,6 +368,234 @@ export async function createTrainingLog(
       `トレーニング記録の作成に失敗しました${detail}`,
       500,
       "TRAINING_LOG_CREATE_FAILED",
+      { cause: error },
+    );
+  }
+}
+
+/** 種目ログとそのセットをまとめてアーカイブ (ゴミ箱へ) する */
+async function archiveExerciseLogWithSets(
+  exerciseLogId: string,
+  setIds: string[],
+): Promise<void> {
+  await Promise.all(
+    setIds.map((setId) =>
+      notionLimit(() =>
+        notionClient.pages.update({ page_id: setId, in_trash: true }),
+      ),
+    ),
+  );
+  await notionClient.pages.update({ page_id: exerciseLogId, in_trash: true });
+}
+
+/**
+ * 既存の種目ログ配下のセットを入力 (あるべき状態) へ差分同期する。
+ * - setId を持つセットは更新、持たないセットは新規作成
+ * - 入力に含まれない既存セットはアーカイブ
+ */
+async function reconcileExerciseSets(params: {
+  exerciseLogId: string;
+  exerciseName: string;
+  dateKey: string; // YYYYMMDD
+  currentSetIds: string[];
+  inputSets: UpdateTrainingLogSetInput[];
+}): Promise<void> {
+  const { exerciseLogId, exerciseName, dateKey, currentSetIds, inputSets } =
+    params;
+
+  const keepSetIds = new Set(
+    inputSets
+      .map((set) => set.setId)
+      .filter((setId): setId is string => !!setId),
+  );
+  const removedSetIds = currentSetIds.filter(
+    (setId) => !keepSetIds.has(setId),
+  );
+
+  await Promise.all([
+    ...removedSetIds.map((setId) =>
+      notionLimit(() =>
+        notionClient.pages.update({ page_id: setId, in_trash: true }),
+      ),
+    ),
+    ...inputSets.map((set, index) =>
+      notionLimit(async () => {
+        if (set.setId) {
+          await notionClient.pages.update({
+            page_id: set.setId,
+            properties: buildUpdateExerciseSetProperties({
+              kg: set.kg,
+              rep: set.rep,
+              memo: set.memo,
+            }) as never,
+          });
+          return;
+        }
+        await notionClient.pages.create({
+          parent: {
+            data_source_id: config.NOTION_EXERCISE_SETS_DATABASE_ID,
+          },
+          properties: buildCreateExerciseSetProperties({
+            setNumber: index + 1,
+            dateKey,
+            exerciseName,
+            kg: set.kg,
+            rep: set.rep,
+            memo: set.memo,
+            exerciseLogId,
+          }) as never,
+        });
+      }),
+    ),
+  ]);
+}
+
+/**
+ * トレーニング記録の更新。
+ * 入力のネスト全体を「あるべき状態」として受け取り、
+ * TRAINING_LOGS 本体 → 種目ごとの EXERCISE_LOGS → セットごとの EXERCISE_SETS を差分同期する。
+ * - logId / setId を持つ要素は更新、持たない要素は新規作成
+ * - 入力に含まれない既存の種目ログ / セットはアーカイブ (削除)
+ * 作成と同様、途中失敗時のロールバックは行わない。
+ */
+export async function updateTrainingLog(
+  id: string,
+  input: UpdateTrainingLogInput,
+): Promise<UpdateTrainingLogResult> {
+  // 現在の状態を取得 (存在確認 + 既存の種目ログ / セット ID の把握)
+  const current = await fetchTrainingLogDetail(id);
+  if (!current) {
+    throw new AppError(
+      "更新対象のトレーニング記録が見つかりません",
+      404,
+      "TRAINING_LOG_NOT_FOUND",
+    );
+  }
+
+  // セット名の採番に使う日付キーは元の記録日ベース (YYYYMMDD)
+  const dateKey = current.createdTime.slice(0, 10).replaceAll("-", "");
+
+  // 既存の種目ログを logId で引けるようにする
+  const currentLogsById = new Map(
+    current.exercises.map((exercise) => [
+      exercise.exerciseSets.exerciseLogId,
+      exercise,
+    ]),
+  );
+
+  try {
+    // 1. トレーニングログ本体を更新
+    const trainingLog = notionCreatedPage.parse(
+      await notionClient.pages.update({
+        page_id: id,
+        properties: buildUpdateTrainingLogProperties({
+          bodyWeight: input.bodyWeight,
+          memo: input.memo,
+        }) as never,
+      }),
+    );
+
+    // 2. 入力に残っていない既存の種目ログ (とそのセット) をアーカイブ
+    const keepLogIds = new Set(
+      input.exercises
+        .map((exercise) => exercise.logId)
+        .filter((logId): logId is string => !!logId),
+    );
+    for (const [logId, currentLog] of currentLogsById) {
+      if (keepLogIds.has(logId)) continue;
+      await archiveExerciseLogWithSets(
+        logId,
+        currentLog.exerciseSets.sets.map((set) => set.id),
+      );
+    }
+
+    // 3. 入力の種目を upsert (連番採番があるため直列で処理)
+    const exerciseLogIds: string[] = [];
+    for (const exercise of input.exercises) {
+      const existing = exercise.logId
+        ? currentLogsById.get(exercise.logId)
+        : undefined;
+
+      if (existing) {
+        // 3a. 既存の種目ログ: rest / memo を更新し、セットを差分同期
+        const exerciseLogId = existing.exerciseSets.exerciseLogId;
+        await notionClient.pages.update({
+          page_id: exerciseLogId,
+          properties: buildUpdateExerciseLogProperties({
+            rest: exercise.rest,
+            memo: exercise.memo,
+          }) as never,
+        });
+        await reconcileExerciseSets({
+          exerciseLogId,
+          exerciseName: existing.trainingName,
+          dateKey,
+          currentSetIds: existing.exerciseSets.sets.map((set) => set.id),
+          inputSets: exercise.sets,
+        });
+        exerciseLogIds.push(exerciseLogId);
+      } else {
+        // 3b. 新規の種目ログ: 作成フローと同じ手順で作成
+        const exerciseName = mapExerciseName(
+          await notionClient.pages.retrieve({
+            page_id: exercise.exerciseId,
+            filter_properties: ["name"],
+          }),
+        ).name;
+        const recordNumber =
+          (await countExerciseLogs(exercise.exerciseId)) + 1;
+
+        const exerciseLog = notionCreatedPage.parse(
+          await notionClient.pages.create({
+            parent: {
+              data_source_id: config.NOTION_EXERCISE_LOGS_DATABASE_ID,
+            },
+            properties: buildCreateExerciseLogProperties({
+              recordNumber,
+              exerciseName,
+              rest: exercise.rest,
+              memo: exercise.memo,
+              exerciseId: exercise.exerciseId,
+              trainingLogId: id,
+            }) as never,
+          }),
+        );
+        exerciseLogIds.push(exerciseLog.id);
+
+        await Promise.all(
+          exercise.sets.map((set, index) =>
+            notionLimit(async () => {
+              await notionClient.pages.create({
+                parent: {
+                  data_source_id: config.NOTION_EXERCISE_SETS_DATABASE_ID,
+                },
+                properties: buildCreateExerciseSetProperties({
+                  setNumber: index + 1,
+                  dateKey,
+                  exerciseName,
+                  kg: set.kg,
+                  rep: set.rep,
+                  memo: set.memo,
+                  exerciseLogId: exerciseLog.id,
+                }) as never,
+              });
+            }),
+          ),
+        );
+      }
+    }
+
+    return {
+      id: trainingLog.id,
+      url: trainingLog.url,
+      exerciseLogIds,
+    };
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(
+      "トレーニング記録の更新に失敗しました",
+      500,
+      "TRAINING_LOG_UPDATE_FAILED",
       { cause: error },
     );
   }

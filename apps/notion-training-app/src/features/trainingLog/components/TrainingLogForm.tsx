@@ -35,13 +35,15 @@ import {
 
 interface Props {
   form: TrainingLogFormState;
+  /** 編集時に表示する記録日 (ISO)。未指定なら当日 (当日記録) を表示 */
+  logDate?: string;
 }
 
 /**
- * トレーニング記録 作成フォーム。
+ * トレーニング記録 作成/編集フォーム。
  * 状態は useTrainingLogForm が持ち、送信ボタンはページ側 (PageHero) に置く。
  */
-const TrainingLogForm = ({ form }: Props) => {
+const TrainingLogForm = ({ form, logDate }: Props) => {
   const { exerciseNames, isLoading: isNamesLoading } = useExerciseNames();
 
   return (
@@ -185,7 +187,8 @@ const TrainingLogForm = ({ form }: Props) => {
               <div>
                 <label className="mb-2 block text-sm font-medium">日付</label>
                 <p className="rounded-md border bg-zinc-50 px-3 py-2 text-sm">
-                  {formatDate(new Date().toISOString(), "slash")} (当日記録)
+                  {formatDate(logDate ?? new Date().toISOString(), "slash")}
+                  {logDate ? "" : " (当日記録)"}
                 </p>
               </div>
               <div>

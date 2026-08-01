@@ -30,6 +30,42 @@ export const createTrainingLogSchema = z.object({
 
 export type CreateTrainingLogInput = z.infer<typeof createTrainingLogSchema>;
 
+/**
+ * トレーニング記録 更新の入力。
+ * ネスト全体を「あるべき状態」として受け取り、サーバ側で差分同期する。
+ * - setId / logId を持つ要素は既存 (更新対象)、持たない要素は新規 (作成対象)
+ * - 入力に含まれない既存の種目ログ / セットはアーカイブ (削除) される
+ */
+const updateTrainingLogSetSchema = z.object({
+  /** 既存セットの Notion ページ ID。未指定なら新規作成 */
+  setId: z.string().optional(),
+  kg: z.coerce.number().min(0),
+  rep: z.coerce.number().int().min(0),
+  memo: z.string().optional().default(""),
+});
+const updateTrainingLogExerciseSchema = z.object({
+  /** 既存の種目ログの Notion ページ ID。未指定なら新規作成 */
+  logId: z.string().optional(),
+  exerciseId: z.string().min(1),
+  rest: z.number().min(0).nullable().optional().default(null),
+  memo: z.string().optional().default(""),
+  sets: z.array(updateTrainingLogSetSchema).min(1),
+});
+
+export const updateTrainingLogSchema = z.object({
+  bodyWeight: z.coerce.number().positive().nullable().optional().default(null),
+  memo: z.string().optional().default(""),
+  exercises: z.array(updateTrainingLogExerciseSchema).min(1),
+});
+
+export type UpdateTrainingLogInput = z.infer<typeof updateTrainingLogSchema>;
+export type UpdateTrainingLogExerciseInput = z.infer<
+  typeof updateTrainingLogExerciseSchema
+>;
+export type UpdateTrainingLogSetInput = z.infer<
+  typeof updateTrainingLogSetSchema
+>;
+
 export const exerciseDetailParamsSchema = z.object({
   trendPeriod: z.enum(EXERCISE_TREND_PERIODS).nullable().catch(null),
   exerciseGuideLineRep: z.enum(EXERCISE_GUIDE_LINE_REPS).nullable().catch(null),

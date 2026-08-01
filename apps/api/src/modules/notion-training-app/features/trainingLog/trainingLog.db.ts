@@ -106,6 +106,7 @@ const detailExerciseLogPageSchema = notionPage({
   // NOTE: rollup プロパティだが従来実装は getFormula("string") で読んでいた (常に null)。
   // 挙動を変えないため lenient のまま維持
   muslesTypesRollup: notionLenient((value) => getFormula(value, "string")),
+  memo: notionRichText(),
   rest: notionNumber(),
   goalWeightRollup: notionRollupNumber(),
   exerciseRelation: notionRelation(),
@@ -172,6 +173,7 @@ function mapTrainingLogDetailExercise(
     maxGoalWeight: p.goalWeightRollup || 0,
     currentMaxWeight: p.todayMaxWeightRollup || 0,
     isPr: p.todayMaxWeightRollup === p.goalWeightRollup,
+    memo: p.memo,
     musclesTypes:
       p.muslesTypesRollup?.split(",").map((part) => part.trim()) || [],
     exerciseSets: {
@@ -246,6 +248,23 @@ export function buildCreateTrainingLogProperties(input: {
           },
         }
       : {}),
+  };
+}
+
+/**
+ * トレーニングログ更新入力 → Notion プロパティペイロード。
+ * 「あるべき状態」への置き換えのため、空値は null / 空配列でクリアする
+ * (name / 日付は当日記録運用のため更新対象外)。
+ */
+export function buildUpdateTrainingLogProperties(input: {
+  bodyWeight: number | null;
+  memo: string;
+}): Record<string, unknown> {
+  return {
+    [trainingLogProp("bodyWeight")]: { number: input.bodyWeight },
+    [trainingLogProp("memo")]: {
+      rich_text: input.memo ? [{ text: { content: input.memo } }] : [],
+    },
   };
 }
 

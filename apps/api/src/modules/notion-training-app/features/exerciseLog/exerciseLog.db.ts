@@ -107,6 +107,22 @@ export function buildCreateExerciseLogProperties(input: {
   };
 }
 
+/**
+ * 種目ログ更新入力 → Notion プロパティペイロード。
+ * name (連番) と種目リレーションは維持し、編集可能な rest / memo のみ置き換える。
+ */
+export function buildUpdateExerciseLogProperties(input: {
+  rest: number | null;
+  memo: string;
+}): Record<string, unknown> {
+  return {
+    [exerciseLogProp("rest")]: { number: input.rest },
+    [exerciseLogProp("memo")]: {
+      rich_text: input.memo ? [{ text: { content: input.memo } }] : [],
+    },
+  };
+}
+
 export function mapExerciseLogsWithSets({
   results,
   exerciseId,
