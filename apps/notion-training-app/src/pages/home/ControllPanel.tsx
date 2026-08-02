@@ -15,11 +15,8 @@ const ControllPanel = () => {
             New Training Exercise
           </Button>
         </Link>
-        <Link to="/goal-weights/new" viewTransition>
-          <Button variant="outline" className="w-full">
-            New Goal Weight of Exercise
-          </Button>
-        </Link>
+        {/* 目標重量は Notion の GOAL_WEIGHTS で管理しているため、
+            対応するルートができるまで導線を置かない */}
       </CardContent>
     </Card>
   );

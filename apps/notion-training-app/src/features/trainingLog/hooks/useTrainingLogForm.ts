@@ -173,32 +173,55 @@ export function useTrainingLogForm() {
     };
   };
 
-  /** 取得済みの詳細でフォームを初期化 (編集画面用) */
-  const hydrate = (detail: TrainingLogDetail) => {
+  /**
+   * 取得済みの詳細でフォームを初期化。
+   * asTemplate: true なら logId / setId を持たせない
+   * (「同じ内容で記録作成」用。送信するとすべて新規作成になる)
+   */
+  const hydrate = (
+    detail: TrainingLogDetail,
+    options?: { asTemplate?: boolean },
+  ) => {
+    const asTemplate = options?.asTemplate ?? false;
     setBodyWeight(detail.bodyWeight ? String(detail.bodyWeight) : "");
-    setMemo(detail.memo ?? "");
+    setMemo(asTemplate ? "" : (detail.memo ?? ""));
     setExercises(
       detail.exercises.map((exercise) => ({
         id: crypto.randomUUID(),
-        logId: exercise.exerciseSets.exerciseLogId,
+        logId: asTemplate ? null : exercise.exerciseSets.exerciseLogId,
         exerciseId: exercise.exerciseSets.exerciseId,
         exerciseName: exercise.trainingName,
         rest: exercise.exerciseSets.rest
           ? String(exercise.exerciseSets.rest)
           : "",
-        memo: exercise.memo ?? "",
+        memo: asTemplate ? "" : (exercise.memo ?? ""),
         sets:
           exercise.exerciseSets.sets.length > 0
             ? exercise.exerciseSets.sets.map((set) => ({
                 id: crypto.randomUUID(),
-                setId: set.id || null,
+                setId: asTemplate ? null : set.id || null,
                 kg: set.kg ? String(set.kg) : "",
                 rep: set.rep ? String(set.rep) : "",
-                memo: set.memo ?? "",
+                memo: asTemplate ? "" : (set.memo ?? ""),
               }))
             : [createSetDraft()],
       })),
     );
+  };
+
+  /** 種目を1つプリセットして開始 (「この種目で記録作成」用) */
+  const addExercisePreset = (preset: {
+    exerciseId: string;
+    exerciseName: string;
+  }) => {
+    setExercises((current) => [
+      ...current,
+      {
+        ...createExerciseDraft(),
+        exerciseId: preset.exerciseId,
+        exerciseName: preset.exerciseName,
+      },
+    ]);
   };
 
   /** 更新 API 入力へ変換。既存要素は logId / setId を付与。送信できない状態なら null */
@@ -245,6 +268,7 @@ export function useTrainingLogForm() {
     canSubmit,
     buildPayload,
     hydrate,
+    addExercisePreset,
     buildUpdatePayload,
   };
 }

@@ -125,7 +125,7 @@ const ExerciseCard = ({ exercise }: { exercise: (typeof exerciseLogs)[number] })
             {exercise.memo}
           </p>
         </div>
-        <Link to={`/exercise-log/${exercise.id}`}>
+        <Link to={`/exercises/${exercise.id}`}>
           <Button variant="outline" size="sm" className="w-full sm:w-auto">
             種目詳細
           </Button>

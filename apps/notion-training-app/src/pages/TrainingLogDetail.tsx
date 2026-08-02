@@ -216,10 +216,19 @@ const TrainingLogDetail = () => {
                 <CardTitle>操作</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full">同じ内容で記録作成</Button>
+                <Button
+                  className="w-full"
+                  onClick={() =>
+                    navigate("/training-logs/new", {
+                      state: { template: trainingLogDetail },
+                    })
+                  }
+                >
+                  同じ内容で記録作成
+                </Button>
                 <Link to={`/training-logs/${trainingId}/edit`}>
                   <Button variant="outline" className="w-full">
-                    メモを編集
+                    記録を編集
                   </Button>
                 </Link>
                 <Button

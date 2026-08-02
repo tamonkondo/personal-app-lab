@@ -1,16 +1,38 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@repo/ui";
+import type { TrainingLogDetail } from "@repo/types/notion-training-app";
 import PageHero, { HeroLinkButton } from "../components/PageHero";
 import TrainingLogForm from "../features/trainingLog/components/TrainingLogForm";
 import { useTrainingLogForm } from "../features/trainingLog/hooks/useTrainingLogForm";
 import { useTrainingLogMutations } from "../features/trainingLog/hooks/useTrainingLogMutations";
 
+/** 他ページから渡される初期化用の state */
+type TrainingLogNewLocationState = {
+  /** 「同じ内容で記録作成」: 既存記録の内容をテンプレートとして流し込む */
+  template?: TrainingLogDetail;
+  /** 「この種目で記録作成」: 種目を1つプリセットする */
+  presetExercise?: { exerciseId: string; exerciseName: string };
+} | null;
+
 const TrainingLogNew = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const form = useTrainingLogForm();
   const { createTrainingLog, isSubmitting } = useTrainingLogMutations();
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // 遷移元からの state で一度だけ初期化する
+  useEffect(() => {
+    const state = location.state as TrainingLogNewLocationState;
+    if (state?.template) {
+      form.hydrate(state.template, { asTemplate: true });
+    } else if (state?.presetExercise) {
+      form.addExercisePreset(state.presetExercise);
+    }
+    // マウント時に一度だけ実行 (form は毎レンダー再生成のため依存に含めない)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async () => {
     const payload = form.buildPayload();
