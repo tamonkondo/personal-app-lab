@@ -1,5 +1,8 @@
 packages:
   - "apps/*"
+  # packages/ 直下の package.json (@repo/packages) も含める
+  # (schemas/types 等が使う zod のインストール先。これがないと
+  #  packages/node_modules が作られず tsc が zod を解決できない)
   - "packages"
   - "packages/*"
 allowBuilds:
@@ -11,17 +14,17 @@ allowBuilds:
   msw: true
 
 catalog:
-  '@tailwindcss/vite': 4.3.3
-  '@types/node': 26.1.2
-  '@types/react': 19.2.18
-  '@types/react-dom': 19.2.4
-  '@vitejs/plugin-react': 6.0.5
-  react: 19.2.8
-  react-dom: 19.2.8
-  react-router-dom: 7.18.2
-  tailwindcss: 4.3.3
+  '@tailwindcss/vite': 4.3.2
+  '@types/node': 26.1.1
+  '@types/react': ^19.2.17
+  '@types/react-dom': ^19.2.3
+  '@vitejs/plugin-react': 6.0.3
+  react: ^19.2.7
+  react-dom: ^19.2.7
+  react-router-dom: 7.18.1
+  tailwindcss: 4.3.2
   typescript: 7.0.2
-  vite: 8.2.0
+  vite: 8.1.3
   zod: ^4.4.3
 minimumReleaseAgeExclude:
   - react-router-dom@7.18.0
