@@ -1,5 +1,9 @@
 packages:
   - "apps/*"
+  # packages/ 直下の package.json (@repo/packages) も含める
+  # (schemas/types 等が使う zod のインストール先。これがないと
+  #  packages/node_modules が作られず tsc が zod を解決できない)
+  - "packages"
   - "packages/*"
 allowBuilds:
   '@sentry-internal/node-cpu-profiler': true
