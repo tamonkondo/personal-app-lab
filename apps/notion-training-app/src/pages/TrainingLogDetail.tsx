@@ -4,22 +4,48 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@repo/ui";
 import { formatDate } from "@repo/utils";
-import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import AlertCard from "../components/AlertCard";
 import { getExerciseVolume } from "../features/trainingLog/components/TrainingLogExerciseCard";
 import { TrainingLogExerciseList } from "../features/trainingLog/components/TrainingLogExerciseList";
 import { useTrainingLogDetail } from "../features/trainingLog/hooks/useTrainingLogDetail";
+import { useTrainingLogMutations } from "../features/trainingLog/hooks/useTrainingLogMutations";
 import BODY_PARTS from "../constants/parts";
 import DetailSkeleton from "../components/DetailPageSkeleton";
 import PageHero, { HeroLinkButton } from "../components/PageHero";
 
 const TrainingLogDetail = () => {
   const { trainingId } = useParams();
+  const navigate = useNavigate();
   const { error, isLoading, mutate, trainingLogDetail } =
     useTrainingLogDetail(trainingId);
+  const { deleteTrainingLog, isSubmitting } = useTrainingLogMutations();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (!trainingId) return;
+    setDeleteError(null);
+    try {
+      await deleteTrainingLog(trainingId);
+      navigate("/training-logs");
+    } catch (deleteFailure) {
+      setDeleteError(
+        deleteFailure instanceof Error
+          ? deleteFailure.message
+          : "削除に失敗しました",
+      );
+    }
+  };
 
   const summaryItems = useMemo(
     () =>
@@ -199,6 +225,10 @@ const TrainingLogDetail = () => {
                 <Button
                   variant="outline"
                   className="w-full text-red-600 hover:text-red-700"
+                  onClick={() => {
+                    setDeleteError(null);
+                    setConfirmOpen(true);
+                  }}
                 >
                   記録を削除
                 </Button>
@@ -206,6 +236,38 @@ const TrainingLogDetail = () => {
             </Card>
           </div>
       </section>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>記録を削除しますか？</DialogTitle>
+            <DialogDescription>
+              {formatDate(trainingLogDetail.createdTime, "slash")}{" "}
+              の記録と、紐づく種目・セットをまとめて削除します。 Notion
+              のゴミ箱から復元は可能ですが、この画面からは元に戻せません。
+            </DialogDescription>
+          </DialogHeader>
+
+          {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              disabled={isSubmitting}
+            >
+              キャンセル
+            </Button>
+            <Button
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "削除中..." : "削除する"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

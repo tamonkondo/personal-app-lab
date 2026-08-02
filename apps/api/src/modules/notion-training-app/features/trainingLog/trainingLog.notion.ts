@@ -24,6 +24,7 @@ import {
 } from "../exerciseSet/exerciseSet.db";
 import type {
   CreateTrainingLogResult,
+  DeleteTrainingLogResult,
   NewestTrainingLogItemResponse,
   TrainingLogDetail,
   TrainingLogSummaryResponse,
@@ -596,6 +597,46 @@ export async function updateTrainingLog(
       "トレーニング記録の更新に失敗しました",
       500,
       "TRAINING_LOG_UPDATE_FAILED",
+      { cause: error },
+    );
+  }
+}
+
+/**
+ * トレーニング記録の削除。
+ * 紐づく種目ごとの EXERCISE_LOGS とそのセット EXERCISE_SETS、
+ * および TRAINING_LOGS 本体をまとめてアーカイブ (ゴミ箱へ) する。
+ * Notion のアーカイブは復元可能なため物理削除ではない。
+ */
+export async function deleteTrainingLog(
+  id: string,
+): Promise<DeleteTrainingLogResult> {
+  const current = await fetchTrainingLogDetail(id);
+  if (!current) {
+    throw new AppError(
+      "削除対象のトレーニング記録が見つかりません",
+      404,
+      "TRAINING_LOG_NOT_FOUND",
+    );
+  }
+
+  try {
+    // 種目ログ + セットを先にアーカイブ
+    for (const exercise of current.exercises) {
+      await archiveExerciseLogWithSets(
+        exercise.exerciseSets.exerciseLogId,
+        exercise.exerciseSets.sets.map((set) => set.id),
+      );
+    }
+    // 最後にトレーニングログ本体をアーカイブ
+    await notionClient.pages.update({ page_id: id, in_trash: true });
+    return { id };
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(
+      "トレーニング記録の削除に失敗しました",
+      500,
+      "TRAINING_LOG_DELETE_FAILED",
       { cause: error },
     );
   }

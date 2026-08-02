@@ -3,6 +3,7 @@ import { useSWRConfig } from "swr";
 import type {
   CreateTrainingLogResponse,
   CreateTrainingLogResult,
+  DeleteTrainingLogResponse,
   UpdateTrainingLogResponse,
   UpdateTrainingLogResult,
 } from "@repo/types/notion-training-app";
@@ -63,5 +64,23 @@ export function useTrainingLogMutations() {
     }
   };
 
-  return { createTrainingLog, updateTrainingLog, isSubmitting };
+  const deleteTrainingLog = async (id: string): Promise<void> => {
+    setIsSubmitting(true);
+    try {
+      await mutateJson<DeleteTrainingLogResponse>(
+        `${TRAINING_LOGS_KEY_PREFIX}/${id}`,
+        "DELETE",
+      );
+      await revalidateTrainingLogs();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return {
+    createTrainingLog,
+    updateTrainingLog,
+    deleteTrainingLog,
+    isSubmitting,
+  };
 }

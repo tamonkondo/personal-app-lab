@@ -20,6 +20,11 @@ notionTrainingAppRouter.put(
   "/training-logs/:id",
   trainingLogHandlers.updateTrainingLog,
 );
+// トレーニング記録の削除 (種目ログ・セットもまとめてアーカイブ)
+notionTrainingAppRouter.delete(
+  "/training-logs/:id",
+  trainingLogHandlers.deleteTrainingLog,
+);
 notionTrainingAppRouter.get(
   "/training-logs/newest",
   trainingLogHandlers.getNewestTrainingLog,

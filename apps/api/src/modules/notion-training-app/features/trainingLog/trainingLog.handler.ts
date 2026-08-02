@@ -80,6 +80,14 @@ export const updateTrainingLog = asyncHandler(
   },
 );
 
+// トレーニング記録の削除エンドポイント (種目ログ・セットもまとめてアーカイブ)
+export const deleteTrainingLog = asyncHandler(
+  async (req: { params: { id: string } }, res) => {
+    const result = await fetches.deleteTrainingLog(req.params.id);
+    res.status(200).json({ message: "deleteTrainingLog", data: result });
+  },
+);
+
 // 最新のトレーニングログを取得するエンドポイント
 export const getNewestTrainingLog = asyncHandler(async (_, res) => {
   const trainingLog = await fetches.fetchNewestTrainingLog();

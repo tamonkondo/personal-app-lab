@@ -68,3 +68,10 @@ export type UpdateTrainingLogResult = {
 };
 
 export type UpdateTrainingLogResponse = ApiResponse<UpdateTrainingLogResult>;
+
+/** トレーニング記録 削除結果 */
+export type DeleteTrainingLogResult = {
+  id: string;
+};
+
+export type DeleteTrainingLogResponse = ApiResponse<DeleteTrainingLogResult>;
