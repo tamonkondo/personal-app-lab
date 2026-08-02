@@ -8,6 +8,7 @@ import { z } from "zod";
 import {
   notionTitle,
   notionMultiSelect,
+  notionNumber,
   notionSelect,
   notionFormulaString,
   notionFormulaNumber,
@@ -28,6 +29,10 @@ import type {
   ExerciseTrendPeriod,
   ExerciseTrendPoint,
 } from "@repo/types/notion-training-app";
+import type {
+  CreateExerciseInput,
+  UpdateExerciseInput,
+} from "@repo/schemas/notion-training-app";
 import { exerciseRmTypesSchema } from "./exercise.schema";
 
 /** filter 等でのプロパティ名参照 (typo 防止) */
@@ -57,6 +62,7 @@ export const exerciseDetailProperties =
     "totalTrainingDaysFormula",
     "totalTrainingVolumeWeightFormula",
     "rmTypes",
+    "rest",
   ]);
 
 /** 種目名のみのページスキーマ */
@@ -85,6 +91,7 @@ const exerciseDetailPageSchema = notionPage({
   totalTrainingDaysFormula: notionFormulaNumber(),
   totalTrainingVolumeWeightFormula: notionFormulaNumber(),
   rmTypes: notionSelect(),
+  rest: notionNumber(),
 });
 
 /** トレンド表示に必要な種目ページのスキーマ */
@@ -154,7 +161,65 @@ export function mapExerciseDetail(raw: unknown): ExerciseDetail {
     totalTrainingDays: p.totalTrainingDaysFormula || 0,
     totalTrainingVolumeWeight: p.totalTrainingVolumeWeightFormula || 0,
     rmTypes: exerciseRmTypesSchema.parse(p.rmTypes),
+    rest: p.rest,
   };
+}
+
+/**
+ * 種目マスタ作成入力 → Notion プロパティペイロード。
+ * 目標重量 (GOAL_WEIGHTS リレーション) はここでは扱わない (Notion 側で管理)。
+ */
+export function buildCreateExerciseProperties(
+  input: CreateExerciseInput,
+): Record<string, unknown> {
+  return {
+    [exerciseProp("name")]: {
+      title: [{ text: { content: input.name } }],
+    },
+    ...(input.musclesTypes.length > 0
+      ? {
+          [exerciseProp("musclesTypes")]: {
+            multi_select: input.musclesTypes.map((name) => ({ name })),
+          },
+        }
+      : {}),
+    ...(input.rmTypes !== null
+      ? { [exerciseProp("rmTypes")]: { select: { name: input.rmTypes } } }
+      : {}),
+    ...(input.rest !== null
+      ? { [exerciseProp("rest")]: { number: input.rest } }
+      : {}),
+  };
+}
+
+/**
+ * 種目マスタ更新入力 → Notion プロパティペイロード。
+ * undefined のフィールドは含めない (変更しない)。null / 空配列はクリア。
+ */
+export function buildUpdateExerciseProperties(
+  input: UpdateExerciseInput,
+): Record<string, unknown> {
+  const properties: Record<string, unknown> = {};
+
+  if (input.name !== undefined) {
+    properties[exerciseProp("name")] = {
+      title: [{ text: { content: input.name } }],
+    };
+  }
+  if (input.musclesTypes !== undefined) {
+    properties[exerciseProp("musclesTypes")] = {
+      multi_select: input.musclesTypes.map((name) => ({ name })),
+    };
+  }
+  if (input.rmTypes !== undefined) {
+    properties[exerciseProp("rmTypes")] = {
+      select: input.rmTypes === null ? null : { name: input.rmTypes },
+    };
+  }
+  if (input.rest !== undefined) {
+    properties[exerciseProp("rest")] = { number: input.rest };
+  }
+  return properties;
 }
 
 /** 生の Notion ページ (unknown) → 種目トレンド */

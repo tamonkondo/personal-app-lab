@@ -34,6 +34,8 @@ export type ExerciseDetail = {
   totalSetsCount: number;
   totalTrainingDays: number;
   totalTrainingVolumeWeight: number;
+  /** デフォルト休憩時間 (秒) */
+  rest: number | null;
 };
 export const EXERCISE_RM_TYPES = ["upperBody", "lowerBody"] as const;
 export const EXERCISE_TREND_PERIODS = [
@@ -68,6 +70,23 @@ export type ExerciseTrends = {
 };
 
 export type ExerciseTrendsResponse = ApiResponse<ExerciseTrends>;
+
+/** 種目マスタ 作成/更新/削除の結果 */
+export type CreateExerciseResult = {
+  id: string;
+  url: string;
+};
+export type CreateExerciseResponse = ApiResponse<CreateExerciseResult>;
+
+export type UpdateExerciseResult = {
+  id: string;
+};
+export type UpdateExerciseResponse = ApiResponse<UpdateExerciseResult>;
+
+export type DeleteExerciseResult = {
+  id: string;
+};
+export type DeleteExerciseResponse = ApiResponse<DeleteExerciseResult>;
 
 export const EXERCISE_GUIDE_LINE_REPS = ["5", "10", "15", "20"] as const;
 

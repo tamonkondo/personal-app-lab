@@ -1,7 +1,8 @@
 import notionClient from "@/integrations/notion/notion.client";
 import { config } from "@/libs/config";
-import { NotFoundError } from "@/libs/errors";
+import { AppError, NotFoundError } from "@/libs/errors";
 import {
+  notionCreatedPage,
   notionQueryEnvelope,
   toPaginationMeta,
 } from "@/integrations/notion/notion.schema";
@@ -11,7 +12,14 @@ import type {
   ExerciseDetail,
   ExerciseTrendPeriod,
   ExerciseTrends,
+  CreateExerciseResult,
+  UpdateExerciseResult,
+  DeleteExerciseResult,
 } from "@repo/types/notion-training-app";
+import type {
+  CreateExerciseInput,
+  UpdateExerciseInput,
+} from "@repo/schemas/notion-training-app";
 
 import { fetchExerciseLogWithSets } from "../exerciseLog/exerciseLog.notion";
 import {
@@ -32,6 +40,8 @@ import {
   mapExerciseTrends,
   trendPeriodStart,
   buildExerciseTrendPoints,
+  buildCreateExerciseProperties,
+  buildUpdateExerciseProperties,
 } from "./exercise.db";
 
 type FetchExerciseSummaryLogsResult = Pick<
@@ -221,4 +231,77 @@ export async function fetchExerciseTrends(
     period,
     points: buildExerciseTrendPoints(logs),
   };
+}
+
+/** 種目マスタの作成 */
+export async function createExercise(
+  input: CreateExerciseInput,
+): Promise<CreateExerciseResult> {
+  const page = notionCreatedPage.parse(
+    await notionClient.pages.create({
+      parent: { data_source_id: config.NOTION_EXERCISES_DATABASE_ID },
+      properties: buildCreateExerciseProperties(input) as never,
+    }),
+  );
+  return { id: page.id, url: page.url };
+}
+
+/** 種目マスタの更新 (undefined のフィールドは変更しない) */
+export async function updateExercise(
+  exerciseId: string,
+  input: UpdateExerciseInput,
+): Promise<UpdateExerciseResult> {
+  // 存在確認 (更新自体の失敗を 404 に丸めないよう retrieve と分ける)
+  await notionClient.pages
+    .retrieve({ page_id: exerciseId, filter_properties: ["name"] })
+    .catch(() => {
+      throw new NotFoundError(`Exercise not found: ${exerciseId}`);
+    });
+
+  await notionClient.pages.update({
+    page_id: exerciseId,
+    properties: buildUpdateExerciseProperties(input) as never,
+  });
+  return { id: exerciseId };
+}
+
+/** 種目に記録 (種目ログ) が1件でも紐づいているか */
+async function hasExerciseLogs(exerciseId: string): Promise<boolean> {
+  const envelope = notionQueryEnvelope.parse(
+    await notionClient.dataSources.query({
+      data_source_id: config.NOTION_EXERCISE_LOGS_DATABASE_ID,
+      filter: {
+        property: exerciseLogProp("exerciseRelation"),
+        relation: { contains: exerciseId },
+      },
+      filter_properties: [exerciseLogProp("rest")],
+      page_size: 1,
+    }),
+  );
+  return envelope.results.length > 0;
+}
+
+/**
+ * 種目マスタの削除 (アーカイブ)。
+ * 記録が紐づいている種目は履歴の整合性が壊れるため 409 で拒否する。
+ */
+export async function deleteExercise(
+  exerciseId: string,
+): Promise<DeleteExerciseResult> {
+  await notionClient.pages
+    .retrieve({ page_id: exerciseId, filter_properties: ["name"] })
+    .catch(() => {
+      throw new NotFoundError(`Exercise not found: ${exerciseId}`);
+    });
+
+  if (await hasExerciseLogs(exerciseId)) {
+    throw new AppError(
+      "この種目には記録が残っているため削除できません",
+      409,
+      "EXERCISE_HAS_LOGS",
+    );
+  }
+
+  await notionClient.pages.update({ page_id: exerciseId, in_trash: true });
+  return { id: exerciseId };
 }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   EXERCISE_GUIDE_LINE_REPS,
+  EXERCISE_RM_TYPES,
   EXERCISE_TREND_PERIODS,
 } from "@repo/types/notion-training-app";
 import { paginationQuerySchema } from "../index";
@@ -77,6 +78,35 @@ export const exerciseTrendsQuerySchema = z.object({
 });
 
 export type ExerciseTrendsQuery = z.infer<typeof exerciseTrendsQuerySchema>;
+
+/**
+ * 種目マスタ 作成の入力。
+ * 目標重量は別 DB (GOAL_WEIGHTS) のリレーション + ロールアップのため
+ * ここでは扱わない (Notion 側で管理)。
+ */
+export const createExerciseSchema = z.object({
+  name: z.string().trim().min(1),
+  /** 対象部位 (multi_select の値)。BODY_PARTS の value を渡す */
+  musclesTypes: z.array(z.string().min(1)).optional().default([]),
+  rmTypes: z.enum(EXERCISE_RM_TYPES).nullable().optional().default(null),
+  /** デフォルト休憩時間 (秒) */
+  rest: z.coerce.number().min(0).nullable().optional().default(null),
+});
+
+export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;
+
+/**
+ * 種目マスタ 更新の入力。
+ * undefined のフィールドは「変更しない」。null / 空配列は「クリアする」。
+ */
+export const updateExerciseSchema = z.object({
+  name: z.string().trim().min(1).optional(),
+  musclesTypes: z.array(z.string().min(1)).optional(),
+  rmTypes: z.enum(EXERCISE_RM_TYPES).nullable().optional(),
+  rest: z.coerce.number().min(0).nullable().optional(),
+});
+
+export type UpdateExerciseInput = z.infer<typeof updateExerciseSchema>;
 
 export type ExerciseDetailParams = z.infer<typeof exerciseDetailParamsSchema>;
 

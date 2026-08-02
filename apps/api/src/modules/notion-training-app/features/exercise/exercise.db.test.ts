@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildExerciseTrendPoints, trendPeriodStart } from "./exercise.db";
+import {
+  buildCreateExerciseProperties,
+  buildExerciseTrendPoints,
+  buildUpdateExerciseProperties,
+  trendPeriodStart,
+} from "./exercise.db";
 import type { ExerciseLogWithSetsItemResponse } from "@repo/types/notion-training-app";
 
 const logFixture = (
@@ -81,5 +86,51 @@ describe("buildExerciseTrendPoints", () => {
       "older",
       "newer",
     ]);
+  });
+});
+
+describe("buildCreateExerciseProperties", () => {
+  it("name 必須 + 任意フィールドは値があるときのみ送信する", () => {
+    const minimal = buildCreateExerciseProperties({
+      name: "ベンチプレス",
+      musclesTypes: [],
+      rmTypes: null,
+      rest: null,
+    });
+    expect(minimal).toEqual({
+      name: { title: [{ text: { content: "ベンチプレス" } }] },
+    });
+
+    const full = buildCreateExerciseProperties({
+      name: "ベンチプレス",
+      musclesTypes: ["chest", "triceps"],
+      rmTypes: "upperBody",
+      rest: 90,
+    });
+    expect(full.musclesTypes).toEqual({
+      multi_select: [{ name: "chest" }, { name: "triceps" }],
+    });
+    expect(full.rmTypes).toEqual({ select: { name: "upperBody" } });
+    expect(full.rest).toEqual({ number: 90 });
+  });
+});
+
+describe("buildUpdateExerciseProperties", () => {
+  it("undefined のフィールドは含めない (変更しない)", () => {
+    expect(buildUpdateExerciseProperties({})).toEqual({});
+    expect(buildUpdateExerciseProperties({ name: "スクワット" })).toEqual({
+      name: { title: [{ text: { content: "スクワット" } }] },
+    });
+  });
+
+  it("null / 空配列はクリアとして送信する", () => {
+    const properties = buildUpdateExerciseProperties({
+      musclesTypes: [],
+      rmTypes: null,
+      rest: null,
+    });
+    expect(properties.musclesTypes).toEqual({ multi_select: [] });
+    expect(properties.rmTypes).toEqual({ select: null });
+    expect(properties.rest).toEqual({ number: null });
   });
 });

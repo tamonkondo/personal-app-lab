@@ -4,13 +4,19 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@repo/ui";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { EXERCISE_TREND_PERIOD_OPTIONS } from "../../features/exercise/constants/constants";
 import { useExerciseDetailParams } from "../../features/exercise/hooks/useExerciseDetailParams";
 import { useMemo } from "react";
@@ -22,16 +28,22 @@ import {
 import ExerciseDetailHeader from "../../features/exercise/components/ExerciseDetailHeader";
 import ExerciseTrendChart from "../../features/exercise/components/ExerciseTrendChart";
 import { useExerciseDetail } from "../../features/exercise/hooks/useExerciseDetail";
+import { useExerciseMutations } from "../../features/exercise/hooks/useExerciseMutations";
 import { useExerciseTrends } from "../../features/exercise/hooks/useExerciseTrends";
 import AlertCard from "../../components/AlertCard";
 import ExerciseDetailMain from "../../features/exercise/components/ExerciseDetailMain";
 import DetailSkeleton from "../../components/DetailPageSkeleton";
 import { Spinner } from "@repo/ui";
+import { useState } from "react";
 
 const ExerciseLogDetail = () => {
   const { trendPeriod, exerciseGuideLineRep, setSearchParamsWithReset } =
     useExerciseDetailParams();
   const { exerciseId } = useParams();
+  const navigate = useNavigate();
+  const { deleteExercise, isSubmitting } = useExerciseMutations();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   if (!exerciseId) return <Navigate replace to="/" />;
 
   const {
@@ -253,22 +265,87 @@ const ExerciseLogDetail = () => {
                 <CardTitle>操作</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full">この種目で記録作成</Button>
+                <Button
+                  className="w-full"
+                  onClick={() =>
+                    navigate("/training-logs/new", {
+                      state: {
+                        presetExercise: {
+                          exerciseId,
+                          exerciseName:
+                            exerciseDetailData.exerciseName ||
+                            exerciseDetailData.trainingName,
+                        },
+                      },
+                    })
+                  }
+                >
+                  この種目で記録作成
+                </Button>
                 <Link to={`/exercises/${exerciseId}/edit`}>
                   <Button variant="outline" className="w-full">
-                    目標重量を更新
+                    種目を編集
                   </Button>
                 </Link>
                 <Button
                   variant="outline"
                   className="w-full text-red-600 hover:text-red-700"
+                  onClick={() => {
+                    setDeleteError(null);
+                    setConfirmOpen(true);
+                  }}
                 >
-                  種目ログを削除
+                  種目を削除
                 </Button>
               </CardContent>
             </Card>
           </div>
       </section>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>種目を削除しますか？</DialogTitle>
+            <DialogDescription>
+              「
+              {exerciseDetailData.exerciseName ||
+                exerciseDetailData.trainingName}
+              」を削除します。記録が紐づいている種目は削除できません。
+            </DialogDescription>
+          </DialogHeader>
+
+          {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              disabled={isSubmitting}
+            >
+              キャンセル
+            </Button>
+            <Button
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={async () => {
+                setDeleteError(null);
+                try {
+                  await deleteExercise(exerciseId);
+                  navigate("/exercises");
+                } catch (deleteFailure) {
+                  setDeleteError(
+                    deleteFailure instanceof Error
+                      ? deleteFailure.message
+                      : "削除に失敗しました",
+                  );
+                }
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "削除中..." : "削除する"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

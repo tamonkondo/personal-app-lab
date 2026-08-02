@@ -6,17 +6,31 @@ import {
   CardTitle,
   Input,
   MultipleSelector,
-  Textarea,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   type Option,
 } from "@repo/ui";
 import type { ExerciseDetail } from "@repo/types/notion-training-app";
+import {
+  EXERCISE_RM_TYPES,
+  type ExerciseRmTypes,
+} from "@repo/types/notion-training-app";
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import PageHero, { HeroLinkButton } from "../components/PageHero";
 import AlertCard from "../components/AlertCard";
 import DetailSkeleton from "../components/DetailPageSkeleton";
 import BODY_PARTS from "../constants/parts";
 import { useExerciseDetail } from "../features/exercise/hooks/useExerciseDetail";
+import { useExerciseMutations } from "../features/exercise/hooks/useExerciseMutations";
+
+const RM_TYPE_LABELS: Record<ExerciseRmTypes, string> = {
+  upperBody: "上半身",
+  lowerBody: "下半身",
+};
 
 const toPartOptions = (parts: string[]): Option[] =>
   parts.map((part) => {
@@ -32,30 +46,40 @@ const getExerciseName = (data: ExerciseDetail) =>
 
 const ExerciseEdit = () => {
   const { exerciseId } = useParams();
+  const navigate = useNavigate();
   const {
     error,
     exerciseDetail,
     isLoading,
     mutate: mutateExerciseDetail,
   } = useExerciseDetail(exerciseId);
+  const { updateExercise, isSubmitting } = useExerciseMutations();
   const [exerciseName, setExerciseName] = useState("");
   const [selectedParts, setSelectedParts] = useState<Option[]>([]);
-  const [goalWeight, setGoalWeight] = useState("");
-  const [memo, setMemo] = useState("");
+  const [defaultRest, setDefaultRest] = useState("");
+  const [rmType, setRmType] = useState<ExerciseRmTypes | "">("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!exerciseDetail) return;
 
     setExerciseName(getExerciseName(exerciseDetail));
     setSelectedParts(toPartOptions(exerciseDetail.musclesTypes));
-    setGoalWeight(String(exerciseDetail.maxGoalWeight ?? ""));
-    setMemo("");
+    setDefaultRest(
+      exerciseDetail.rest !== null ? String(exerciseDetail.rest) : "",
+    );
+    setRmType(exerciseDetail.rmTypes ?? "");
   }, [exerciseDetail]);
 
   const summaryItems = useMemo(
     () => [
       { label: "対象部位", value: `${selectedParts.length}` },
-      { label: "目標重量", value: goalWeight ? `${goalWeight}kg` : "未入力" },
+      {
+        label: "目標重量 (Notion管理)",
+        value: exerciseDetail?.maxGoalWeight
+          ? `${exerciseDetail.maxGoalWeight}kg`
+          : "未設定",
+      },
       {
         label: "現在MAX重量",
         value: exerciseDetail
@@ -63,7 +87,7 @@ const ExerciseEdit = () => {
           : "読み込み中",
       },
     ],
-    [exerciseDetail, goalWeight, selectedParts.length],
+    [exerciseDetail, selectedParts.length],
   );
 
   if (!exerciseId) return <Navigate replace to="/exercises" />;
@@ -73,8 +97,32 @@ const ExerciseEdit = () => {
 
     setExerciseName(getExerciseName(exerciseDetail));
     setSelectedParts(toPartOptions(exerciseDetail.musclesTypes));
-    setGoalWeight(String(exerciseDetail.maxGoalWeight ?? ""));
-    setMemo("");
+    setDefaultRest(
+      exerciseDetail.rest !== null ? String(exerciseDetail.rest) : "",
+    );
+    setRmType(exerciseDetail.rmTypes ?? "");
+  };
+
+  const canSubmit = exerciseName.trim().length > 0;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitError(null);
+    try {
+      await updateExercise(exerciseId, {
+        name: exerciseName.trim(),
+        musclesTypes: selectedParts.map((part) => part.value),
+        rmTypes: rmType === "" ? null : rmType,
+        rest: defaultRest.trim() === "" ? null : Number(defaultRest),
+      });
+      navigate(`/exercises/${exerciseId}`);
+    } catch (submitFailure) {
+      setSubmitError(
+        submitFailure instanceof Error
+          ? submitFailure.message
+          : "更新に失敗しました",
+      );
+    }
   };
 
   if (isLoading) return <DetailSkeleton />;
@@ -110,18 +158,28 @@ const ExerciseEdit = () => {
       <PageHero
         badge="Edit Exercise"
         title="エクササイズ種目を編集"
-        description="取得済みの種目情報をもとに、種目名、対象部位、目標重量を編集します。"
+        description="取得済みの種目情報をもとに、種目名、対象部位、休憩時間、RMタイプを編集します。"
         actions={
           <>
             <HeroLinkButton to={`/exercises/${exerciseId}`} variant="outline">
               詳細へ戻る
             </HeroLinkButton>
-            <Button className="w-full sm:w-auto" disabled>
-              変更を保存
+            <Button
+              className="w-full sm:w-auto"
+              disabled={!canSubmit || isSubmitting}
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? "保存中..." : "変更を保存"}
             </Button>
           </>
         }
       />
+
+      {submitError && (
+        <section className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {submitError}
+        </section>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-3">
           {summaryItems.map((item) => (
@@ -173,26 +231,47 @@ const ExerciseEdit = () => {
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium">
-                    目標重量
+                    休憩時間（秒）
                   </label>
                   <Input
                     type="number"
-                    inputMode="decimal"
-                    placeholder="100"
-                    value={goalWeight}
-                    onChange={(event) => setGoalWeight(event.target.value)}
+                    inputMode="numeric"
+                    placeholder="90"
+                    value={defaultRest}
+                    onChange={(event) => setDefaultRest(event.target.value)}
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium">メモ</label>
-                <Textarea
-                  placeholder="フォーム、注意点、補助種目との関係など"
-                  value={memo}
-                  onChange={(event) => setMemo(event.target.value)}
-                />
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    RMタイプ（次回セット目安の計算に使用）
+                  </label>
+                  <Select
+                    value={rmType}
+                    onValueChange={(value) =>
+                      setRmType(value as ExerciseRmTypes)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="上半身 / 下半身" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXERCISE_RM_TYPES.map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {RM_TYPE_LABELS[value]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              <p className="rounded-2xl border bg-zinc-50 p-4 text-sm text-zinc-500">
+                目標重量は Notion の GOAL_WEIGHTS
+                データベースで管理しているため、この画面では編集できません。
+              </p>
             </CardContent>
           </Card>
 
@@ -210,8 +289,12 @@ const ExerciseEdit = () => {
                 <Button variant="outline" className="w-full" onClick={resetDraft}>
                   変更を破棄
                 </Button>
-                <Button className="w-full" disabled>
-                  変更を保存
+                <Button
+                  className="w-full"
+                  disabled={!canSubmit || isSubmitting}
+                  onClick={handleSubmit}
+                >
+                  {isSubmitting ? "保存中..." : "変更を保存"}
                 </Button>
               </CardContent>
             </Card>

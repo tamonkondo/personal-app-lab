@@ -33,7 +33,19 @@ notionTrainingAppRouter.get(
   "/training-logs/:id",
   trainingLogHandlers.getTrainingLogDetail,
 );
-// 最新のトレーニングログの取得
+// 種目マスタの作成
+notionTrainingAppRouter.post("/exercise", exerciseHandlers.createExercise);
+// 種目マスタの更新
+notionTrainingAppRouter.patch(
+  "/exercise/:exerciseId",
+  exerciseHandlers.updateExercise,
+);
+// 種目マスタの削除 (記録が紐づく種目は 409)
+notionTrainingAppRouter.delete(
+  "/exercise/:exerciseId",
+  exerciseHandlers.deleteExercise,
+);
+// 種目名一覧の取得
 notionTrainingAppRouter.get(
   "/exercise/names",
   exerciseHandlers.getExerciseNames,
