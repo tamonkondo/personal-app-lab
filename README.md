@@ -27,6 +27,7 @@
 
 - Node.js + Express
 - ビルド: tsup
+- テスト: Vitest
 - データソース: Notion API (@notionhq/client)
 - エラートラッキング: Sentry (設定ファイルあり)
 
@@ -41,15 +42,17 @@
 
 - Docker / Docker Compose
 - Nginx
+- CI: GitHub Actions (typecheck / test / build)
 
 ## 今後の実装タスク・残課題
 
 ### TODO
 
 - [✅️] APIをUI側につなぎこみをする。
-- [ ] トレーニング種目詳細の最近の傾向を期間を調整しながらAPIを作成する。
-- [ ] グラフのUI追加
-- [ ] 各記録のCRUDAPIとUIを作成
+- [✅️] トレーニング種目詳細の最近の傾向を期間を調整しながらAPIを作成する。
+- [✅️] グラフのUI追加
+- [✅️] 各記録のCRUDAPIとUIを作成（トレーニング記録の作成/更新/削除）
+- [ ] 種目マスタのCRUD APIとUIを作成
 - [ ] UI改善（導線整理）
 - [ ] GCPとNeonにデプロイ
 
