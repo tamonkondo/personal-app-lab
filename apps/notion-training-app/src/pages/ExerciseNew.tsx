@@ -11,17 +11,24 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  type Option,
 } from "@repo/ui";
 import {
   EXERCISE_RM_TYPES,
   type ExerciseRmTypes,
 } from "@repo/types/notion-training-app";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import BODY_PARTS from "../constants/parts";
 import PageHero, { HeroLinkButton } from "../components/PageHero";
 import { useExerciseMutations } from "../features/exercise/hooks/useExerciseMutations";
+import {
+  emptyExerciseFormValues,
+  exerciseFormSchema,
+  toExerciseInput,
+  type ExerciseFormValues,
+} from "../features/exercise/exerciseForm.schema";
 
 const RM_TYPE_LABELS: Record<ExerciseRmTypes, string> = {
   upperBody: "上半身",
@@ -31,43 +38,33 @@ const RM_TYPE_LABELS: Record<ExerciseRmTypes, string> = {
 const ExerciseNew = () => {
   const navigate = useNavigate();
   const { createExercise, isSubmitting } = useExerciseMutations();
-  const [exerciseName, setExerciseName] = useState("");
-  const [selectedParts, setSelectedParts] = useState<Option[]>([]);
-  const [defaultRest, setDefaultRest] = useState("90");
-  const [rmType, setRmType] = useState<ExerciseRmTypes | "">("");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const summaryItems = useMemo(
-    () => [
-      { label: "対象部位", value: `${selectedParts.length}` },
-      { label: "休憩時間", value: defaultRest ? `${defaultRest}秒` : "未入力" },
-      {
-        label: "RMタイプ",
-        value: rmType === "" ? "未設定" : RM_TYPE_LABELS[rmType],
-      },
-    ],
-    [defaultRest, rmType, selectedParts.length],
-  );
+  const form = useForm<ExerciseFormValues>({
+    resolver: zodResolver(exerciseFormSchema),
+    defaultValues: emptyExerciseFormValues(),
+    mode: "onChange",
+  });
+  const { register, control, watch, reset, formState } = form;
+  const [selectedParts, defaultRest, rmType] = watch([
+    "musclesTypes",
+    "rest",
+    "rmType",
+  ]);
 
-  const clearDraft = () => {
-    setExerciseName("");
-    setSelectedParts([]);
-    setDefaultRest("90");
-    setRmType("");
-  };
+  const summaryItems = [
+    { label: "対象部位", value: `${selectedParts.length}` },
+    { label: "休憩時間", value: defaultRest ? `${defaultRest}秒` : "未入力" },
+    {
+      label: "RMタイプ",
+      value: rmType === "" ? "未設定" : RM_TYPE_LABELS[rmType],
+    },
+  ];
 
-  const canSubmit = exerciseName.trim().length > 0;
-
-  const handleSubmit = async () => {
-    if (!canSubmit) return;
+  const handleSubmit = form.handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      const created = await createExercise({
-        name: exerciseName.trim(),
-        musclesTypes: selectedParts.map((part) => part.value),
-        rmTypes: rmType === "" ? null : rmType,
-        rest: defaultRest.trim() === "" ? null : Number(defaultRest),
-      });
+      const created = await createExercise(toExerciseInput(values));
       navigate(`/exercises/${created.id}`);
     } catch (submitFailure) {
       setSubmitError(
@@ -76,7 +73,7 @@ const ExerciseNew = () => {
           : "登録に失敗しました",
       );
     }
-  };
+  });
 
   return (
     <>
@@ -91,7 +88,7 @@ const ExerciseNew = () => {
             </HeroLinkButton>
             <Button
               className="w-full sm:w-auto"
-              disabled={!canSubmit || isSubmitting}
+              disabled={!formState.isValid || isSubmitting}
               onClick={handleSubmit}
             >
               {isSubmitting ? "登録中..." : "登録する"}
@@ -130,11 +127,12 @@ const ExerciseNew = () => {
           <CardContent className="space-y-5">
             <div>
               <label className="mb-2 block text-sm font-medium">種目名</label>
-              <Input
-                placeholder="ベンチプレス"
-                value={exerciseName}
-                onChange={(event) => setExerciseName(event.target.value)}
-              />
+              <Input placeholder="ベンチプレス" {...register("name")} />
+              {formState.errors.name?.message && (
+                <p className="mt-1 text-sm text-red-600">
+                  {formState.errors.name.message}
+                </p>
+              )}
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -142,16 +140,22 @@ const ExerciseNew = () => {
                 <label className="mb-2 block text-sm font-medium">
                   対象部位
                 </label>
-                <MultipleSelector
-                  value={selectedParts}
-                  defaultOptions={BODY_PARTS}
-                  placeholder="胸、肩、上腕三頭筋..."
-                  onChange={setSelectedParts}
-                  emptyIndicator={
-                    <p className="text-center text-sm text-zinc-500">
-                      該当する部位がありません
-                    </p>
-                  }
+                <Controller
+                  control={control}
+                  name="musclesTypes"
+                  render={({ field }) => (
+                    <MultipleSelector
+                      value={field.value}
+                      defaultOptions={BODY_PARTS}
+                      placeholder="胸、肩、上腕三頭筋..."
+                      onChange={field.onChange}
+                      emptyIndicator={
+                        <p className="text-center text-sm text-zinc-500">
+                          該当する部位がありません
+                        </p>
+                      }
+                    />
+                  )}
                 />
               </div>
               <div>
@@ -162,9 +166,13 @@ const ExerciseNew = () => {
                   type="number"
                   inputMode="numeric"
                   placeholder="90"
-                  value={defaultRest}
-                  onChange={(event) => setDefaultRest(event.target.value)}
+                  {...register("rest")}
                 />
+                {formState.errors.rest?.message && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {formState.errors.rest.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -173,21 +181,24 @@ const ExerciseNew = () => {
                 <label className="mb-2 block text-sm font-medium">
                   RMタイプ（次回セット目安の計算に使用）
                 </label>
-                <Select
-                  value={rmType}
-                  onValueChange={(value) => setRmType(value as ExerciseRmTypes)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="上半身 / 下半身" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EXERCISE_RM_TYPES.map((value) => (
-                      <SelectItem key={value} value={value}>
-                        {RM_TYPE_LABELS[value]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="rmType"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="上半身 / 下半身" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EXERCISE_RM_TYPES.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {RM_TYPE_LABELS[value]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
 
@@ -209,12 +220,16 @@ const ExerciseNew = () => {
                   一覧へ戻る
                 </Button>
               </Link>
-              <Button variant="outline" className="w-full" onClick={clearDraft}>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => reset(emptyExerciseFormValues())}
+              >
                 下書きクリア
               </Button>
               <Button
                 className="w-full"
-                disabled={!canSubmit || isSubmitting}
+                disabled={!formState.isValid || isSubmitting}
                 onClick={handleSubmit}
               >
                 {isSubmitting ? "登録中..." : "登録する"}

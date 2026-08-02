@@ -1,49 +1,21 @@
-import { useMemo, useState } from "react";
-import type {
-  CreateTrainingLogInput,
-  UpdateTrainingLogInput,
-} from "@repo/schemas/notion-training-app";
+import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { TrainingLogDetail } from "@repo/types/notion-training-app";
+import {
+  emptyExerciseValues,
+  emptySetValues,
+  emptyTrainingLogFormValues,
+  exerciseDraftSchema,
+  detailToFormValues,
+  trainingLogFormSchema,
+  isFilledSet,
+  type ExerciseFieldValues,
+  type TrainingLogFormValues,
+} from "../trainingLogForm.schema";
 
-export type ExerciseSetDraft = {
-  id: string;
-  /** 既存セットの Notion ページ ID (新規は null) */
-  setId: string | null;
-  kg: string;
-  rep: string;
-  memo: string;
-};
-
-export type TrainingExerciseDraft = {
-  id: string;
-  /** 既存の種目ログの Notion ページ ID (新規は null) */
-  logId: string | null;
-  exerciseId: string;
-  exerciseName: string;
-  rest: string;
-  memo: string;
-  sets: ExerciseSetDraft[];
-};
-
-const createSetDraft = (): ExerciseSetDraft => ({
-  id: crypto.randomUUID(),
-  setId: null,
-  kg: "",
-  rep: "",
-  memo: "",
-});
-
-const createExerciseDraft = (): TrainingExerciseDraft => ({
-  id: crypto.randomUUID(),
-  logId: null,
-  exerciseId: "",
-  exerciseName: "",
-  rest: "90",
-  memo: "",
-  sets: [createSetDraft()],
-});
-
-export const getMaxWeight = (sets: ExerciseSetDraft[]) => {
+/** セット配列 → 最大重量 (未入力のみなら null) */
+export const getMaxWeight = (sets: { kg: string }[]) => {
   const weights = sets
     .map((set) => Number(set.kg))
     .filter((weight) => Number.isFinite(weight) && weight > 0);
@@ -51,162 +23,84 @@ export const getMaxWeight = (sets: ExerciseSetDraft[]) => {
   return weights.length > 0 ? Math.max(...weights) : null;
 };
 
-export const getCompletedSetCount = (sets: ExerciseSetDraft[]) =>
-  sets.filter((set) => Number(set.kg) > 0 || Number(set.rep) > 0).length;
-
-/** kg / rep の両方が空のセットは未入力扱いで送信対象から外す */
-const toFilledSets = (sets: ExerciseSetDraft[]) =>
-  sets.filter((set) => set.kg.trim() !== "" || set.rep.trim() !== "");
+/** 入力済みセット数 */
+export const getCompletedSetCount = (sets: { kg: string; rep: string }[]) =>
+  sets.filter(isFilledSet).length;
 
 /**
- * トレーニング記録 作成フォームの状態管理。
- * (日付は「当日記録のみ」の運用のため入力を持たない)
+ * トレーニング記録 作成/編集フォームの状態管理 (react-hook-form + zod)。
+ * - メインフォーム: 体重 / メモ / 種目リスト (useFieldArray)
+ * - 種目ダイアログ: 独立したサブフォーム。保存時に zod 検証し、
+ *   メインフォームの field array へ append / update する
  */
 export function useTrainingLogForm() {
-  const [bodyWeight, setBodyWeight] = useState("");
-  const [memo, setMemo] = useState("");
-  const [exercises, setExercises] = useState<TrainingExerciseDraft[]>([]);
+  const form = useForm<TrainingLogFormValues>({
+    resolver: zodResolver(trainingLogFormSchema),
+    defaultValues: emptyTrainingLogFormValues(),
+    mode: "onChange",
+  });
+  const exercisesArray = useFieldArray({
+    control: form.control,
+    name: "exercises",
+  });
+
+  // 種目ダイアログのサブフォーム (キャンセルでメインに影響しない)
+  const draftForm = useForm<ExerciseFieldValues>({
+    resolver: zodResolver(exerciseDraftSchema),
+    defaultValues: emptyExerciseValues(),
+    mode: "onChange",
+  });
+  const draftSets = useFieldArray({
+    control: draftForm.control,
+    name: "sets",
+  });
+
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [exerciseDraft, setExerciseDraft] = useState(createExerciseDraft);
-
-  const totalSets = useMemo(
-    () =>
-      exercises.reduce(
-        (total, exercise) => total + getCompletedSetCount(exercise.sets),
-        0,
-      ),
-    [exercises],
-  );
-
-  const maxWeightExerciseCount = useMemo(
-    () =>
-      exercises.filter((exercise) => getMaxWeight(exercise.sets) !== null)
-        .length,
-    [exercises],
-  );
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const openNewExerciseDialog = () => {
-    setEditingId(null);
-    setExerciseDraft(createExerciseDraft());
+    setEditingIndex(null);
+    draftForm.reset(emptyExerciseValues());
     setDialogOpen(true);
   };
 
-  const openEditExerciseDialog = (exercise: TrainingExerciseDraft) => {
-    setEditingId(exercise.id);
-    setExerciseDraft({
-      ...exercise,
-      sets: exercise.sets.map((set) => ({ ...set })),
-    });
+  const openEditExerciseDialog = (index: number) => {
+    setEditingIndex(index);
+    draftForm.reset(structuredClone(form.getValues(`exercises.${index}`)));
     setDialogOpen(true);
   };
 
-  const saveExerciseDraft = () => {
-    if (!exerciseDraft.exerciseId) return;
-
-    if (editingId) {
-      setExercises((current) =>
-        current.map((exercise) =>
-          exercise.id === editingId ? exerciseDraft : exercise,
-        ),
-      );
+  /** ダイアログの内容を検証してメインフォームへ反映 */
+  const saveExerciseDraft = draftForm.handleSubmit((values) => {
+    if (editingIndex !== null) {
+      exercisesArray.update(editingIndex, values);
     } else {
-      setExercises((current) => [...current, exerciseDraft]);
+      exercisesArray.append(values);
     }
-
     setDialogOpen(false);
-  };
+  });
 
-  const removeExercise = (exerciseId: string) => {
-    setExercises((current) =>
-      current.filter((item) => item.id !== exerciseId),
-    );
-  };
-
-  const updateDraftSet = (
-    setId: string,
-    field: keyof Omit<ExerciseSetDraft, "id">,
-    value: string,
-  ) => {
-    setExerciseDraft((current) => ({
-      ...current,
-      sets: current.sets.map((set) =>
-        set.id === setId ? { ...set, [field]: value } : set,
-      ),
-    }));
+  const removeExercise = (index: number) => {
+    exercisesArray.remove(index);
   };
 
   const addDraftSet = () => {
-    setExerciseDraft((current) => ({
-      ...current,
-      sets: [...current.sets, createSetDraft()],
-    }));
+    draftSets.append(emptySetValues());
   };
 
-  const removeDraftSet = (setId: string) => {
-    setExerciseDraft((current) => ({
-      ...current,
-      sets: current.sets.filter((item) => item.id !== setId),
-    }));
-  };
-
-  const canSubmit =
-    exercises.length > 0 &&
-    exercises.every((exercise) => toFilledSets(exercise.sets).length > 0);
-
-  /** API 入力へ変換。送信できない状態なら null */
-  const buildPayload = (): CreateTrainingLogInput | null => {
-    if (!canSubmit) return null;
-    return {
-      bodyWeight: bodyWeight.trim() === "" ? null : Number(bodyWeight),
-      memo,
-      exercises: exercises.map((exercise) => ({
-        exerciseId: exercise.exerciseId,
-        rest: exercise.rest.trim() === "" ? null : Number(exercise.rest),
-        memo: exercise.memo,
-        sets: toFilledSets(exercise.sets).map((set) => ({
-          kg: Number(set.kg) || 0,
-          rep: Number(set.rep) || 0,
-          memo: set.memo,
-        })),
-      })),
-    };
+  const removeDraftSet = (index: number) => {
+    draftSets.remove(index);
   };
 
   /**
    * 取得済みの詳細でフォームを初期化。
-   * asTemplate: true なら logId / setId を持たせない
-   * (「同じ内容で記録作成」用。送信するとすべて新規作成になる)
+   * asTemplate: true なら logId / setId を持たせない (「同じ内容で記録作成」用)
    */
   const hydrate = (
     detail: TrainingLogDetail,
     options?: { asTemplate?: boolean },
   ) => {
-    const asTemplate = options?.asTemplate ?? false;
-    setBodyWeight(detail.bodyWeight ? String(detail.bodyWeight) : "");
-    setMemo(asTemplate ? "" : (detail.memo ?? ""));
-    setExercises(
-      detail.exercises.map((exercise) => ({
-        id: crypto.randomUUID(),
-        logId: asTemplate ? null : exercise.exerciseSets.exerciseLogId,
-        exerciseId: exercise.exerciseSets.exerciseId,
-        exerciseName: exercise.trainingName,
-        rest: exercise.exerciseSets.rest
-          ? String(exercise.exerciseSets.rest)
-          : "",
-        memo: asTemplate ? "" : (exercise.memo ?? ""),
-        sets:
-          exercise.exerciseSets.sets.length > 0
-            ? exercise.exerciseSets.sets.map((set) => ({
-                id: crypto.randomUUID(),
-                setId: asTemplate ? null : set.id || null,
-                kg: set.kg ? String(set.kg) : "",
-                rep: set.rep ? String(set.rep) : "",
-                memo: asTemplate ? "" : (set.memo ?? ""),
-              }))
-            : [createSetDraft()],
-      })),
-    );
+    form.reset(detailToFormValues(detail, options));
   };
 
   /** 種目を1つプリセットして開始 (「この種目で記録作成」用) */
@@ -214,62 +108,29 @@ export function useTrainingLogForm() {
     exerciseId: string;
     exerciseName: string;
   }) => {
-    setExercises((current) => [
-      ...current,
-      {
-        ...createExerciseDraft(),
-        exerciseId: preset.exerciseId,
-        exerciseName: preset.exerciseName,
-      },
-    ]);
-  };
-
-  /** 更新 API 入力へ変換。既存要素は logId / setId を付与。送信できない状態なら null */
-  const buildUpdatePayload = (): UpdateTrainingLogInput | null => {
-    if (!canSubmit) return null;
-    return {
-      bodyWeight: bodyWeight.trim() === "" ? null : Number(bodyWeight),
-      memo,
-      exercises: exercises.map((exercise) => ({
-        ...(exercise.logId ? { logId: exercise.logId } : {}),
-        exerciseId: exercise.exerciseId,
-        rest: exercise.rest.trim() === "" ? null : Number(exercise.rest),
-        memo: exercise.memo,
-        sets: toFilledSets(exercise.sets).map((set) => ({
-          ...(set.setId ? { setId: set.setId } : {}),
-          kg: Number(set.kg) || 0,
-          rep: Number(set.rep) || 0,
-          memo: set.memo,
-        })),
-      })),
-    };
+    exercisesArray.append({
+      ...emptyExerciseValues(),
+      exerciseId: preset.exerciseId,
+      exerciseName: preset.exerciseName,
+    });
   };
 
   return {
-    bodyWeight,
-    setBodyWeight,
-    memo,
-    setMemo,
-    exercises,
-    totalSets,
-    maxWeightExerciseCount,
+    form,
+    exercisesArray,
+    draftForm,
+    draftSets,
     dialogOpen,
     setDialogOpen,
-    editingId,
-    exerciseDraft,
-    setExerciseDraft,
+    editingIndex,
     openNewExerciseDialog,
     openEditExerciseDialog,
     saveExerciseDraft,
     removeExercise,
-    updateDraftSet,
     addDraftSet,
     removeDraftSet,
-    canSubmit,
-    buildPayload,
     hydrate,
     addExercisePreset,
-    buildUpdatePayload,
   };
 }
 

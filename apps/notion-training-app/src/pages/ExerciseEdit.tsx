@@ -11,14 +11,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  type Option,
 } from "@repo/ui";
-import type { ExerciseDetail } from "@repo/types/notion-training-app";
 import {
   EXERCISE_RM_TYPES,
   type ExerciseRmTypes,
 } from "@repo/types/notion-training-app";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import PageHero, { HeroLinkButton } from "../components/PageHero";
 import AlertCard from "../components/AlertCard";
@@ -26,23 +26,18 @@ import DetailSkeleton from "../components/DetailPageSkeleton";
 import BODY_PARTS from "../constants/parts";
 import { useExerciseDetail } from "../features/exercise/hooks/useExerciseDetail";
 import { useExerciseMutations } from "../features/exercise/hooks/useExerciseMutations";
+import {
+  detailToExerciseFormValues,
+  emptyExerciseFormValues,
+  exerciseFormSchema,
+  toExerciseInput,
+  type ExerciseFormValues,
+} from "../features/exercise/exerciseForm.schema";
 
 const RM_TYPE_LABELS: Record<ExerciseRmTypes, string> = {
   upperBody: "上半身",
   lowerBody: "下半身",
 };
-
-const toPartOptions = (parts: string[]): Option[] =>
-  parts.map((part) => {
-    const option = BODY_PARTS.find(
-      (bodyPart) => bodyPart.value === part || bodyPart.label === part,
-    );
-
-    return option ?? { value: part, label: part };
-  });
-
-const getExerciseName = (data: ExerciseDetail) =>
-  data.exerciseName || data.trainingName || "";
 
 const ExerciseEdit = () => {
   const { exerciseId } = useParams();
@@ -54,67 +49,45 @@ const ExerciseEdit = () => {
     mutate: mutateExerciseDetail,
   } = useExerciseDetail(exerciseId);
   const { updateExercise, isSubmitting } = useExerciseMutations();
-  const [exerciseName, setExerciseName] = useState("");
-  const [selectedParts, setSelectedParts] = useState<Option[]>([]);
-  const [defaultRest, setDefaultRest] = useState("");
-  const [rmType, setRmType] = useState<ExerciseRmTypes | "">("");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const form = useForm<ExerciseFormValues>({
+    resolver: zodResolver(exerciseFormSchema),
+    defaultValues: emptyExerciseFormValues(),
+    mode: "onChange",
+  });
+  const { register, control, watch, reset, formState } = form;
+  const selectedParts = watch("musclesTypes");
+
+  // 取得できたらフォームへプリフィル
   useEffect(() => {
-    if (!exerciseDetail) return;
+    if (exerciseDetail) {
+      reset(detailToExerciseFormValues(exerciseDetail));
+    }
+  }, [exerciseDetail, reset]);
 
-    setExerciseName(getExerciseName(exerciseDetail));
-    setSelectedParts(toPartOptions(exerciseDetail.musclesTypes));
-    setDefaultRest(
-      exerciseDetail.rest !== null ? String(exerciseDetail.rest) : "",
-    );
-    setRmType(exerciseDetail.rmTypes ?? "");
-  }, [exerciseDetail]);
-
-  const summaryItems = useMemo(
-    () => [
-      { label: "対象部位", value: `${selectedParts.length}` },
-      {
-        label: "目標重量 (Notion管理)",
-        value: exerciseDetail?.maxGoalWeight
-          ? `${exerciseDetail.maxGoalWeight}kg`
-          : "未設定",
-      },
-      {
-        label: "現在MAX重量",
-        value: exerciseDetail
-          ? `${exerciseDetail.currentMaxWeight ?? 0}kg`
-          : "読み込み中",
-      },
-    ],
-    [exerciseDetail, selectedParts.length],
-  );
+  const summaryItems = [
+    { label: "対象部位", value: `${selectedParts.length}` },
+    {
+      label: "目標重量 (Notion管理)",
+      value: exerciseDetail?.maxGoalWeight
+        ? `${exerciseDetail.maxGoalWeight}kg`
+        : "未設定",
+    },
+    {
+      label: "現在MAX重量",
+      value: exerciseDetail
+        ? `${exerciseDetail.currentMaxWeight ?? 0}kg`
+        : "読み込み中",
+    },
+  ];
 
   if (!exerciseId) return <Navigate replace to="/exercises" />;
 
-  const resetDraft = () => {
-    if (!exerciseDetail) return;
-
-    setExerciseName(getExerciseName(exerciseDetail));
-    setSelectedParts(toPartOptions(exerciseDetail.musclesTypes));
-    setDefaultRest(
-      exerciseDetail.rest !== null ? String(exerciseDetail.rest) : "",
-    );
-    setRmType(exerciseDetail.rmTypes ?? "");
-  };
-
-  const canSubmit = exerciseName.trim().length > 0;
-
-  const handleSubmit = async () => {
-    if (!canSubmit) return;
+  const handleSubmit = form.handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      await updateExercise(exerciseId, {
-        name: exerciseName.trim(),
-        musclesTypes: selectedParts.map((part) => part.value),
-        rmTypes: rmType === "" ? null : rmType,
-        rest: defaultRest.trim() === "" ? null : Number(defaultRest),
-      });
+      await updateExercise(exerciseId, toExerciseInput(values));
       navigate(`/exercises/${exerciseId}`);
     } catch (submitFailure) {
       setSubmitError(
@@ -123,7 +96,7 @@ const ExerciseEdit = () => {
           : "更新に失敗しました",
       );
     }
-  };
+  });
 
   if (isLoading) return <DetailSkeleton />;
 
@@ -166,7 +139,7 @@ const ExerciseEdit = () => {
             </HeroLinkButton>
             <Button
               className="w-full sm:w-auto"
-              disabled={!canSubmit || isSubmitting}
+              disabled={!formState.isValid || isSubmitting}
               onClick={handleSubmit}
             >
               {isSubmitting ? "保存中..." : "変更を保存"}
@@ -205,11 +178,12 @@ const ExerciseEdit = () => {
             <CardContent className="space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-medium">種目名</label>
-                <Input
-                  placeholder="ベンチプレス"
-                  value={exerciseName}
-                  onChange={(event) => setExerciseName(event.target.value)}
-                />
+                <Input placeholder="ベンチプレス" {...register("name")} />
+                {formState.errors.name?.message && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {formState.errors.name.message}
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
@@ -217,16 +191,22 @@ const ExerciseEdit = () => {
                   <label className="mb-2 block text-sm font-medium">
                     対象部位
                   </label>
-                  <MultipleSelector
-                    value={selectedParts}
-                    defaultOptions={BODY_PARTS}
-                    placeholder="胸、肩、上腕三頭筋..."
-                    onChange={setSelectedParts}
-                    emptyIndicator={
-                      <p className="text-center text-sm text-zinc-500">
-                        該当する部位がありません
-                      </p>
-                    }
+                  <Controller
+                    control={control}
+                    name="musclesTypes"
+                    render={({ field }) => (
+                      <MultipleSelector
+                        value={field.value}
+                        defaultOptions={BODY_PARTS}
+                        placeholder="胸、肩、上腕三頭筋..."
+                        onChange={field.onChange}
+                        emptyIndicator={
+                          <p className="text-center text-sm text-zinc-500">
+                            該当する部位がありません
+                          </p>
+                        }
+                      />
+                    )}
                   />
                 </div>
                 <div>
@@ -237,9 +217,13 @@ const ExerciseEdit = () => {
                     type="number"
                     inputMode="numeric"
                     placeholder="90"
-                    value={defaultRest}
-                    onChange={(event) => setDefaultRest(event.target.value)}
+                    {...register("rest")}
                   />
+                  {formState.errors.rest?.message && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formState.errors.rest.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -248,23 +232,27 @@ const ExerciseEdit = () => {
                   <label className="mb-2 block text-sm font-medium">
                     RMタイプ（次回セット目安の計算に使用）
                   </label>
-                  <Select
-                    value={rmType}
-                    onValueChange={(value) =>
-                      setRmType(value as ExerciseRmTypes)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="上半身 / 下半身" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EXERCISE_RM_TYPES.map((value) => (
-                        <SelectItem key={value} value={value}>
-                          {RM_TYPE_LABELS[value]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    control={control}
+                    name="rmType"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="上半身 / 下半身" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {EXERCISE_RM_TYPES.map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {RM_TYPE_LABELS[value]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -286,12 +274,18 @@ const ExerciseEdit = () => {
                     詳細へ戻る
                   </Button>
                 </Link>
-                <Button variant="outline" className="w-full" onClick={resetDraft}>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() =>
+                    reset(detailToExerciseFormValues(exerciseDetail))
+                  }
+                >
                   変更を破棄
                 </Button>
                 <Button
                   className="w-full"
-                  disabled={!canSubmit || isSubmitting}
+                  disabled={!formState.isValid || isSubmitting}
                   onClick={handleSubmit}
                 >
                   {isSubmitting ? "保存中..." : "変更を保存"}

@@ -6,6 +6,7 @@ import PageHero, { HeroLinkButton } from "../components/PageHero";
 import TrainingLogForm from "../features/trainingLog/components/TrainingLogForm";
 import { useTrainingLogForm } from "../features/trainingLog/hooks/useTrainingLogForm";
 import { useTrainingLogMutations } from "../features/trainingLog/hooks/useTrainingLogMutations";
+import { toCreateTrainingLogInput } from "../features/trainingLog/trainingLogForm.schema";
 
 /** 他ページから渡される初期化用の state */
 type TrainingLogNewLocationState = {
@@ -34,20 +35,18 @@ const TrainingLogNew = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSubmit = async () => {
-    const payload = form.buildPayload();
-    if (!payload) return;
-
+  // zod 検証を通過した値だけが submit ハンドラに渡る
+  const handleSubmit = form.form.handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      const created = await createTrainingLog(payload);
+      const created = await createTrainingLog(toCreateTrainingLogInput(values));
       navigate(`/training-logs/${created.id}`);
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : "登録に失敗しました",
       );
     }
-  };
+  });
 
   return (
     <>
@@ -62,7 +61,7 @@ const TrainingLogNew = () => {
             </HeroLinkButton>
             <Button
               className="w-full sm:w-auto"
-              disabled={!form.canSubmit || isSubmitting}
+              disabled={!form.form.formState.isValid || isSubmitting}
               onClick={handleSubmit}
             >
               {isSubmitting ? "登録中..." : "登録する"}

@@ -8,6 +8,7 @@ import TrainingLogForm from "../features/trainingLog/components/TrainingLogForm"
 import { useTrainingLogDetail } from "../features/trainingLog/hooks/useTrainingLogDetail";
 import { useTrainingLogForm } from "../features/trainingLog/hooks/useTrainingLogForm";
 import { useTrainingLogMutations } from "../features/trainingLog/hooks/useTrainingLogMutations";
+import { toUpdateTrainingLogInput } from "../features/trainingLog/trainingLogForm.schema";
 
 const TrainingLogEdit = () => {
   const { trainingId } = useParams();
@@ -55,13 +56,11 @@ const TrainingLogEdit = () => {
     );
   }
 
-  const handleSubmit = async () => {
-    const payload = form.buildUpdatePayload();
-    if (!payload) return;
-
+  // zod 検証を通過した値だけが submit ハンドラに渡る
+  const handleSubmit = form.form.handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      await updateTrainingLog(trainingId, payload);
+      await updateTrainingLog(trainingId, toUpdateTrainingLogInput(values));
       navigate(`/training-logs/${trainingId}`);
     } catch (submitFailure) {
       setSubmitError(
@@ -70,7 +69,7 @@ const TrainingLogEdit = () => {
           : "更新に失敗しました",
       );
     }
-  };
+  });
 
   return (
     <>
@@ -88,7 +87,7 @@ const TrainingLogEdit = () => {
             </HeroLinkButton>
             <Button
               className="w-full sm:w-auto"
-              disabled={!form.canSubmit || isSubmitting}
+              disabled={!form.form.formState.isValid || isSubmitting}
               onClick={handleSubmit}
             >
               {isSubmitting ? "保存中..." : "変更を保存"}
