@@ -20,10 +20,13 @@ import {
   type ExerciseTrendPeriod,
 } from "@repo/types/notion-training-app/exercise";
 import ExerciseDetailHeader from "../../features/exercise/components/ExerciseDetailHeader";
+import ExerciseTrendChart from "../../features/exercise/components/ExerciseTrendChart";
 import { useExerciseDetail } from "../../features/exercise/hooks/useExerciseDetail";
+import { useExerciseTrends } from "../../features/exercise/hooks/useExerciseTrends";
 import AlertCard from "../../components/AlertCard";
 import ExerciseDetailMain from "../../features/exercise/components/ExerciseDetailMain";
 import DetailSkeleton from "../../components/DetailPageSkeleton";
+import { Spinner } from "@repo/ui";
 
 const ExerciseLogDetail = () => {
   const { trendPeriod, exerciseGuideLineRep, setSearchParamsWithReset } =
@@ -48,17 +51,41 @@ const ExerciseLogDetail = () => {
           100,
         )
       : 0;
-  const trendItems = useMemo(
-    () => [
-      {
-        label: `直近${EXERCISE_TREND_PERIOD_OPTIONS.find((option) => option.value === trendPeriod)?.label}の伸び`,
-        value: "+5kg",
-        tone: "text-emerald-700",
-      },
-      { label: "平均セット数", value: "4.0 set", tone: "text-zinc-950" },
-    ],
-    [trendPeriod],
+  const effectivePeriod = trendPeriod ?? "4w";
+  const { trends, isLoading: isTrendsLoading } = useExerciseTrends(
+    exerciseId,
+    effectivePeriod,
   );
+  // トレンドの実データから「伸び」と「平均セット数」を計算する
+  const trendItems = useMemo(() => {
+    const periodLabel =
+      EXERCISE_TREND_PERIOD_OPTIONS.find(
+        (option) => option.value === effectivePeriod,
+      )?.label ?? "";
+    const points = trends?.points ?? [];
+    const first = points[0];
+    const last = points[points.length - 1];
+    const gain = first && last ? last.maxWeight - first.maxWeight : null;
+    const averageSets =
+      points.length > 0
+        ? points.reduce((acc, point) => acc + point.setsCount, 0) /
+          points.length
+        : null;
+    return [
+      {
+        label: `直近${periodLabel}の伸び`,
+        value:
+          gain === null ? "-" : `${gain >= 0 ? "+" : ""}${gain.toFixed(1)}kg`,
+        tone:
+          gain !== null && gain > 0 ? "text-emerald-700" : "text-zinc-950",
+      },
+      {
+        label: "平均セット数",
+        value: averageSets === null ? "-" : `${averageSets.toFixed(1)} set`,
+        tone: "text-zinc-950",
+      },
+    ];
+  }, [effectivePeriod, trends]);
   const rmTypes = exerciseDetailData?.rmTypes;
   const currentMaxWeight = exerciseDetailData?.currentMaxWeight;
   const guideLineSet = useMemo(() => {
@@ -197,6 +224,16 @@ const ExerciseLogDetail = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {isTrendsLoading ? (
+                  <div className="flex h-32 items-center justify-center">
+                    <Spinner />
+                  </div>
+                ) : (
+                  <ExerciseTrendChart
+                    points={trends?.points ?? []}
+                    goalWeight={trends?.maxGoalWeight ?? 0}
+                  />
+                )}
                 {trendItems.map((item) => (
                   <div
                     key={item.label}

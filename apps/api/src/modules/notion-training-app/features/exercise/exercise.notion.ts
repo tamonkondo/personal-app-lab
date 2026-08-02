@@ -9,6 +9,8 @@ import type {
   ExerciseLogWithSetsResponse,
   ExerciseSummaryResponse,
   ExerciseDetail,
+  ExerciseTrendPeriod,
+  ExerciseTrends,
 } from "@repo/types/notion-training-app";
 
 import { fetchExerciseLogWithSets } from "../exerciseLog/exerciseLog.notion";
@@ -28,6 +30,8 @@ import {
   mapExerciseSummaryItem,
   mapExerciseDetail,
   mapExerciseTrends,
+  trendPeriodStart,
+  buildExerciseTrendPoints,
 } from "./exercise.db";
 
 type FetchExerciseSummaryLogsResult = Pick<
@@ -156,9 +160,16 @@ export async function fetchExerciseDetail(
   return mapExerciseDetail(raw);
 }
 
-export async function fetchExerciseTrends(exerciseId: string) {
-  // 従来はデータソースに存在しない "id" プロパティで query しており常に 500 だったため、
-  // ページ ID で直接 retrieve する方式に修正
+/**
+ * 種目の重量トレンド (期間指定つき時系列) を取得する。
+ * 目標重量は種目ページから、時系列は期間内の種目ログ (+セット) から組み立てる。
+ * 期間フィルタ/ソートは DB プロパティに依存しない built-in の
+ * timestamp (created_time) を使う。
+ */
+export async function fetchExerciseTrends(
+  exerciseId: string,
+  period: ExerciseTrendPeriod = "4w",
+): Promise<ExerciseTrends> {
   const raw = await notionClient.pages
     .retrieve({
       page_id: exerciseId,
@@ -167,6 +178,47 @@ export async function fetchExerciseTrends(exerciseId: string) {
     .catch(() => {
       throw new NotFoundError(`Exercise not found: ${exerciseId}`);
     });
+  const { maxGoalWeight } = mapExerciseTrends(raw);
 
-  return mapExerciseTrends(raw);
+  const since = trendPeriodStart(period, new Date());
+  const relationFilter = {
+    property: exerciseLogProp("exerciseRelation"),
+    relation: { contains: exerciseId },
+  };
+
+  // 期間内の種目ログを全件取得 (ページネーション)
+  const results: unknown[] = [];
+  let cursor: string | undefined;
+  do {
+    const envelope = notionQueryEnvelope.parse(
+      await notionClient.dataSources.query({
+        data_source_id: config.NOTION_EXERCISE_LOGS_DATABASE_ID,
+        filter: since
+          ? {
+              and: [
+                relationFilter,
+                {
+                  timestamp: "created_time",
+                  created_time: { on_or_after: since },
+                },
+              ],
+            }
+          : relationFilter,
+        sorts: [{ timestamp: "created_time", direction: "ascending" }],
+        filter_properties: [...exerciseLogWithSetsProperties],
+        page_size: 100,
+        start_cursor: cursor,
+      }),
+    );
+    results.push(...envelope.results);
+    cursor = envelope.next_cursor ?? undefined;
+  } while (cursor);
+
+  const logs = mapExerciseLogsWithSets({ results, exerciseId });
+
+  return {
+    maxGoalWeight,
+    period,
+    points: buildExerciseTrendPoints(logs),
+  };
 }

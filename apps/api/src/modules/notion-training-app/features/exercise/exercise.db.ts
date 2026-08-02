@@ -25,6 +25,8 @@ import type {
   ExerciseDetail,
   ExerciseSummaryItem,
   ExerciseLogWithSetsItemResponse,
+  ExerciseTrendPeriod,
+  ExerciseTrendPoint,
 } from "@repo/types/notion-training-app";
 import { exerciseRmTypesSchema } from "./exercise.schema";
 
@@ -159,4 +161,41 @@ export function mapExerciseDetail(raw: unknown): ExerciseDetail {
 export function mapExerciseTrends(raw: unknown): { maxGoalWeight: number } {
   const page = exerciseTrendsPageSchema.parse(raw);
   return { maxGoalWeight: page.properties.maxGoalWeightRollup || 0 };
+}
+
+/** トレンド期間 → 取得開始日時 (ISO)。"all" は null (期間フィルタなし) */
+export function trendPeriodStart(
+  period: ExerciseTrendPeriod,
+  now: Date,
+): string | null {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const days: Record<Exclude<ExerciseTrendPeriod, "all">, number> = {
+    "1w": 7,
+    "2w": 14,
+    "4w": 28,
+    "6m": 183,
+    "1y": 365,
+  };
+  if (period === "all") return null;
+  return new Date(now.getTime() - days[period] * DAY_MS).toISOString();
+}
+
+/**
+ * セット付き種目ログ → トレンドの時系列点。
+ * 1ログ = 1点。トップセット重量 / 総ボリューム / セット数をここで集計する。
+ * セットが1件もないログは点にしない。
+ */
+export function buildExerciseTrendPoints(
+  logs: ExerciseLogWithSetsItemResponse[],
+): ExerciseTrendPoint[] {
+  return logs
+    .filter((log) => log.sets.length > 0)
+    .map((log) => ({
+      exerciseLogId: log.exerciseLogId,
+      date: log.createdTime,
+      maxWeight: Math.max(...log.sets.map((set) => set.kg)),
+      totalVolume: log.sets.reduce((acc, set) => acc + set.kg * set.rep, 0),
+      setsCount: log.sets.length,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }

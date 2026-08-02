@@ -3,8 +3,10 @@ import type {
   ExerciseLogWithSetsResponse,
   ExerciseNamesResponse,
   ExerciseSummaryResponse,
+  ExerciseTrendsResponse,
 } from "@repo/types/notion-training-app";
 import { paginationQuerySchema } from "@repo/schemas";
+import { exerciseTrendsQuerySchema } from "@repo/schemas/notion-training-app";
 import * as fetches from "./exercise.notion";
 
 export const getExerciseNames = asyncHandler(async (_, res) => {
@@ -63,14 +65,19 @@ export const getExerciseDetail = asyncHandler(
 );
 
 export const getExerciseTrends = asyncHandler(
-  async (req: { params: { exerciseId: string } }, res) => {
+  async (req: { params: { exerciseId: string }; query: unknown }, res) => {
     const { exerciseId } = req.params;
+    const { period } = exerciseTrendsQuerySchema.parse(req.query);
 
-    const exerciseTrends = await fetches.fetchExerciseTrends(exerciseId);
+    const exerciseTrends = await fetches.fetchExerciseTrends(
+      exerciseId,
+      period,
+    );
 
-    res.status(200).json({
+    const response: ExerciseTrendsResponse = {
       message: "getExerciseTrends",
-      ...exerciseTrends,
-    });
+      data: exerciseTrends,
+    };
+    res.status(200).json(response);
   },
 );

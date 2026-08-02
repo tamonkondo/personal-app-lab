@@ -71,6 +71,13 @@ export const exerciseDetailParamsSchema = z.object({
   exerciseGuideLineRep: z.enum(EXERCISE_GUIDE_LINE_REPS).nullable().catch(null),
 });
 
+/** 種目トレンド API のクエリ (期間指定。未指定/不正値は 4w) */
+export const exerciseTrendsQuerySchema = z.object({
+  period: z.enum(EXERCISE_TREND_PERIODS).catch("4w"),
+});
+
+export type ExerciseTrendsQuery = z.infer<typeof exerciseTrendsQuerySchema>;
+
 export type ExerciseDetailParams = z.infer<typeof exerciseDetailParamsSchema>;
 
 /**

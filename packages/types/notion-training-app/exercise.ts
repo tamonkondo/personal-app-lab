@@ -48,6 +48,27 @@ export const EXERCISE_TREND_PERIODS = [
 export type ExerciseTrendPeriod = (typeof EXERCISE_TREND_PERIODS)[number];
 export type ExerciseRmTypes = (typeof EXERCISE_RM_TYPES)[number];
 
+/** トレンドの1点 (1回の種目ログ) */
+export type ExerciseTrendPoint = {
+  exerciseLogId: string;
+  /** 記録日時 (ISO) */
+  date: string;
+  /** その日のトップセット重量 (kg) */
+  maxWeight: number;
+  /** kg×rep の合計ボリューム */
+  totalVolume: number;
+  setsCount: number;
+};
+
+/** 種目の重量トレンド (期間指定つき時系列) */
+export type ExerciseTrends = {
+  maxGoalWeight: number;
+  period: ExerciseTrendPeriod;
+  points: ExerciseTrendPoint[];
+};
+
+export type ExerciseTrendsResponse = ApiResponse<ExerciseTrends>;
+
 export const EXERCISE_GUIDE_LINE_REPS = ["5", "10", "15", "20"] as const;
 
 export type ExerciseGuideLineRep = (typeof EXERCISE_GUIDE_LINE_REPS)[number];
