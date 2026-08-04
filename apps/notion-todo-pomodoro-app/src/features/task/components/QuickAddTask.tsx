@@ -1,17 +1,23 @@
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { Plus } from "@repo/ui/icons";
 import {
   TASK_CATEGORIES,
   WORKING_HOURS_OPTIONS,
-  type TaskCategory,
-  type WorkingHours,
 } from "@repo/types/notion-todo-pomodoro-app";
 import { useTaskMutations } from "../hooks/useTaskMutations";
 import { useProjects } from "../../project/hooks/useProjects";
 import { TASK_CATEGORY_LABEL } from "../constants";
-import { currentWorkingHours, WORKING_HOURS_META } from "../lib/workingHours";
+import { WORKING_HOURS_META } from "../lib/workingHours";
+import {
+  defaultTaskFormValues,
+  taskFormSchema,
+  toCreateTaskInput,
+  type TaskFormValues,
+} from "../taskForm.schema";
 
 type QuickAddTaskProps = {
   /** 予定日を今日に設定する（ホームの「今日」ビュー向け） */
@@ -27,49 +33,38 @@ export function QuickAddTask({
 }: QuickAddTaskProps) {
   const { createTask, isSubmitting } = useTaskMutations();
   const { projects } = useProjects();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<TaskCategory>("✅️ Task");
-  const [pomodoros, setPomodoros] = useState(1);
-  const [projectId, setProjectId] = useState(defaultProjectId ?? "");
-  // 既定は現在時刻の時間帯。範囲外なら未設定
-  const [workingHours, setWorkingHours] = useState<WorkingHours | "">(
-    () => currentWorkingHours() ?? "",
-  );
-  const [error, setError] = useState<string | null>(null);
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: defaultTaskFormValues(defaultProjectId),
+    mode: "onChange",
+  });
+  const { register, control, formState, getValues, reset } = form;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    setError(null);
+  const handleSubmit = form.handleSubmit(async (values) => {
+    setSubmitError(null);
     try {
       await createTask({
-        name: trimmed,
-        category,
-        status: "To-do",
-        estimatedPomodoros: pomodoros,
-        workingHours: workingHours || undefined,
-        projectId: projectId || undefined,
+        ...toCreateTaskInput(values),
         scheduledStart: scheduleToday ? todayDateString() : undefined,
       });
-      setName("");
-      setPomodoros(1);
+      // カテゴリ・時間帯・プロジェクトは維持し、名前と見積だけ初期化する
+      reset({ ...getValues(), name: "", pomodoros: 1 });
     } catch {
-      setError("作成に失敗しました。APIサーバを確認してください。");
+      setSubmitError("作成に失敗しました。APIサーバを確認してください。");
     }
-  };
+  });
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border p-3">
       <div className="flex gap-2">
         <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
           placeholder="タスクを追加..."
           className="flex-1"
+          {...register("name")}
         />
-        <Button type="submit" disabled={isSubmitting || !name.trim()}>
+        <Button type="submit" disabled={isSubmitting || !formState.isValid}>
           <Plus className="size-4" />
           追加
         </Button>
@@ -77,9 +72,8 @@ export function QuickAddTask({
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value as TaskCategory)}
           className="h-8 rounded-md border bg-background px-2"
+          {...register("category")}
         >
           {TASK_CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -89,10 +83,9 @@ export function QuickAddTask({
         </select>
 
         <select
-          value={workingHours}
-          onChange={(e) => setWorkingHours(e.target.value as WorkingHours | "")}
           className="h-8 rounded-md border bg-background px-2"
           title="時間帯"
+          {...register("workingHours")}
         >
           <option value="">時間帯なし</option>
           {WORKING_HOURS_OPTIONS.map((wh) => (
@@ -104,28 +97,35 @@ export function QuickAddTask({
 
         <div className="flex items-center gap-1">
           <span className="text-muted-foreground">見積</span>
-          {POMODORO_CHOICES.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setPomodoros(n)}
-              className={cn(
-                "rounded-md border px-2 py-1 text-xs transition-colors",
-                pomodoros === n
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "hover:bg-secondary",
-              )}
-            >
-              {"🍅".repeat(n)}
-            </button>
-          ))}
+          <Controller
+            control={control}
+            name="pomodoros"
+            render={({ field }) => (
+              <>
+                {POMODORO_CHOICES.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => field.onChange(n)}
+                    className={cn(
+                      "rounded-md border px-2 py-1 text-xs transition-colors",
+                      field.value === n
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "hover:bg-secondary",
+                    )}
+                  >
+                    {"🍅".repeat(n)}
+                  </button>
+                ))}
+              </>
+            )}
+          />
         </div>
 
         {projects.length > 0 && (
           <select
-            value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
             className="h-8 max-w-[200px] rounded-md border bg-background px-2"
+            {...register("projectId")}
           >
             <option value="">プロジェクトなし</option>
             {projects.map((p) => (
@@ -137,7 +137,7 @@ export function QuickAddTask({
         )}
       </div>
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {submitError && <p className="text-xs text-destructive">{submitError}</p>}
     </form>
   );
 }

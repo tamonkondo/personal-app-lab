@@ -10,14 +10,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-hook-form": "^7.84.0",
+    "react-hook-form": "catalog:",
     "react-router-dom": "catalog:",
     "swr": "^2.4.2",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "zod": "catalog:",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
