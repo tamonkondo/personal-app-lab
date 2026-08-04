@@ -68,7 +68,7 @@ export const notionDate = () =>
       date: z
         .object({
           start: z.string().nullable(),
-          end: z.string().nullable().optional(),
+          end: z.string().nullish(),
         })
         .nullable(),
     })
@@ -96,7 +96,7 @@ export const notionFormulaString = () =>
   z
     .object({
       type: z.literal("formula"),
-      formula: z.object({ string: z.string().nullable().optional() }),
+      formula: z.object({ string: z.string().nullish() }),
     })
     .transform((v) => v.formula.string ?? null);
 
@@ -105,7 +105,7 @@ export const notionFormulaNumber = () =>
   z
     .object({
       type: z.literal("formula"),
-      formula: z.object({ number: z.number().nullable().optional() }),
+      formula: z.object({ number: z.number().nullish() }),
     })
     .transform((v) => v.formula.number ?? null);
 
@@ -118,7 +118,7 @@ export const notionFormulaDate = () =>
         date: z
           .object({
             start: z.string().nullable(),
-            end: z.string().nullable().optional(),
+            end: z.string().nullish(),
           })
           .nullable()
           .optional(),
@@ -135,7 +135,7 @@ export const notionRollupNumber = () =>
   z
     .object({
       type: z.literal("rollup"),
-      rollup: z.object({ number: z.number().nullable().optional() }),
+      rollup: z.object({ number: z.number().nullish() }),
     })
     .transform((v) => v.rollup.number ?? null);
 
@@ -146,7 +146,7 @@ export const notionRollupArrayNumber = () =>
       type: z.literal("rollup"),
       rollup: z.object({
         array: z.array(
-          z.object({ number: z.number().nullable().optional() }).or(z.unknown()),
+          z.object({ number: z.number().nullish() }).or(z.unknown()),
         ),
       }),
     })

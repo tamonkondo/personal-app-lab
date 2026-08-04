@@ -18,13 +18,13 @@ const createTrainingLogSetSchema = z.object({
 });
 const createTrainingLogExerciseSchema = z.object({
   exerciseId: z.string().min(1),
-  rest: z.number().min(0).nullable().optional().default(null),
+  rest: z.number().min(0).nullish().default(null),
   memo: z.string().optional().default(""),
   sets: z.array(createTrainingLogSetSchema).min(1),
 });
 
 export const createTrainingLogSchema = z.object({
-  bodyWeight: z.coerce.number().positive().nullable().optional().default(null),
+  bodyWeight: z.coerce.number().positive().nullish().default(null),
   memo: z.string().optional().default(""),
   exercises: z.array(createTrainingLogExerciseSchema).min(1),
 });
@@ -48,13 +48,13 @@ const updateTrainingLogExerciseSchema = z.object({
   /** 既存の種目ログの Notion ページ ID。未指定なら新規作成 */
   logId: z.string().optional(),
   exerciseId: z.string().min(1),
-  rest: z.number().min(0).nullable().optional().default(null),
+  rest: z.number().min(0).nullish().default(null),
   memo: z.string().optional().default(""),
   sets: z.array(updateTrainingLogSetSchema).min(1),
 });
 
 export const updateTrainingLogSchema = z.object({
-  bodyWeight: z.coerce.number().positive().nullable().optional().default(null),
+  bodyWeight: z.coerce.number().positive().nullish().default(null),
   memo: z.string().optional().default(""),
   exercises: z.array(updateTrainingLogExerciseSchema).min(1),
 });
@@ -88,9 +88,9 @@ export const createExerciseSchema = z.object({
   name: z.string().trim().min(1),
   /** 対象部位 (multi_select の値)。BODY_PARTS の value を渡す */
   musclesTypes: z.array(z.string().min(1)).optional().default([]),
-  rmTypes: z.enum(EXERCISE_RM_TYPES).nullable().optional().default(null),
+  rmTypes: z.enum(EXERCISE_RM_TYPES).nullish().default(null),
   /** デフォルト休憩時間 (秒) */
-  rest: z.coerce.number().min(0).nullable().optional().default(null),
+  rest: z.coerce.number().min(0).nullish().default(null),
 });
 
 export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;
@@ -102,8 +102,8 @@ export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;
 export const updateExerciseSchema = z.object({
   name: z.string().trim().min(1).optional(),
   musclesTypes: z.array(z.string().min(1)).optional(),
-  rmTypes: z.enum(EXERCISE_RM_TYPES).nullable().optional(),
-  rest: z.coerce.number().min(0).nullable().optional(),
+  rmTypes: z.enum(EXERCISE_RM_TYPES).nullish(),
+  rest: z.coerce.number().min(0).nullish(),
 });
 
 export type UpdateExerciseInput = z.infer<typeof updateExerciseSchema>;

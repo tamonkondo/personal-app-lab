@@ -28,8 +28,8 @@ export type CreateTaskInput = z.infer<typeof createTaskSchema>;
  */
 export const updateTaskSchema = z.object({
   status: z.enum(TASK_STATUSES).optional(),
-  startTime: z.string().nullable().optional(),
-  endTime: z.string().nullable().optional(),
+  startTime: z.string().nullish(),
+  endTime: z.string().nullish(),
 });
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 
