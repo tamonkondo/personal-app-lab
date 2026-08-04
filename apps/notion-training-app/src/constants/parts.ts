@@ -1,4 +1,4 @@
-import { Option } from "@repo/ui";
+import type { Option } from "@repo/ui";
 
 const BODY_PARTS: Option[] = [
   { label: "全身", value: "theWholeBody" },
