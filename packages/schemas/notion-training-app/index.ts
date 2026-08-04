@@ -8,7 +8,7 @@ import { paginationQuerySchema } from "../index";
 
 /**
  * トレーニング記録 新規作成の入力。
- * 日付は「当日記録のみ」の運用のため入力に含めない (サーバ側で当日を採用)。
+ * date (YYYY-MM-DD) は省略可。省略時はサーバ側で当日を採用する (過去日付の記録に対応)。
  * フォーム入力は文字列で来るため kg / rep は coerce する。
  */
 const createTrainingLogSetSchema = z.object({
@@ -24,6 +24,11 @@ const createTrainingLogExerciseSchema = z.object({
 });
 
 export const createTrainingLogSchema = z.object({
+  /** 記録日 (YYYY-MM-DD)。省略時はサーバ側で当日を採用 */
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "日付は YYYY-MM-DD 形式で指定してください")
+    .optional(),
   bodyWeight: z.coerce.number().positive().nullish().default(null),
   memo: z.string().optional().default(""),
   exercises: z.array(createTrainingLogExerciseSchema).min(1),

@@ -51,7 +51,21 @@ export const exerciseDraftSchema = exerciseFieldSchema.refine(
   { message: "セットを1つ以上入力してください", path: ["sets", "root"] },
 );
 
+/** ローカルタイムゾーンの当日 (YYYY-MM-DD) */
+export const todayDateString = (): string => {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+};
+
 export const trainingLogFormSchema = z.object({
+  /** 記録日 (YYYY-MM-DD)。未来日は不可 (編集時は表示のみで送信しない) */
+  date: z
+    .string()
+    .min(1, "日付を入力してください")
+    .refine((value) => value <= todayDateString(), {
+      message: "未来の日付は選択できません",
+    }),
   bodyWeight: numericString(),
   memo: z.string(),
   exercises: z
@@ -83,6 +97,7 @@ export const emptyExerciseValues = (): ExerciseFieldValues => ({
 });
 
 export const emptyTrainingLogFormValues = (): TrainingLogFormValues => ({
+  date: todayDateString(),
   bodyWeight: "",
   memo: "",
   exercises: [],
@@ -99,6 +114,8 @@ export function detailToFormValues(
 ): TrainingLogFormValues {
   const asTemplate = options?.asTemplate ?? false;
   return {
+    // テンプレート利用時は新規記録なので当日。編集時は既存の記録日 (表示のみ)
+    date: asTemplate ? todayDateString() : detail.createdTime.slice(0, 10),
     bodyWeight: detail.bodyWeight ? String(detail.bodyWeight) : "",
     memo: asTemplate ? "" : (detail.memo ?? ""),
     exercises: detail.exercises.map((exercise) => ({
@@ -127,6 +144,7 @@ export function toCreateTrainingLogInput(
   values: TrainingLogFormValues,
 ): CreateTrainingLogInput {
   return {
+    date: values.date,
     bodyWeight:
       values.bodyWeight.trim() === "" ? null : Number(values.bodyWeight),
     memo: values.memo,

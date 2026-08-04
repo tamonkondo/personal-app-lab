@@ -10,7 +10,7 @@ notionTrainingAppRouter.get(
   "/training-logs",
   trainingLogHandlers.getTrainingLogs,
 );
-// トレーニング記録の作成 (当日記録のみ)
+// トレーニング記録の作成 (date 省略時は当日、過去日付も指定可)
 notionTrainingAppRouter.post(
   "/training-logs",
   trainingLogHandlers.createTrainingLog,

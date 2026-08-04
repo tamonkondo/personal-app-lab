@@ -12,6 +12,8 @@ const rawTrainingLogPage = (overrides?: {
   bodyWeight?: number | null;
   memo?: string;
   relationIds?: string[];
+  /** 記録日 (date プロパティ)。undefined ならプロパティ自体を持たない旧レコード */
+  date?: string;
 }) => ({
   id: "training-1",
   url: "https://notion.so/training-1",
@@ -32,6 +34,9 @@ const rawTrainingLogPage = (overrides?: {
       type: "created_time",
       created_time: "2026-08-01T10:00:00.000Z",
     },
+    ...(overrides?.date
+      ? { date: { type: "date", date: { start: overrides.date, end: null } } }
+      : {}),
     bodyWeight: { type: "number", number: overrides?.bodyWeight ?? 72.5 },
     musleTypesFormula: { type: "formula", formula: { string: "胸, 肩" } },
   },
@@ -83,7 +88,7 @@ const rawDetailExerciseLogPage = (overrides?: {
 });
 
 describe("buildCreateTrainingLogProperties", () => {
-  it("name に日付、bodyWeight / memo は値があるときのみ送信する", () => {
+  it("name と date に記録日、bodyWeight / memo は値があるときのみ送信する", () => {
     const full = buildCreateTrainingLogProperties({
       dateName: "2026-08-01",
       bodyWeight: 72.5,
@@ -92,6 +97,7 @@ describe("buildCreateTrainingLogProperties", () => {
     expect(full.name).toEqual({
       title: [{ text: { content: "2026-08-01" } }],
     });
+    expect(full.date).toEqual({ date: { start: "2026-08-01" } });
     expect(full.bodyWeight).toEqual({ number: 72.5 });
     expect(full.memo).toEqual({
       rich_text: [{ text: { content: "調子良い" } }],
@@ -123,10 +129,13 @@ describe("buildUpdateTrainingLogProperties", () => {
     });
   });
 
-  it("name (日付) は含めない (当日記録運用のため維持)", () => {
-    expect(
-      buildUpdateTrainingLogProperties({ bodyWeight: 70, memo: "" }),
-    ).not.toHaveProperty("name");
+  it("name / date (記録日) は含めない (日付の変更は未対応)", () => {
+    const properties = buildUpdateTrainingLogProperties({
+      bodyWeight: 70,
+      memo: "",
+    });
+    expect(properties).not.toHaveProperty("name");
+    expect(properties).not.toHaveProperty("date");
   });
 });
 
@@ -140,6 +149,22 @@ describe("parseTrainingLogPage", () => {
     expect(page.properties.trainingExercisesRelation).toEqual(["a", "b"]);
     expect(page.properties.bodyWeight).toBe(72.5);
     expect(page.properties.musleTypesFormula).toBe("胸, 肩");
+  });
+
+  it("記録日は date プロパティ優先、未設定の旧レコードは created_time にフォールバックする", () => {
+    const withDate = parseTrainingLogPage(
+      rawTrainingLogPage({ date: "2026-07-20" }),
+    );
+    expect(withDate.properties.date?.start).toBe("2026-07-20");
+    expect(
+      mapTrainingLogDetail(withDate, []).createdTime,
+    ).toBe("2026-07-20");
+
+    const withoutDate = parseTrainingLogPage(rawTrainingLogPage());
+    expect(withoutDate.properties.date).toBeUndefined();
+    expect(
+      mapTrainingLogDetail(withoutDate, []).createdTime,
+    ).toBe("2026-08-01T10:00:00.000Z");
   });
 
   it("プロパティ型が変わったら ZodError で検出する (スキーマ変更検知)", () => {

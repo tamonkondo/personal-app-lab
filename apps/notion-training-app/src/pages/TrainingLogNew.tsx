@@ -53,7 +53,7 @@ const TrainingLogNew = () => {
       <PageHero
         badge="New Training Log"
         title="トレーニング記録を作成"
-        description="体重とメモを入力し、種目ごとのセット内容を追加します (当日記録)。"
+        description="日付・体重・メモを入力し、種目ごとのセット内容を追加します (過去日付も指定可)。"
         actions={
           <>
             <HeroLinkButton to="/training-logs" variant="outline">

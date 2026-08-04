@@ -30,6 +30,18 @@ describe("createTrainingLogSchema", () => {
     expect(parsed.exercises[0]?.rest).toBeNull();
   });
 
+  it("date は YYYY-MM-DD のみ受け付け、省略も可", () => {
+    expect(
+      createTrainingLogSchema.parse({ ...validInput, date: "2026-07-20" })
+        .date,
+    ).toBe("2026-07-20");
+    expect(createTrainingLogSchema.parse(validInput).date).toBeUndefined();
+    expect(
+      createTrainingLogSchema.safeParse({ ...validInput, date: "2026/07/20" })
+        .success,
+    ).toBe(false);
+  });
+
   it("種目 0 件 / セット 0 件は拒否する", () => {
     expect(
       createTrainingLogSchema.safeParse({ exercises: [] }).success,

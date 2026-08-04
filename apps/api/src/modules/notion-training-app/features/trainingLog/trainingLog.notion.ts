@@ -76,10 +76,12 @@ export async function fetchTrainingLogs(
       }))
     : [];
 
+  // 期間フィルタは記録日 (date プロパティ) を見る。
+  // date 未設定の旧レコードはヒットしないため、バックフィル済みであることが前提
   const dateFilters = [
     startDate
       ? {
-          property: trainingLogProp("createdTime"),
+          property: trainingLogProp("date"),
           date: {
             on_or_after: startDate,
           },
@@ -87,7 +89,7 @@ export async function fetchTrainingLogs(
       : undefined,
     endDate
       ? {
-          property: trainingLogProp("createdTime"),
+          property: trainingLogProp("date"),
           date: {
             on_or_before: endDate,
           },
@@ -118,7 +120,7 @@ export async function fetchTrainingLogs(
       sorts: sort
         ? [
             {
-              property: trainingLogProp("createdTime"),
+              property: trainingLogProp("date"),
               direction: sort === "asc" ? "ascending" : "descending",
             },
           ]
@@ -195,7 +197,7 @@ export async function fetchNewestTrainingLog(): Promise<NewestTrainingLogItemRes
       page_size: 1,
       sorts: [
         {
-          property: trainingLogProp("createdTime"),
+          property: trainingLogProp("date"),
           direction: "descending",
         },
       ],
@@ -274,7 +276,8 @@ async function countExerciseLogs(exerciseId: string): Promise<number> {
 }
 
 /**
- * トレーニング記録の作成 (当日記録のみ)。
+ * トレーニング記録の作成。
+ * 記録日は input.date (YYYY-MM-DD) を採用し、省略時は当日とする (過去日付の記録に対応)。
  * TRAINING_LOGS → 種目ごとの EXERCISE_LOGS → セットごとの EXERCISE_SETS の順に作成する。
  * 途中失敗時のロールバックは行わず、作成済みページ ID をエラーに含めて返す
  * (Notion 上で手直しできるようにするため)。
@@ -284,7 +287,8 @@ export async function createTrainingLog(
 ): Promise<CreateTrainingLogResult> {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
-  const dateName = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const dateName = input.date ?? today;
   const dateKey = dateName.replaceAll("-", "");
 
   const createdIds: string[] = [];
@@ -319,6 +323,7 @@ export async function createTrainingLog(
           properties: buildCreateExerciseLogProperties({
             recordNumber,
             exerciseName,
+            date: dateName,
             rest: exercise.rest,
             memo: exercise.memo,
             exerciseId: exercise.exerciseId,
@@ -473,8 +478,9 @@ export async function updateTrainingLog(
     );
   }
 
-  // セット名の採番に使う日付キーは元の記録日ベース (YYYYMMDD)
-  const dateKey = current.createdTime.slice(0, 10).replaceAll("-", "");
+  // セット名の採番などに使う記録日は元の記録日ベース (date プロパティ優先の値)
+  const recordDate = current.createdTime.slice(0, 10); // YYYY-MM-DD
+  const dateKey = recordDate.replaceAll("-", "");
 
   // 既存の種目ログを logId で引けるようにする
   const currentLogsById = new Map(
@@ -554,6 +560,7 @@ export async function updateTrainingLog(
             properties: buildCreateExerciseLogProperties({
               recordNumber,
               exerciseName,
+              date: recordDate,
               rest: exercise.rest,
               memo: exercise.memo,
               exerciseId: exercise.exerciseId,

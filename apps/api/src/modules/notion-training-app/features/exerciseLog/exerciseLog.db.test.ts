@@ -8,6 +8,7 @@ describe("buildCreateExerciseLogProperties", () => {
   const baseInput = {
     recordNumber: 3,
     exerciseName: "ベンチプレス",
+    date: "2026-08-01",
     rest: 90,
     memo: "",
     exerciseId: "exercise-1",
@@ -19,6 +20,11 @@ describe("buildCreateExerciseLogProperties", () => {
     expect(properties.name).toEqual({
       title: [{ text: { content: "record__3__ベンチプレス" } }],
     });
+  });
+
+  it("記録日を date プロパティに設定する", () => {
+    const properties = buildCreateExerciseLogProperties(baseInput);
+    expect(properties.date).toEqual({ date: { start: "2026-08-01" } });
   });
 
   it("種目・トレーニングログへのリレーションを張る", () => {

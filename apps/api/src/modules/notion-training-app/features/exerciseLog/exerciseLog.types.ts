@@ -17,6 +17,8 @@ export interface NotionExerciseLogProperties {
     "relation"
   >;
   createdTime: NotionProp<"createdTime", "created_time">;
+  /** 記録日。過去日付の記録に対応するため created_time とは別に持つ */
+  date: NotionProp<"date", "date">;
   bodyWeight: NotionProp<"bodyWeight", "number">;
   name: NotionProp<"name", "title">;
   goalWeightRollup: NotionProp<"goalWeightRollup", "rollup">;

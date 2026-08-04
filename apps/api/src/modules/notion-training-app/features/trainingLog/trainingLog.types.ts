@@ -13,6 +13,8 @@ export type NotionTrainingLogProperties = {
     "relation"
   >;
   createdTime: NotionProp<"createdTime", "created_time">;
+  /** 記録日。過去日付の記録に対応するため created_time とは別に持つ */
+  date: NotionProp<"date", "date">;
   bodyWeight: NotionProp<"bodyWeight", "number">;
   exerciseRollup: NotionProp<"exerciseRollup", "rollup">;
   musleTypesFormula: NotionProp<"musleTypesFormula", "formula">;

@@ -19,5 +19,5 @@
       "@repo/utils/*": ["../../packages/utils/*"]
     }
   },
-  "include": ["src", "tsup.config.ts", "vitest.config.ts"]
+  "include": ["src", "scripts", "tsup.config.ts", "vitest.config.ts"]
 }

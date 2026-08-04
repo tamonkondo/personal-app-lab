@@ -6,6 +6,7 @@
  */
 import { z } from "zod";
 import {
+  notionDate,
   notionFormulaString,
   notionLenient,
   notionNumber,
@@ -70,9 +71,15 @@ const trainingLogPageSchema = notionPage({
   memo: notionRichText(),
   trainingExercisesRelation: notionRelation(),
   createdTime: notionCreatedTime(),
+  // date プロパティが Notion 側に未作成の環境でもパースを壊さないよう optional + catch
+  date: notionDate().optional().catch(undefined),
   bodyWeight: notionNumber(),
   musleTypesFormula: notionFormulaString(),
 });
+
+/** 記録日 (date プロパティ優先。未設定の旧レコードは created_time にフォールバック) */
+const recordDate = (properties: TrainingLogPage["properties"]): string =>
+  properties.date?.start ?? properties.createdTime;
 
 export type TrainingLogPage = z.infer<typeof trainingLogPageSchema>;
 
@@ -147,7 +154,7 @@ export function mapTrainingLogSummaryItem(
   const relationIds = trainingLog.properties.trainingExercisesRelation;
   return {
     id: trainingLog.id,
-    createdTime: trainingLog.properties.createdTime,
+    createdTime: recordDate(trainingLog.properties),
     bodyWeight: trainingLog.properties.bodyWeight || 0,
     memo: trainingLog.properties.memo,
     exercises: exerciseLogs
@@ -212,7 +219,7 @@ export function mapTrainingLogDetail(
 
   return {
     id: trainingLog.id,
-    createdTime: properties.createdTime,
+    createdTime: recordDate(properties),
     bodyParts:
       properties.musleTypesFormula?.split(",").map((part) => part.trim()) || [],
     memo: properties.memo,
@@ -226,8 +233,8 @@ export function mapTrainingLogDetail(
 
 /**
  * トレーニングログ作成入力 → Notion プロパティペイロード。
- * 日付は「当日記録のみ」の運用のため name に当日日付 (YYYY-MM-DD) を設定する
- * (createdTime は Notion が自動採番)。
+ * 記録日 (YYYY-MM-DD) は name と date プロパティの両方に設定する
+ * (createdTime は Notion が自動採番のため書き込めない)。
  */
 export function buildCreateTrainingLogProperties(input: {
   dateName: string; // YYYY-MM-DD
@@ -238,6 +245,7 @@ export function buildCreateTrainingLogProperties(input: {
     [trainingLogProp("name")]: {
       title: [{ text: { content: input.dateName } }],
     },
+    [trainingLogProp("date")]: { date: { start: input.dateName } },
     ...(input.bodyWeight !== null
       ? { [trainingLogProp("bodyWeight")]: { number: input.bodyWeight } }
       : {}),
@@ -254,7 +262,7 @@ export function buildCreateTrainingLogProperties(input: {
 /**
  * トレーニングログ更新入力 → Notion プロパティペイロード。
  * 「あるべき状態」への置き換えのため、空値は null / 空配列でクリアする
- * (name / 日付は当日記録運用のため更新対象外)。
+ * (name / 記録日は更新対象外。日付の変更は未対応)。
  */
 export function buildUpdateTrainingLogProperties(input: {
   bodyWeight: number | null;
@@ -275,7 +283,7 @@ export function mapNewestTrainingLog(
 ): NewestTrainingLogItemResponse {
   return {
     id: log.id,
-    createdTime: log.properties.createdTime,
+    createdTime: recordDate(log.properties),
     bodyWeight: log.properties.bodyWeight || 0,
     memo: log.properties.memo,
     exerciseCount: totals.exerciseCount,

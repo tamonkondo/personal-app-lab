@@ -5,6 +5,7 @@
  * (設計方針: docs/design-policy-2026-07-25.md Part 1)
  */
 import {
+  notionDate,
   notionFormulaString,
   notionNumber,
   notionPage,
@@ -25,6 +26,7 @@ export const exerciseLogWithSetsProperties =
     "rest",
     "trainingNameFormula",
     "setsJsonFormula",
+    "date",
   ]);
 
 /** セット表示に必要な種目ログページのスキーマ */
@@ -32,6 +34,8 @@ const exerciseLogWithSetsPageSchema = notionPage({
   rest: notionNumber(),
   trainingNameFormula: notionFormulaString(),
   setsJsonFormula: notionFormulaString(),
+  // date プロパティが Notion 側に未作成の環境でもパースを壊さないよう optional + catch
+  date: notionDate().optional().catch(undefined),
 });
 
 /** 生の Notion ページ (unknown) → セット付き種目ログ */
@@ -46,7 +50,8 @@ export function mapExerciseLogWithSetsItem(
     exerciseId,
     rest: p.rest || 0,
     trainingName: p.trainingNameFormula || "",
-    createdTime: page.created_time,
+    // 記録日は date プロパティ優先 (未設定の旧レコードは created_time)
+    createdTime: p.date?.start ?? page.created_time,
     sets: parseExerciseSetsText(p.setsJsonFormula, page.id),
     notionUrl: page.url,
   };
@@ -69,10 +74,12 @@ export function emptyExerciseLogWithSets(
 /**
  * 種目ログ作成入力 → Notion プロパティペイロード。
  * name は既存規則 "record__<既存ログ数+1>__<種目名>" に合わせる。
+ * date は親トレーニングログの記録日 (YYYY-MM-DD) を設定する (トレンド集計用)。
  */
 export function buildCreateExerciseLogProperties(input: {
   recordNumber: number;
   exerciseName: string;
+  date: string; // YYYY-MM-DD
   rest: number | null;
   memo: string;
   exerciseId: string;
@@ -88,6 +95,7 @@ export function buildCreateExerciseLogProperties(input: {
         },
       ],
     },
+    [exerciseLogProp("date")]: { date: { start: input.date } },
     ...(input.rest !== null
       ? { [exerciseLogProp("rest")]: { number: input.rest } }
       : {}),

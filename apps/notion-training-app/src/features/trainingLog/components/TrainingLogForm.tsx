@@ -28,6 +28,7 @@ import {
 import { formatDate } from "@repo/utils";
 import { useWatch } from "react-hook-form";
 import { useExerciseNames } from "../../exercise/hooks/useExerciseNames";
+import { todayDateString } from "../trainingLogForm.schema";
 import {
   getCompletedSetCount,
   getMaxWeight,
@@ -36,7 +37,7 @@ import {
 
 interface Props {
   form: TrainingLogFormState;
-  /** 編集時に表示する記録日 (ISO)。未指定なら当日 (当日記録) を表示 */
+  /** 編集時に表示する記録日 (ISO)。編集では日付変更不可のため表示のみ。未指定 (新規) なら日付入力を表示 */
   logDate?: string;
 }
 
@@ -223,10 +224,24 @@ const TrainingLogForm = ({ form: state, logDate }: Props) => {
             <CardContent className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium">日付</label>
-                <p className="rounded-md border bg-zinc-50 px-3 py-2 text-sm">
-                  {formatDate(logDate ?? new Date().toISOString(), "slash")}
-                  {logDate ? "" : " (当日記録)"}
-                </p>
+                {logDate ? (
+                  <p className="rounded-md border bg-zinc-50 px-3 py-2 text-sm">
+                    {formatDate(logDate, "slash")}
+                  </p>
+                ) : (
+                  <>
+                    <Input
+                      type="date"
+                      max={todayDateString()}
+                      {...form.register("date")}
+                    />
+                    {form.formState.errors.date?.message && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {form.formState.errors.date.message}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium">体重</label>

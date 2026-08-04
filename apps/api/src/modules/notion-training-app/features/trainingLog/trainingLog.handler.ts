@@ -50,7 +50,7 @@ export const getTrainingLogDetail = asyncHandler(
   },
 );
 
-// トレーニング記録の作成エンドポイント (当日記録のみ)
+// トレーニング記録の作成エンドポイント (date 省略時は当日、過去日付も指定可)
 export const createTrainingLog = asyncHandler(async (req, res) => {
   const parsed = createTrainingLogSchema.safeParse(req.body);
   if (!parsed.success) {

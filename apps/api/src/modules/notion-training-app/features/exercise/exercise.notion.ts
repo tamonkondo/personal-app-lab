@@ -145,6 +145,8 @@ export async function fetchExerciseLogs(
           contains: exerciseId,
         },
       },
+      // 履歴は記録日 (date プロパティ) の新しい順。過去日付で作成した記録も正しい位置に並ぶ
+      sorts: [{ property: exerciseLogProp("date"), direction: "descending" }],
       filter_properties: [...exerciseLogWithSetsProperties],
       page_size: limit,
       start_cursor: cursor,
@@ -173,8 +175,8 @@ export async function fetchExerciseDetail(
 /**
  * 種目の重量トレンド (期間指定つき時系列) を取得する。
  * 目標重量は種目ページから、時系列は期間内の種目ログ (+セット) から組み立てる。
- * 期間フィルタ/ソートは DB プロパティに依存しない built-in の
- * timestamp (created_time) を使う。
+ * 期間フィルタ/ソートは記録日 (date プロパティ) を使う (過去日付の記録に対応)。
+ * date 未設定の旧レコードはヒットしないため、バックフィル済みであることが前提。
  */
 export async function fetchExerciseTrends(
   exerciseId: string,
@@ -208,13 +210,16 @@ export async function fetchExerciseTrends(
               and: [
                 relationFilter,
                 {
-                  timestamp: "created_time",
-                  created_time: { on_or_after: since },
+                  // date プロパティは日付のみのため、境界日を丸ごと含むよう日付部分で比較する
+                  property: exerciseLogProp("date"),
+                  date: { on_or_after: since.slice(0, 10) },
                 },
               ],
             }
           : relationFilter,
-        sorts: [{ timestamp: "created_time", direction: "ascending" }],
+        sorts: [
+          { property: exerciseLogProp("date"), direction: "ascending" },
+        ],
         filter_properties: [...exerciseLogWithSetsProperties],
         page_size: 100,
         start_cursor: cursor,
