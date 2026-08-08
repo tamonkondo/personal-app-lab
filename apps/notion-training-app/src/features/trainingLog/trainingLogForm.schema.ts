@@ -9,21 +9,13 @@ import type {
   UpdateTrainingLogInput,
 } from "@repo/schemas/notion-training-app";
 import type { TrainingLogDetail } from "@repo/types/notion-training-app";
-
-/** 空文字 or 数値文字列のみ許可 */
-const numericString = (message = "数値で入力してください") =>
-  z
-    .string()
-    .refine(
-      (value) => value.trim() === "" || !Number.isNaN(Number(value)),
-      { message },
-    );
+import { numericString } from "../../lib/numericString";
 
 export const exerciseSetFieldSchema = z.object({
   /** 既存セットの Notion ページ ID (新規は null) */
   setId: z.string().nullable(),
-  kg: numericString(),
-  rep: numericString(),
+  kg: numericString({ min: 0 }),
+  rep: numericString({ min: 0, integer: true }),
   memo: z.string(),
 });
 
@@ -38,7 +30,7 @@ export const exerciseFieldSchema = z.object({
   logId: z.string().nullable(),
   exerciseId: z.string().min(1, "種目を選択してください"),
   exerciseName: z.string(),
-  rest: numericString(),
+  rest: numericString({ min: 0 }),
   memo: z.string(),
   sets: z.array(exerciseSetFieldSchema).min(1),
 });
@@ -66,15 +58,11 @@ export const trainingLogFormSchema = z.object({
     .refine((value) => value <= todayDateString(), {
       message: "未来の日付は選択できません",
     }),
-  bodyWeight: numericString(),
+  /** 体重 (kg)。API 側は正の数のみ許可 */
+  bodyWeight: numericString({ positive: true }),
   memo: z.string(),
   exercises: z
-    .array(
-      exerciseFieldSchema.refine(
-        (exercise) => exercise.sets.some(isFilledSet),
-        { message: "セットを1つ以上入力してください", path: ["sets", "root"] },
-      ),
-    )
+    .array(exerciseDraftSchema)
     .min(1, "種目を1つ以上追加してください"),
 });
 

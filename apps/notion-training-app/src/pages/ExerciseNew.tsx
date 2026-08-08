@@ -4,24 +4,14 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Input,
-  MultipleSelector,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@repo/ui";
-import {
-  EXERCISE_RM_TYPES,
-  type ExerciseRmTypes,
-} from "@repo/types/notion-training-app";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
-import BODY_PARTS from "../constants/parts";
 import PageHero, { HeroLinkButton } from "../components/PageHero";
+import ExerciseFormFields from "../features/exercise/components/ExerciseFormFields";
+import { RM_TYPE_LABELS } from "../features/exercise/constants/constants";
 import { useExerciseMutations } from "../features/exercise/hooks/useExerciseMutations";
 import {
   emptyExerciseFormValues,
@@ -29,11 +19,6 @@ import {
   toExerciseInput,
   type ExerciseFormValues,
 } from "../features/exercise/exerciseForm.schema";
-
-const RM_TYPE_LABELS: Record<ExerciseRmTypes, string> = {
-  upperBody: "上半身",
-  lowerBody: "下半身",
-};
 
 const ExerciseNew = () => {
   const navigate = useNavigate();
@@ -45,7 +30,7 @@ const ExerciseNew = () => {
     defaultValues: emptyExerciseFormValues(),
     mode: "onChange",
   });
-  const { register, control, watch, reset, formState } = form;
+  const { watch, reset, formState } = form;
   const [selectedParts, defaultRest, rmType] = watch([
     "musclesTypes",
     "rest",
@@ -125,82 +110,7 @@ const ExerciseNew = () => {
             </p>
           </CardHeader>
           <CardContent className="space-y-5">
-            <div>
-              <label className="mb-2 block text-sm font-medium">種目名</label>
-              <Input placeholder="ベンチプレス" {...register("name")} />
-              {formState.errors.name?.message && (
-                <p className="mt-1 text-sm text-red-600">
-                  {formState.errors.name.message}
-                </p>
-              )}
-            </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  対象部位
-                </label>
-                <Controller
-                  control={control}
-                  name="musclesTypes"
-                  render={({ field }) => (
-                    <MultipleSelector
-                      value={field.value}
-                      defaultOptions={BODY_PARTS}
-                      placeholder="胸、肩、上腕三頭筋..."
-                      onChange={field.onChange}
-                      emptyIndicator={
-                        <p className="text-center text-sm text-zinc-500">
-                          該当する部位がありません
-                        </p>
-                      }
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  休憩時間（秒）
-                </label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="90"
-                  {...register("rest")}
-                />
-                {formState.errors.rest?.message && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {formState.errors.rest.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  RMタイプ（次回セット目安の計算に使用）
-                </label>
-                <Controller
-                  control={control}
-                  name="rmType"
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="上半身 / 下半身" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {EXERCISE_RM_TYPES.map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {RM_TYPE_LABELS[value]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-            </div>
+            <ExerciseFormFields form={form} />
 
             <p className="rounded-2xl border bg-zinc-50 p-4 text-sm text-zinc-500">
               目標重量は Notion の GOAL_WEIGHTS

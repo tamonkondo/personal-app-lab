@@ -1,4 +1,13 @@
-import { ExerciseTrendPeriod } from "@repo/types/notion-training-app";
+import {
+  ExerciseRmTypes,
+  ExerciseTrendPeriod,
+} from "@repo/types/notion-training-app";
+
+/** RMタイプの表示ラベル */
+export const RM_TYPE_LABELS: Record<ExerciseRmTypes, string> = {
+  upperBody: "上半身",
+  lowerBody: "下半身",
+};
 
 export const EXERCISE_TREND_PERIOD_OPTIONS: {
   value: ExerciseTrendPeriod;

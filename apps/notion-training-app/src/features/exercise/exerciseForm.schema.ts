@@ -11,21 +11,13 @@ import {
 } from "@repo/types/notion-training-app";
 import type { CreateExerciseInput } from "@repo/schemas/notion-training-app";
 import BODY_PARTS from "../../constants/parts";
-
-/** 空文字 or 数値文字列のみ許可 */
-const numericString = (message = "数値で入力してください") =>
-  z
-    .string()
-    .refine(
-      (value) => value.trim() === "" || !Number.isNaN(Number(value)),
-      { message },
-    );
+import { numericString } from "../../lib/numericString";
 
 export const exerciseFormSchema = z.object({
   name: z.string().trim().min(1, "種目名を入力してください"),
   /** MultipleSelector の選択値 (value = Notion multi_select の値) */
   musclesTypes: z.array(z.custom<Option>()),
-  rest: numericString(),
+  rest: numericString({ min: 0 }),
   /** "" は未設定 */
   rmType: z.union([z.enum(EXERCISE_RM_TYPES), z.literal("")]),
 });
