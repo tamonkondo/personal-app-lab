@@ -35,3 +35,25 @@ jobs:
 
       - name: Build
         run: pnpm -r build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @repo/notion-training-app exec playwright install --with-deps chromium
+
+      # API は route intercept でモックされるため実 API / Notion 認証は不要
+      - name: E2E tests
+        run: pnpm --filter @repo/notion-training-app test:e2e
