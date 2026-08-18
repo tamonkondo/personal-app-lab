@@ -326,6 +326,11 @@ const TrainingLogForm = ({ form: state, logDate }: Props) => {
                 inputMode="numeric"
                 {...draftForm.register("rest")}
               />
+              {draftForm.formState.errors.rest?.message && (
+                <p className="mt-1 text-sm text-red-600">
+                  {draftForm.formState.errors.rest.message}
+                </p>
+              )}
             </div>
             <div className="sm:col-span-2">
               <label className="mb-2 block text-sm font-medium">種目メモ</label>
@@ -359,18 +364,32 @@ const TrainingLogForm = ({ form: state, logDate }: Props) => {
                   <div className="flex items-center text-sm font-semibold">
                     Set {index + 1}
                   </div>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="kg"
-                    {...draftForm.register(`sets.${index}.kg`)}
-                  />
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="rep"
-                    {...draftForm.register(`sets.${index}.rep`)}
-                  />
+                  <div>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="kg"
+                      {...draftForm.register(`sets.${index}.kg`)}
+                    />
+                    {draftSetsError?.[index]?.kg?.message && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {draftSetsError?.[index]?.kg?.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="rep"
+                      {...draftForm.register(`sets.${index}.rep`)}
+                    />
+                    {draftSetsError?.[index]?.rep?.message && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {draftSetsError?.[index]?.rep?.message}
+                      </p>
+                    )}
+                  </div>
                   <Input
                     placeholder="メモ"
                     {...draftForm.register(`sets.${index}.memo`)}
