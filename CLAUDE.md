@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## リポジトリ概要
 
-複数の個人アプリ（フロントエンド）と単一のExpress APIを管理するpnpmワークスペースのモノレポ。データソースはNotion API。
+単一のフロントエンドアプリとExpress APIを管理するpnpmワークスペースのモノレポ。データソースはNotion API。
 
-- `apps/portal` (port 5173) — 各アプリへの入口となるポータル
-- `apps/notion-training-app` (port 5174) — トレーニング記録アプリ（略称: nta）
-- `apps/notion-todo-pomodoro-app` (port 5175) — Todo/ポモドーロアプリ（略称: ntpa）
-- `apps/api` (port 3000) — Express API。全アプリ共通のバックエンド
+- `apps/personal-app` (port 5173) — 統合フロントエンド。ルート `/` にトップ、`/training/*` にトレーニング記録、`/todo/*` にTodo/ポモドーロ
+- `apps/api` (port 3000) — Express API
 - `packages/*` — 共有モジュール（`@repo/types`, `@repo/schemas`, `@repo/ui`, `@repo/utils`, `@repo/api-client`）
+
+フロントは1つだが、APIは `notion-training-app` / `notion-todo-pomodoro-app` という**モジュール単位**で分かれたままにしている（`/api/<モジュール名>/...`）。`packages/types` と `packages/schemas` のサブディレクトリ名もこのモジュール名と対応しており、フロントのルート名（`/training`, `/todo`）とは独立している。
 
 `docs/` はAIエージェント向けの実装コンテキスト、`handbook/` は開発者向け設計ガイド（命名規約・分割判断など）。設計判断に迷ったら `handbook/07-api-type-and-naming-guidelines.md` を参照する。
 
@@ -21,9 +21,7 @@ pnpm install                # 依存インストール（pnpm@11 / packageManage
 
 # 開発サーバー（ルートから）
 pnpm dev:api                # API (tsx watch)
-pnpm dev:nta                # notion-training-app
-pnpm dev:ntpa               # notion-todo-pomodoro-app
-pnpm dev:portal             # portal
+pnpm dev:app                # personal-app
 
 # 検証（CIと同じ: typecheck → test → build）
 pnpm typecheck              # 全ワークスペース tsc --noEmit
@@ -33,7 +31,7 @@ pnpm build                  # 全ワークスペースのビルド
 # 単一ワークスペース・単一テスト
 pnpm --filter @repo/api test
 pnpm --filter @repo/api exec vitest run src/modules/notion-training-app/features/trainingLog/trainingLog.db.test.ts
-pnpm --filter @repo/notion-training-app exec vitest run <path>
+pnpm --filter @repo/personal-app exec vitest run <path>
 
 # shadcn/ui コンポーネントの追加（packages/ui に入る。手動コピーしない）
 pnpm add:ui <component-name>
@@ -49,7 +47,7 @@ React / Vite / TypeScript / zod などの共通依存は `pnpm-workspace.yaml` �
 
 ### 共有パッケージの解決は2箇所に登録が必要
 
-`@repo/*` のパス解決は **`tsconfig.base.json` の `paths`** と **各アプリの `vite.config.ts` の `resolve.alias`** の両方で定義されている。新しい共有パッケージを作る／エクスポートを増やす場合は両方を更新すること。
+`@repo/*` のパス解決は **`tsconfig.base.json` の `paths`** と **各アプリの `vite.config.ts` / `vitest.config.ts` の `resolve.alias`** で定義されている。新しい共有パッケージを作る／エクスポートを増やす場合は全部を更新すること。アプリの `tsconfig.json` で `paths` を定義すると `extends` 元とマージされず**上書き**になるので、その場合は `@repo/*` を全て再掲する必要がある。
 
 ### API: modules/features 構成
 
@@ -75,11 +73,13 @@ Sentry初期化は `src/app.ts` の先頭importで行い、Sentryのエラーハ
 
 ### フロントエンド: features 構成
 
-各アプリは `src/features/<feature>/` に `components/` `hooks/` `store/` とフォームスキーマ（`*Form.schema.ts` + テスト）を持つ。技術スタック:
+`src/features/<feature>/` に `components/` `hooks/` `store/` とフォームスキーマ（`*Form.schema.ts` + テスト）を持つ。features は**フラットに並べる**（ドメイン別にネストしない）。ドメインの分割は `src/pages/<domain>/` とルートプレフィックス（`/training`, `/todo`）で表現する。技術スタック:
 
 - データ取得: SWR + `@repo/api-client` の `fetcher` / `mutateJson`（アプリ内に独自のfetchラッパーを作らない — 過去にコピペで乖離した経緯があり集約済み）
 - フォーム: react-hook-form + zod（`@hookform/resolvers`）
 - クライアント状態: zustand
 - UI: `packages/ui`（shadcn/ui ベース、Tailwind CSS v4）
 
-各アプリのViteは `base: "/<アプリ名>/"` を設定しており、Nginx経由でパスベースのルーティングをする前提。
+Viteの `base` は `/`。Nginxは `/` を `apps/personal-app` の成果物、`/api/` を APIコンテナに割り当てる。
+
+API のベースURLは `src/lib/fetch.ts` に集約し、`VITE_API_URL`（APIのルート。例 `http://localhost:3000/api`）から `TRAINING_API_BASE` / `TODO_API_BASE` の2本を導出する。各フックで `import.meta.env` を直接参照しない。本番イメージには `.env` が入らないため、未設定時は同一オリジンの `/api` にフォールバックする。

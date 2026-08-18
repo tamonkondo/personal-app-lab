@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS: PomodoroSettings = {
   soundEnabled: true,
 };
 
+// アプリ統合後もキーは据え置き（変更すると既存の設定が初期化されるため）
 const SETTINGS_KEY = "ntpa:pomodoro-settings";
 
 function loadSettings(): PomodoroSettings {

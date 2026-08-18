@@ -5,7 +5,7 @@
 このドキュメントは、この monorepo に Sentry を導入するための実践手順です。
 
 - API: `apps/api`（Express）
-- Frontend: `apps/notion-training-app`（React + Vite）
+- Frontend: `apps/personal-app`（React + Vite）
 
 まず API 側を導入し、その後に React 側を追加します。
 理由は、バックエンド例外を先に可視化すると障害調査の土台が安定するためです。
@@ -17,7 +17,7 @@
 1. Sentry で Project を 2 つ作る
 
 - `personal-app-lab-api`（Node/Express）
-- `personal-app-lab-nta`（React）
+- `personal-app-lab-nta`（React。プロジェクト名は作成当時のまま）
 
 2. DSN を控える
 
@@ -123,20 +123,23 @@ app.use(errorHandler);
 
 ---
 
-## 2. React（apps/notion-training-app）に導入
+## 2. React（apps/personal-app）に導入
 
 ### 2-1. 依存追加
 
 ルートで実行:
 
 ```bash
-pnpm --filter @repo/notion-training-app add @sentry/react @sentry/tracing
-pnpm --filter @repo/notion-training-app add -D @sentry/vite-plugin
+pnpm --filter @repo/personal-app add @sentry/react
 ```
+
+> `@sentry/tracing` は v8 以降コアに統合されたため不要（v7 の遺物）。
+> `@sentry/vite-plugin` は source map をアップロードする 2-4 を実施するときだけ devDependency に追加する。
+> 現状の `apps/personal-app` は 2-4 を設定していないため、どちらも入れていない。
 
 ### 2-2. 環境変数を追加
 
-`apps/notion-training-app/.env` に追加:
+`apps/personal-app/.env` に追加:
 
 ```env
 VITE_SENTRY_DSN=YOUR_WEB_DSN
@@ -155,7 +158,7 @@ SENTRY_PROJECT=personal-app-lab-nta
 
 ### 2-3. React 初期化
 
-`apps/notion-training-app/src/main.tsx` の先頭付近で初期化:
+`apps/personal-app/src/main.tsx` の先頭付近で初期化:
 
 ```ts
 import * as Sentry from "@sentry/react";
@@ -186,7 +189,7 @@ Sentry.init({
 
 ### 2-4. Vite に source map アップロード設定
 
-`apps/notion-training-app/vite.config.ts`:
+`apps/personal-app/vite.config.ts`:
 
 ```ts
 import { sentryVitePlugin } from "@sentry/vite-plugin";

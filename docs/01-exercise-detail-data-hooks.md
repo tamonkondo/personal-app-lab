@@ -2,7 +2,7 @@
 
 ## Goal
 
-`apps/notion-training-app/src/pages/ExerciseDetail.tsx` で直接行っている種目詳細・種目別ログの API 取得を hooks に分離し、モックの `sessionLogs` 表示を API の実データ表示へ置き換える。
+`apps/personal-app/src/pages/training/ExerciseDetail/ExerciseDetail.tsx` で直接行っている種目詳細・種目別ログの API 取得を hooks に分離し、モックの `sessionLogs` 表示を API の実データ表示へ置き換える。
 
 既存の似た構造は優先して再利用する。特にログカードは `ExerciseSummaryCard` のカード構造に寄せ、セット表は既存の `ExerciseSetTable` を使う。
 
@@ -19,7 +19,7 @@
 - ログカードは `ExerciseSummaryCard` と同じ `article` 外枠、ヘッダー、Badge、Link/Button の基本構造に寄せている。
 - セット表は新規に重複実装せず、既存 `features/exercise/components/ExerciseSetTable.tsx` を利用している。
 - 「最近の傾向」の `trendItems`, `Select`, `trendPeriod`, `setSearchParamsWithReset` 周辺の挙動・表示を変更していない。
-- `pnpm --filter @repo/notion-training-app typecheck` が通る。
+- `pnpm --filter @repo/personal-app typecheck` が通る。
 
 ## Implementation Plan
 
@@ -62,8 +62,8 @@
 
 ## Verification
 
-- `pnpm --filter @repo/notion-training-app typecheck`
-- 可能なら `pnpm --filter @repo/notion-training-app build`
+- `pnpm --filter @repo/personal-app typecheck`
+- 可能なら `pnpm --filter @repo/personal-app build`
 - ブラウザ確認項目:
   - 種目詳細が存在するページで hero、summary cards、目標進捗が表示される。
   - 種目別ログが API データで表示される。

@@ -139,6 +139,8 @@ API実装時に追加する
 
 アプリ単位のディレクトリ内を機能別ファイルに分割し、`index.ts` は再exportだけを行う。
 
+ここでいう「アプリ単位」は **API のモジュール名**（`apps/api/src/modules/<モジュール名>/`）を指す。フロントエンドは `apps/personal-app` 1つに統合済みで、そのルートプレフィックス（`/training`, `/todo`）とは独立している。
+
 ```txt
 packages/types/notion-training-app/
   index.ts
