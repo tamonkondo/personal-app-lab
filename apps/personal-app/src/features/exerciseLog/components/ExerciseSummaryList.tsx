@@ -40,7 +40,7 @@ const ExerciseSummaryList = ({ enabled }: { enabled: boolean }) => {
         title="データが一件も存在しません"
         message="トレーニング種目のデータが存在しません。新しい記録を追加してください。"
         action={
-          <Link to="/exercise/new">
+          <Link to="/training/exercises/new">
             <Button>新しい記録を追加</Button>
           </Link>
         }

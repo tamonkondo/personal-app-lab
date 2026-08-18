@@ -1,11 +1,11 @@
 import type { TrainingLogDetailResponse } from "@repo/types/notion-training-app";
-import { API_BASE, fetcher } from "../../../lib/fetch";
+import { TRAINING_API_BASE, fetcher } from "../../../lib/fetch";
 import useSWR from "swr";
 
 export function useTrainingLogDetail(trainingId?: string) {
   const { data, error, isLoading, mutate } =
     useSWR<TrainingLogDetailResponse>(
-      trainingId ? `${API_BASE}/training-logs/${trainingId}` : null,
+      trainingId ? `${TRAINING_API_BASE}/training-logs/${trainingId}` : null,
       fetcher,
     );
 

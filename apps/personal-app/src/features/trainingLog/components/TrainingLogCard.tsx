@@ -35,7 +35,7 @@ export function TrainingLogCard({ data }: Props) {
             </h2>
           </div>
         </div>
-        <Link to={`/training-logs/${data.id}`}>
+        <Link to={`/training/logs/${data.id}`}>
           <Button variant="outline" size="sm" className="w-full sm:w-auto">
             詳細
           </Button>

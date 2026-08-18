@@ -52,7 +52,7 @@ export function ExerciseLogHistoryList({
         title="データが一件も存在しません"
         message="この種目のトレーニング記録が存在しません。新しい記録を追加してください。"
         action={
-          <Link to="/exercise/new">
+          <Link to="/training/logs/new">
             <Button>新しい記録を追加</Button>
           </Link>
         }

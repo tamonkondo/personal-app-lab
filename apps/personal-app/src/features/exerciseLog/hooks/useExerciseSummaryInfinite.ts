@@ -2,7 +2,7 @@ import { ExerciseSummaryResponse } from "@repo/types/notion-training-app";
 import { useCallback, useEffect } from "react";
 import { ExerciseSummaryParams } from "./useExerciseSummaryParams";
 import { formatDate } from "@repo/utils";
-import { API_BASE, buildQuery, fetcher } from "../../../lib/fetch";
+import { TRAINING_API_BASE, buildQuery, fetcher } from "../../../lib/fetch";
 import useSWRInfinite from "swr/infinite";
 
 interface UseExerciseSummaryInfinite {
@@ -31,7 +31,7 @@ export function useExerciseSummaryInfinite({
         // Body parts are joined as CSV in the query string
         parts: elBodyParts.length > 0 ? elBodyParts.join(",") : undefined,
       });
-      return `${API_BASE}/exercise/summary/${query}`;
+      return `${TRAINING_API_BASE}/exercise/summary/${query}`;
     },
     [elStartDate, elEndDate, elSort, elBodyParts],
   );

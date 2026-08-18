@@ -11,9 +11,9 @@ import type {
   CreateExerciseInput,
   UpdateExerciseInput,
 } from "@repo/schemas/notion-training-app";
-import { API_BASE, mutateJson } from "../../../lib/fetch";
+import { TRAINING_API_BASE, mutateJson } from "../../../lib/fetch";
 
-const EXERCISE_KEY_PREFIX = `${API_BASE}/exercise`;
+const EXERCISE_KEY_PREFIX = `${TRAINING_API_BASE}/exercise`;
 
 /**
  * 種目マスタのミューテーション。

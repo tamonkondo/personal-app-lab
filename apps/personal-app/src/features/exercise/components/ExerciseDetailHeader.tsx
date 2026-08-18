@@ -35,7 +35,7 @@ const ExerciseDetailHeader = ({ data }: Props) => {
         eyebrow={`Latest ${formatDate(data.latestTrainingDate, "slash")}`}
         title={data.exerciseName}
         actions={
-          <HeroLinkButton to="/exercises" variant="outline">
+          <HeroLinkButton to="/training/exercises" variant="outline">
             一覧へ戻る
           </HeroLinkButton>
         }

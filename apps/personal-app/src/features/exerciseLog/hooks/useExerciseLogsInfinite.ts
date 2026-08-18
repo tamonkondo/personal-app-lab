@@ -1,6 +1,6 @@
 import type { ExerciseLogWithSetsResponse } from "@repo/types/notion-training-app";
 import { useCallback, useEffect } from "react";
-import { API_BASE, buildQuery, fetcher } from "../../../lib/fetch";
+import { TRAINING_API_BASE, buildQuery, fetcher } from "../../../lib/fetch";
 import useSWRInfinite from "swr/infinite";
 
 type UseExerciseLogsInfinite = {
@@ -27,7 +27,7 @@ export function useExerciseLogsInfinite({
         cursor: pageIndex > 0 ? previousPageData?.meta.next_cursor : undefined,
         limit,
       });
-      return `${API_BASE}/exercise/${exerciseId}/logs${query}`;
+      return `${TRAINING_API_BASE}/exercise/${exerciseId}/logs${query}`;
     },
     [exerciseId, limit],
   );

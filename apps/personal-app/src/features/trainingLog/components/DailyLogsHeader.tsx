@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@repo/ui";
 import * as Sentry from "@sentry/react";
 import useSWR from "swr";
-import { API_BASE, fetcher } from "../../../lib/fetch";
+import { TRAINING_API_BASE, fetcher } from "../../../lib/fetch";
 import DailyLogsHeaderSkeleton from "./DailyLogsHeaderSkeleton";
 import { formatDate } from "@repo/utils";
 import type { NewestTrainingLogResponse } from "@repo/types/notion-training-app";
@@ -13,7 +13,7 @@ const DailyLogsHeader = () => {
     error,
     isLoading,
   } = useSWR<NewestTrainingLogResponse>(
-    `${API_BASE}/training-logs/newest`,
+    `${TRAINING_API_BASE}/training-logs/newest`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -55,7 +55,7 @@ const DailyLogsHeader = () => {
         title={formatDate(newestLog.createdTime)}
         description={newestLog.memo}
         actions={
-          <HeroLinkButton to={`/training-logs/${newestLog.id}`}>
+          <HeroLinkButton to={`/training/logs/${newestLog.id}`}>
             詳細
           </HeroLinkButton>
         }

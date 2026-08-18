@@ -11,9 +11,9 @@ import type {
   CreateTrainingLogInput,
   UpdateTrainingLogInput,
 } from "@repo/schemas/notion-training-app";
-import { API_BASE, mutateJson } from "../../../lib/fetch";
+import { TRAINING_API_BASE, mutateJson } from "../../../lib/fetch";
 
-const TRAINING_LOGS_KEY_PREFIX = `${API_BASE}/training-logs`;
+const TRAINING_LOGS_KEY_PREFIX = `${TRAINING_API_BASE}/training-logs`;
 
 /**
  * トレーニング記録のミューテーション。

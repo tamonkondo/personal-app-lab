@@ -2,7 +2,7 @@ import { TrainingLogSummaryResponse } from "@repo/types/notion-training-app";
 import { useCallback, useEffect } from "react";
 import { TrainingLogParams } from "./useTrainingLogParams";
 import { formatDate } from "@repo/utils";
-import { API_BASE, buildQuery, fetcher } from "../../../lib/fetch";
+import { TRAINING_API_BASE, buildQuery, fetcher } from "../../../lib/fetch";
 import useSWRInfinite from "swr/infinite";
 interface UseTrainingLogInfinite {
   params: TrainingLogParams;
@@ -29,7 +29,7 @@ export function useTrainingLogInfinite({ params }: UseTrainingLogInfinite) {
         sort: tlSort,
         parts: tlParts,
       });
-      return `${API_BASE}/training-logs/${query}`;
+      return `${TRAINING_API_BASE}/training-logs/${query}`;
     },
     [tlStartDate, tlEndDate, tlSort, tlParts],
   );

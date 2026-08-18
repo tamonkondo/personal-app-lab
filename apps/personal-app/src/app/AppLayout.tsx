@@ -1,5 +1,7 @@
 import { Outlet } from "react-router-dom";
 
+import { AppHeader } from "./AppHeader";
+
 /**
  * 全ページ共通のレイアウト。
  * 以前は各ページが同じ <main> ラッパを重複記述していたものを集約。
@@ -7,10 +9,14 @@ import { Outlet } from "react-router-dom";
  */
 export function AppLayout() {
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-6 text-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <Outlet />
-      </div>
-    </main>
+    <div className="min-h-screen bg-zinc-50 text-zinc-950">
+      <AppHeader />
+
+      <main className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+          <Outlet />
+        </div>
+      </main>
+    </div>
   );
 }
