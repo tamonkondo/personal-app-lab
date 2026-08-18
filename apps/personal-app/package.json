@@ -1,19 +1,18 @@
 {
-  "name": "@repo/notion-training-app",
+  "name": "@repo/personal-app",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 5174",
+    "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 4174",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "catalog:",
     "@sentry/react": "^10.69.0",
-    "@sentry/tracing": "^7.120.4",
     "@vitejs/plugin-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -26,7 +25,6 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@sentry/vite-plugin": "^5.4.0",
     "@tailwindcss/vite": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

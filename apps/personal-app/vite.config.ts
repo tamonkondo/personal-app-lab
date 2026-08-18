@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
-  base: "/notion-training-app/",
+  base: "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -13,6 +13,9 @@ export default defineConfig({
         new URL("../../packages/api-client", import.meta.url),
       ),
       "@repo/ui": fileURLToPath(new URL("../../packages/ui", import.meta.url)),
+      "@repo/icons": fileURLToPath(
+        new URL("../../packages/ui/icons", import.meta.url),
+      ),
       "@repo/types": fileURLToPath(
         new URL("../../packages/types", import.meta.url),
       ),
